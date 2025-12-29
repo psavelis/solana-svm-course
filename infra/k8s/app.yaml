@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solana-study-app
+  namespace: solana-study
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: solana-study-app
+  template:
+    metadata:
+      labels:
+        app: solana-study-app
+    spec:
+      containers:
+      - name: app
+        image: solana-study-app:latest  # Replace with actual image
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: solana-study-config
+        - secretRef:
+            name: solana-study-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: solana-study-app-service
+  namespace: solana-study
+spec:
+  selector:
+    app: solana-study-app
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: LoadBalancer  # Or ClusterIP with Ingress

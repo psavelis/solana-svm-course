@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: solana-study-config
+  namespace: solana-study
+data:
+  NODE_ENV: "production"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_DATABASE: "solana_study"
+  KAFKA_BROKERS: "kafka-service:9092"
+  SOLANA_RPC_URL: "http://solana-validator-service:8899"  # Local validator for SVM study
+  SOLANA_WS_URL: "ws://solana-validator-service:8900"
+  SOLANA_FAUCET_URL: "http://solana-validator-service:9900"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  SOLANA_NETWORK: "local"  # Options: local, devnet, testnet, mainnet

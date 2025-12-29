@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: solana-study-postgres
+    environment:
+      POSTGRES_DB: solana_study
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - solana-study
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: solana-study-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - solana-study
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: solana-study-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - solana-study
+
+  redis:
+    image: redis:7-alpine
+    container_name: solana-study-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - solana-study
+
+  solana-validator:
+    image: solanalabs/solana:v1.18.4
+    container_name: solana-study-validator
+    ports:
+      - "8899:8899"   # RPC
+      - "8900:8900"   # WebSocket
+      - "9900:9900"   # Faucet
+      - "8001:8001"   # Metrics
+    command: ["solana-test-validator", "--rpc-port", "8899", "--faucet-port", "9900", "--log", "--accounts-db-cache-size-mb", "1024", "--faucet-sol", "1000"]
+    volumes:
+      - solana_ledger:/tmp/solana-ledger
+    networks:
+      - solana-study
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8899/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  app:
+    build: .
+    container_name: solana-study-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      solana-validator:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      DB_DATABASE: solana_study
+      KAFKA_BROKERS: kafka:29092
+      SOLANA_RPC_URL: http://solana-validator:8899
+      SOLANA_WS_URL: ws://solana-validator:8900
+      SOLANA_FAUCET_URL: http://solana-validator:9900
+      SOLANA_NETWORK: local
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - solana-study
+    command: npm run start:dev
+
+volumes:
+  postgres_data:
+  redis_data:
+  solana_ledger:
+
+networks:
+  solana-study:
+    driver: bridge
