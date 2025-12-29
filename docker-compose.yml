@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: solana-study-postgres
+    environment:
+      POSTGRES_DB: solana_study
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - solana-study
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: solana-study-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - solana-study
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: solana-study-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - solana-study
+
+  app:
+    build: .
+    container_name: solana-study-app
+    depends_on:
+      - postgres
+      - kafka
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      DB_DATABASE: solana_study
+      KAFKA_BROKERS: kafka:29092
+      SOLANA_RPC_URL: https://api.mainnet-beta.solana.com
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - solana-study
+    command: npm run start:dev
+
+volumes:
+  postgres_data:
+
+networks:
+  solana-study:
+    driver: bridge
