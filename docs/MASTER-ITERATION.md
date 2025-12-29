@@ -39,6 +39,16 @@ The implementation adheres to the following principles:
 - Documentation: Comments reference external links, official docs, and assertive forum discussions
 - Async Patterns: Leverage async/await, observables, and event-driven architecture
 
+### Work Preservation Standards
+- **Safe File Operations**: Never use `rm` directly on important files. Use `mv` to backup location first, then `rm` after validation
+- **Pre-Destruction Validation**: Always verify file contents and git status before destructive operations
+- **Git Commit Frequency**: Commit frequently with descriptive messages to prevent work loss
+- **Branch Strategy**: Use feature branches for experimental work, never commit directly to main
+- **Backup Verification**: Ensure all work is committed and pushed before major refactoring
+- **Code Review**: Require review before merging to prevent accidental deletions
+- **Documentation Updates**: Update documentation in same commit as code changes
+- **Testing Before Commit**: Run tests and validate functionality before committing
+
 ## Technology Stack
 - Framework: NestJS (Node.js)
 - Database: PostgreSQL
