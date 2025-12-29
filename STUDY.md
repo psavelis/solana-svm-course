@@ -2,7 +2,7 @@
 
 ## Solana and SVM Study Topics
 
-This document outlines the comprehensive study topics for mastering Solana and SVM (Solana Virtual Machine), with direct comparisons to EVM (Ethereum Virtual Machine) concepts where applicable. Each topic includes key learning objectives and implementation considerations for this project.
+This document outlines the study topics for mastering Solana and SVM (Solana Virtual Machine), with direct comparisons to EVM (Ethereum Virtual Machine) concepts where applicable. Each topic includes key learning objectives and implementation considerations for this project.
 
 ## Core Concepts
 
@@ -168,6 +168,98 @@ This document outlines the comprehensive study topics for mastering Solana and S
 4. Program interaction APIs
 5. Event streaming and monitoring
 6. Advanced features and optimizations
+
+## Design Patterns
+
+### Gang of Four (GoF) Patterns
+
+#### Factory Pattern
+- **Application**: Transaction creation and account management
+- **Implementation**: Abstract factory for different transaction types (transfer, token transfer, program interaction)
+- **Relation**: Used in `TransactionsService` for creating various Solana transaction types
+- **Example**: `TransactionFactory.createTransfer(from, to, amount)` vs `TransactionFactory.createTokenTransfer(mint, from, to, amount)`
+
+#### Strategy Pattern
+- **Application**: Signing mechanisms and fee calculation
+- **Implementation**: Pluggable signing strategies (Ed25519, MPC, hardware wallets)
+- **Relation**: Implemented in signing services for different cryptographic approaches
+- **Example**: `SigningStrategy` interface with `Ed25519Strategy`, `MPCStrategy` implementations
+
+#### Observer Pattern
+- **Application**: Event monitoring and logging
+- **Implementation**: Event listeners for transaction confirmations and account changes
+- **Relation**: Used in event streaming services for real-time blockchain updates
+- **Example**: `TransactionObserver` subscribing to confirmation events via WebSocket connections
+
+#### Command Pattern
+- **Application**: Transaction instructions and program invocations
+- **Implementation**: Encapsulated instruction execution with undo capabilities
+- **Relation**: Applied to CPI (Cross-Program Invocation) sequences
+- **Example**: `InstructionCommand` objects for System Program transfers, SPL token operations
+
+#### Adapter Pattern
+- **Application**: Multi-chain integrations
+- **Implementation**: Unified interface for EVM and Solana operations
+- **Relation**: Used in API controllers to provide consistent endpoints across blockchains
+- **Example**: `BlockchainAdapter` interface with `SolanaAdapter`, `EthereumAdapter` implementations
+
+### Blockchain-Specific Patterns
+
+#### Token Factory Pattern
+- **Application**: SPL token creation and management
+- **Implementation**: Standardized token deployment with metadata
+- **Relation**: Implemented in token services for creating fungible and non-fungible tokens
+- **Example**: `TokenFactory.create(mintAuthority, decimals, supply)` with automatic ATA creation
+
+#### Multisig Wallet Pattern
+- **Application**: Multi-signature transactions and MPC
+- **Implementation**: Threshold signature schemes for secure transaction authorization
+- **Relation**: Used in MPC services for distributed key management
+- **Example**: `MultisigWallet` with configurable threshold (2-of-3, 3-of-5 signatures)
+
+#### Oracle Pattern
+- **Application**: External data feeds and price feeds
+- **Implementation**: Decentralized data sources for on-chain consumption
+- **Relation**: Integrated in program interactions for cross-chain data
+- **Example**: `PriceOracle` program providing real-time token prices for DeFi operations
+
+#### Bridge Pattern
+- **Application**: Cross-chain asset transfers
+- **Implementation**: Lock-and-mint mechanisms for token bridging
+- **Relation**: Used in advanced features for EVM-Solana interoperability
+- **Example**: `BridgeService` handling token locks on Ethereum and mints on Solana
+
+### Solana-Specific Patterns
+
+#### Program Derived Addresses (PDAs)
+- **Application**: Deterministic account creation and program-controlled accounts
+- **Implementation**: Cryptographic address derivation from seeds and program ID
+- **Relation**: Core to account abstraction and smart contract patterns
+- **Example**: `findProgramAddress([userPubkey, "escrow"], programId)` for escrow accounts
+
+#### Associated Token Accounts (ATAs)
+- **Application**: Automatic token account management
+- **Implementation**: Deterministic token account addresses per wallet-token pair
+- **Relation**: Implemented in token services for seamless token operations
+- **Example**: `getAssociatedTokenAddress(mint, owner)` for automatic account discovery
+
+#### Cross-Program Invocation (CPI)
+- **Application**: Program composition and modularity
+- **Implementation**: Programs calling other programs within transactions
+- **Relation**: Used in complex DeFi operations and protocol interactions
+- **Example**: DEX program invoking token program for swap execution
+
+#### Account Abstraction via Programs
+- **Application**: Smart accounts and programmable transaction authorization
+- **Implementation**: Program-controlled accounts replacing EOAs
+- **Relation**: Implemented in account services for advanced wallet features
+- **Example**: `SmartAccount` program enabling session keys and batched transactions
+
+#### Event-Driven Architecture
+- **Application**: Real-time blockchain monitoring
+- **Implementation**: Program logs and transaction events
+- **Relation**: Used in event streaming services for application notifications
+- **Example**: `ProgramEventListener` parsing transaction logs for specific event types
 
 ## Resources
 - [Official Solana Documentation](https://docs.solana.com/)
