@@ -1,6 +1,6 @@
 # Solana SVM Study Repository
 
-A comprehensive learning and implementation platform for Solana and SVM (Solana Virtual Machine) development, designed for developers transitioning from EVM-based chains like Ethereum and Polygon.
+A learning and implementation platform for Solana and SVM (Solana Virtual Machine) development, designed for developers transitioning from EVM-based chains like Ethereum and Polygon.
 
 ## Overview
 
@@ -8,32 +8,34 @@ This repository implements a NestJS-based API service that demonstrates Solana i
 - PostgreSQL database for data persistence
 - Kafka for asynchronous messaging
 - Docker Compose for containerized deployment
-- Comprehensive Solana feature implementations
+- Solana feature implementations
 - Enterprise-grade architecture following SOLID principles
 
 ## Study Materials
 
-📚 **[Complete Study Guide](STUDY.md)** - Detailed breakdown of Solana concepts with EVM comparisons
+📚 **[Study Guide](docs/STUDY.md)** - Breakdown of Solana concepts with EVM comparisons
 
-📋 **[Master Iteration Plan](MASTER-ITERATION.md)** - Project objectives, design patterns, and development roadmap
+📋 **[Master Iteration Plan](docs/MASTER-ITERATION.md)** - Project objectives, design patterns, and development roadmap
+
+📝 **[Implementation Tasks](docs/TASKS.md)** - Detailed task breakdown for all features
 
 ## Architecture
 
 ### Design Principles
-- **SOLID**: Single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion
-- **DRY**: Don't Repeat Yourself
-- **YAGNI**: You Aren't Gonna Need It
-- **KISS**: Keep It Simple, Stupid
-- **Object Calisthenics**: 9 rules for clean object-oriented code
-- **High Code Coverage**: >80% test coverage maintained
+- SOLID: Single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion
+- DRY: Don't Repeat Yourself
+- YAGNI: You Aren't Gonna Need It
+- KISS: Keep It Simple, Stupid
+- Object Calisthenics: 9 rules for clean object-oriented code
+- High Code Coverage: >80% test coverage maintained
 
 ### Technology Stack
-- **Backend**: NestJS (Node.js framework)
-- **Database**: PostgreSQL
-- **Message Queue**: Apache Kafka
-- **Blockchain**: Solana Web3.js, SVM integrations
-- **Containerization**: Docker & Docker Compose
-- **Testing**: Jest with code coverage reporting
+- Backend: NestJS (Node.js framework)
+- Database: PostgreSQL
+- Message Queue: Apache Kafka
+- Blockchain: Solana Web3.js, SVM integrations
+- Containerization: Docker & Docker Compose
+- Testing: Jest with code coverage reporting
 
 ## Quick Start
 
@@ -149,7 +151,7 @@ src/
 
 ## Learning Path
 
-This project serves as both an implementation reference and educational resource. Start with the [Study Guide](STUDY.md) to understand Solana concepts, then explore the codebase for practical implementations.
+This project provides implementation reference and educational resource. Start with the [Study Guide](STUDY.md) to understand Solana concepts, then explore the codebase for practical implementations.
 
 ## Resources
 
