@@ -1,71 +1,80 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { User } from './user.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from "typeorm";
+import { User } from "./user.entity";
 
 export enum ApiKeyStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  REVOKED = 'revoked',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  REVOKED = "revoked",
 }
 
 export enum ApiKeyPermission {
-  READ = 'read',
-  WRITE = 'write',
-  ADMIN = 'admin',
+  READ = "read",
+  WRITE = "write",
+  ADMIN = "admin",
 }
 
-@Entity('api_keys')
-@Index(['keyHash'])
-@Index(['userId'])
+@Entity("api_keys")
+@Index(["keyHash"])
+@Index(["userId"])
 export class ApiKey {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "userId" })
   user: User;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: "varchar", length: 100, unique: true })
   name: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   description: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: "varchar", length: 255 })
   keyHash: string; // Hashed version of the API key
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: "varchar", length: 255 })
   keyPrefix: string; // First 8 characters for identification
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: ApiKeyStatus,
     default: ApiKeyStatus.ACTIVE,
   })
   status: ApiKeyStatus;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: ApiKeyPermission,
     default: ApiKeyPermission.READ,
   })
   permission: ApiKeyPermission;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   expiresAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastUsedAt: Date;
 
-  @Column({ type: 'varchar', length: 45, nullable: true })
+  @Column({ type: "varchar", length: 45, nullable: true })
   lastUsedIp: string;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   usageCount: number;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: "int", nullable: true })
   rateLimit: number; // Requests per minute
 
   @CreateDateColumn()
@@ -92,6 +101,8 @@ export class ApiKey {
       [ApiKeyPermission.ADMIN]: 3,
     };
 
-    return permissionLevels[this.permission] >= permissionLevels[requiredPermission];
+    return (
+      permissionLevels[this.permission] >= permissionLevels[requiredPermission]
+    );
   }
 }

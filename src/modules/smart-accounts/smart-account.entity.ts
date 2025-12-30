@@ -1,14 +1,20 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
 export enum SmartAccountStatus {
-  ACTIVE = 'active',
-  FROZEN = 'frozen',
-  DISABLED = 'disabled',
+  ACTIVE = "active",
+  FROZEN = "frozen",
+  DISABLED = "disabled",
 }
 
-@Entity('smart_accounts')
+@Entity("smart_accounts")
 export class SmartAccount {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -18,13 +24,13 @@ export class SmartAccount {
   smartAccountAddress: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: SmartAccountStatus,
     default: SmartAccountStatus.ACTIVE,
   })
   status: SmartAccountStatus;
 
-  @Column('jsonb', { default: {} })
+  @Column("jsonb", { default: {} })
   rules: {
     maxDailySpend?: number;
     allowedPrograms?: string[];

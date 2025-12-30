@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsBoolean, IsObject, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsObject,
+  IsDateString,
+} from "class-validator";
 
 export class CreateCpiPermissionDto {
   @IsString()

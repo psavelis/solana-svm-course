@@ -1,20 +1,24 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getDataSourceToken } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import { MigrationService, MigrationInfo, MigrationResult } from '../migration.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getDataSourceToken } from "@nestjs/typeorm";
+import { DataSource } from "typeorm";
+import {
+  MigrationService,
+  MigrationInfo,
+  MigrationResult,
+} from "../migration.service";
 
 // Mock DataSource
 const mockDataSource = {
   migrations: [
     {
-      name: '1735512000000-CreateAccountsTable',
-      constructor: { name: 'CreateAccountsTable1735512000000' },
+      name: "1735512000000-CreateAccountsTable",
+      constructor: { name: "CreateAccountsTable1735512000000" },
       up: jest.fn().mockResolvedValue(undefined),
       down: jest.fn().mockResolvedValue(undefined),
     },
     {
-      name: '1735512000001-CreateTransactionsTable',
-      constructor: { name: 'CreateTransactionsTable1735512000001' },
+      name: "1735512000001-CreateTransactionsTable",
+      constructor: { name: "CreateTransactionsTable1735512000001" },
       up: jest.fn().mockResolvedValue(undefined),
       down: jest.fn().mockResolvedValue(undefined),
     },
@@ -25,7 +29,7 @@ const mockDataSource = {
   query: jest.fn(),
 };
 
-describe('MigrationService', () => {
+describe("MigrationService", () => {
   let service: MigrationService;
   let dataSource: DataSource;
 
@@ -48,26 +52,29 @@ describe('MigrationService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('getMigrations', () => {
-    it('should return all migrations with their status', async () => {
+  describe("getMigrations", () => {
+    it("should return all migrations with their status", async () => {
       mockDataSource.query.mockResolvedValue([
-        { name: '1735512000000-CreateAccountsTable' },
+        { name: "1735512000000-CreateAccountsTable" },
       ]);
 
       const result = await service.getMigrations();
 
       expect(result).toHaveLength(2);
-      expect(result[0]).toHaveProperty('name', '1735512000000-CreateAccountsTable');
-      expect(result[0]).toHaveProperty('timestamp', 1735512000000);
-      expect(result[0]).toHaveProperty('executed', true);
-      expect(result[1]).toHaveProperty('executed', false);
+      expect(result[0]).toHaveProperty(
+        "name",
+        "1735512000000-CreateAccountsTable",
+      );
+      expect(result[0]).toHaveProperty("timestamp", 1735512000000);
+      expect(result[0]).toHaveProperty("executed", true);
+      expect(result[1]).toHaveProperty("executed", false);
     });
 
-    it('should sort migrations by timestamp', async () => {
+    it("should sort migrations by timestamp", async () => {
       mockDataSource.query.mockResolvedValue([]);
 
       const result = await service.getMigrations();
@@ -76,25 +83,27 @@ describe('MigrationService', () => {
     });
   });
 
-  describe('runMigrations', () => {
-    it('should run pending migrations successfully', async () => {
+  describe("runMigrations", () => {
+    it("should run pending migrations successfully", async () => {
       mockDataSource.query.mockResolvedValue([
-        { name: '1735512000000-CreateAccountsTable' },
+        { name: "1735512000000-CreateAccountsTable" },
       ]);
 
       const result = await service.runMigrations();
 
       expect(result.success).toBe(true);
       expect(result.executedMigrations).toHaveLength(1);
-      expect(result.executedMigrations[0]).toBe('1735512000001-CreateTransactionsTable');
+      expect(result.executedMigrations[0]).toBe(
+        "1735512000001-CreateTransactionsTable",
+      );
       expect(result.failedMigrations).toHaveLength(0);
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should handle migration failures', async () => {
+    it("should handle migration failures", async () => {
       mockDataSource.query.mockResolvedValue([]);
       const mockMigration = mockDataSource.migrations[0];
-      mockMigration.up.mockRejectedValue(new Error('Migration failed'));
+      mockMigration.up.mockRejectedValue(new Error("Migration failed"));
 
       const result = await service.runMigrations();
 
@@ -102,25 +111,27 @@ describe('MigrationService', () => {
       expect(result.executedMigrations).toHaveLength(0);
       expect(result.failedMigrations).toHaveLength(1);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0]).toContain('Migration failed');
+      expect(result.errors[0]).toContain("Migration failed");
     });
   });
 
-  describe('rollbackMigration', () => {
-    it('should rollback the last executed migration', async () => {
+  describe("rollbackMigration", () => {
+    it("should rollback the last executed migration", async () => {
       mockDataSource.query.mockResolvedValue([
-        { name: '1735512000000-CreateAccountsTable' },
-        { name: '1735512000001-CreateTransactionsTable' },
+        { name: "1735512000000-CreateAccountsTable" },
+        { name: "1735512000001-CreateTransactionsTable" },
       ]);
 
       const result = await service.rollbackMigration();
 
       expect(result.success).toBe(true);
       expect(result.executedMigrations).toHaveLength(1);
-      expect(result.executedMigrations[0]).toBe('1735512000001-CreateTransactionsTable');
+      expect(result.executedMigrations[0]).toBe(
+        "1735512000001-CreateTransactionsTable",
+      );
     });
 
-    it('should handle no migrations to rollback', async () => {
+    it("should handle no migrations to rollback", async () => {
       mockDataSource.query.mockResolvedValue([]);
 
       const result = await service.rollbackMigration();
@@ -128,48 +139,51 @@ describe('MigrationService', () => {
       expect(result.success).toBe(true);
       expect(result.executedMigrations).toHaveLength(0);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0]).toBe('No migrations to rollback');
+      expect(result.errors[0]).toBe("No migrations to rollback");
     });
   });
 
-  describe('createMigration', () => {
-    const fs = require('fs');
-    const path = require('path');
+  describe("createMigration", () => {
+    const fs = require("fs");
+    const path = require("path");
 
     beforeEach(() => {
-      jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
-      jest.spyOn(console, 'log').mockImplementation(() => {});
+      jest.spyOn(fs, "writeFileSync").mockImplementation(() => {});
+      jest.spyOn(console, "log").mockImplementation(() => {});
     });
 
     afterEach(() => {
       jest.restoreAllMocks();
     });
 
-    it('should create a new migration file', async () => {
-      const migrationName = 'AddUserTable';
+    it("should create a new migration file", async () => {
+      const migrationName = "AddUserTable";
       const result = await service.createMigration(migrationName);
 
       expect(fs.writeFileSync).toHaveBeenCalled();
       expect(result).toContain(migrationName);
-      expect(result).toContain('.ts');
+      expect(result).toContain(".ts");
     });
   });
 
-  describe('getMigrationStats', () => {
-    it('should return migration statistics', async () => {
+  describe("getMigrationStats", () => {
+    it("should return migration statistics", async () => {
       mockDataSource.query.mockResolvedValue([
-        { name: '1735512000000-CreateAccountsTable' },
+        { name: "1735512000000-CreateAccountsTable" },
       ]);
 
       const result = await service.getMigrationStats();
 
-      expect(result).toHaveProperty('total', 2);
-      expect(result).toHaveProperty('executed', 1);
-      expect(result).toHaveProperty('pending', 1);
-      expect(result).toHaveProperty('lastExecuted', '1735512000000-CreateAccountsTable');
+      expect(result).toHaveProperty("total", 2);
+      expect(result).toHaveProperty("executed", 1);
+      expect(result).toHaveProperty("pending", 1);
+      expect(result).toHaveProperty(
+        "lastExecuted",
+        "1735512000000-CreateAccountsTable",
+      );
     });
 
-    it('should handle no executed migrations', async () => {
+    it("should handle no executed migrations", async () => {
       mockDataSource.query.mockResolvedValue([]);
 
       const result = await service.getMigrationStats();
@@ -181,55 +195,61 @@ describe('MigrationService', () => {
     });
   });
 
-  describe('validateFeeEstimate', () => {
-    it('should validate migration data integrity', async () => {
+  describe("validateFeeEstimate", () => {
+    it("should validate migration data integrity", async () => {
       // Test that migrations have required properties
       const migrations = await service.getMigrations();
 
-      migrations.forEach(migration => {
-        expect(migration).toHaveProperty('name');
-        expect(migration).toHaveProperty('timestamp');
-        expect(typeof migration.timestamp).toBe('number');
+      migrations.forEach((migration) => {
+        expect(migration).toHaveProperty("name");
+        expect(migration).toHaveProperty("timestamp");
+        expect(typeof migration.timestamp).toBe("number");
         expect(migration.timestamp).toBeGreaterThan(0);
-        expect(migration).toHaveProperty('executed');
-        expect(typeof migration.executed).toBe('boolean');
+        expect(migration).toHaveProperty("executed");
+        expect(typeof migration.executed).toBe("boolean");
       });
     });
   });
 
-  describe('Migration file structure', () => {
-    it('should have properly structured migration files', () => {
+  describe("Migration file structure", () => {
+    it("should have properly structured migration files", () => {
       const migrations = mockDataSource.migrations;
 
-      migrations.forEach(migration => {
-        expect(migration).toHaveProperty('name');
-        expect(migration).toHaveProperty('up');
-        expect(migration).toHaveProperty('down');
-        expect(typeof migration.up).toBe('function');
-        expect(typeof migration.down).toBe('function');
+      migrations.forEach((migration) => {
+        expect(migration).toHaveProperty("name");
+        expect(migration).toHaveProperty("up");
+        expect(migration).toHaveProperty("down");
+        expect(typeof migration.up).toBe("function");
+        expect(typeof migration.down).toBe("function");
       });
     });
   });
 
-  describe('Error handling', () => {
-    it('should handle database query failures gracefully', async () => {
-      mockDataSource.query.mockRejectedValue(new Error('Database connection failed'));
+  describe("Error handling", () => {
+    it("should handle database query failures gracefully", async () => {
+      mockDataSource.query.mockRejectedValue(
+        new Error("Database connection failed"),
+      );
 
       const result = await service.getMigrations();
 
       // Should still return migrations but all marked as not executed
       expect(result).toHaveLength(2);
-      expect(result.every(m => m.executed === false)).toBe(true);
+      expect(result.every((m) => m.executed === false)).toBe(true);
     });
 
-    it('should handle migration execution errors', async () => {
+    it("should handle migration execution errors", async () => {
       mockDataSource.query.mockResolvedValue([]);
-      mockDataSource.migrations[0].up.mockRejectedValue(new Error('Table creation failed'));
+      mockDataSource.migrations[0].up.mockRejectedValue(
+        new Error("Table creation failed"),
+      );
 
       const result = await service.runMigrations();
 
       expect(result.success).toBe(false);
-      expect(result.failedMigrations).toContain('1735512000000-CreateAccountsTable');
+      expect(result.failedMigrations).toContain(
+        "1735512000000-CreateAccountsTable",
+      );
       expect(result.errors.length).toBeGreaterThan(0);
     });
   });

@@ -1,6 +1,6 @@
 # Events Module (Real-time Event Streaming)
 
-This module implements comprehensive real-time event monitoring and streaming for the Solana SVM study repository. It provides WebSocket connections, event filtering, persistence, and replay capabilities for blockchain events.
+This module implements in-depth real-time event monitoring and streaming for the Solana SVM study repository. It provides WebSocket connections, event filtering, persistence, and replay capabilities for blockchain events.
 
 ## Features
 

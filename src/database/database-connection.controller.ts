@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Logger } from '@nestjs/common';
-import { DatabaseConnectionService, DatabaseHealthStatus } from './database-connection.service';
+import { Controller, Get, Post, Logger } from "@nestjs/common";
+import {
+  DatabaseConnectionService,
+  DatabaseHealthStatus,
+} from "./database-connection.service";
 
-@Controller('database')
+@Controller("database")
 export class DatabaseConnectionController {
   private readonly logger = new Logger(DatabaseConnectionController.name);
 
@@ -10,38 +13,38 @@ export class DatabaseConnectionController {
   ) {}
 
   /**
-   * Get comprehensive database health status
+   * Get in-depth database health status
    */
-  @Get('health')
+  @Get("health")
   async getHealth(): Promise<DatabaseHealthStatus> {
-    this.logger.debug('Health check requested');
+    this.logger.debug("Health check requested");
     return this.databaseConnectionService.getHealthStatus();
   }
 
   /**
    * Get connection pool statistics
    */
-  @Get('pool/stats')
+  @Get("pool/stats")
   async getPoolStats() {
-    this.logger.debug('Pool stats requested');
+    this.logger.debug("Pool stats requested");
     return this.databaseConnectionService.getPoolStats();
   }
 
   /**
    * Get database connection information
    */
-  @Get('info')
+  @Get("info")
   getConnectionInfo() {
-    this.logger.debug('Connection info requested');
+    this.logger.debug("Connection info requested");
     return this.databaseConnectionService.getConnectionInfo();
   }
 
   /**
    * Perform a manual health check
    */
-  @Get('health/check')
+  @Get("health/check")
   async performHealthCheck() {
-    this.logger.debug('Manual health check requested');
+    this.logger.debug("Manual health check requested");
     const isHealthy = await this.databaseConnectionService.performHealthCheck();
     return {
       healthy: isHealthy,
@@ -52,12 +55,12 @@ export class DatabaseConnectionController {
   /**
    * Close idle connections (maintenance operation)
    */
-  @Post('pool/close-idle')
+  @Post("pool/close-idle")
   async closeIdleConnections() {
-    this.logger.warn('Closing idle connections requested');
+    this.logger.warn("Closing idle connections requested");
     await this.databaseConnectionService.closeIdleConnections();
     return {
-      message: 'Idle connections closed',
+      message: "Idle connections closed",
       timestamp: new Date().toISOString(),
     };
   }
@@ -65,7 +68,7 @@ export class DatabaseConnectionController {
   /**
    * Get current connection count
    */
-  @Get('connections/count')
+  @Get("connections/count")
   getConnectionCount() {
     const count = this.databaseConnectionService.getConnectionCount();
     return {

@@ -1,11 +1,20 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { TransactionsService } from './transactions.service';
-import { MessagePublisherService } from './message-publisher.service';
-import { Transaction } from './transaction.entity';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  Query,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { TransactionsService } from "./transactions.service";
+import { MessagePublisherService } from "./message-publisher.service";
+import { Transaction } from "./transaction.entity";
 
-@ApiTags('transactions')
-@Controller('transactions')
+@ApiTags("transactions")
+@Controller("transactions")
 /**
  * Controller for managing Solana transactions.
  * @see docs/diagrams/02-transactions-instructions.md
@@ -17,58 +26,91 @@ export class TransactionsController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new transaction record' })
-  @ApiResponse({ status: 201, description: 'Transaction created successfully', type: Transaction })
+  @ApiOperation({ summary: "Create a new transaction record" })
+  @ApiResponse({
+    status: 201,
+    description: "Transaction created successfully",
+    type: Transaction,
+  })
   create(@Body() createTransactionDto: Partial<Transaction>) {
     return this.transactionsService.create(createTransactionDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all transactions' })
-  @ApiResponse({ status: 200, description: 'List of transactions', type: [Transaction] })
+  @ApiOperation({ summary: "Get all transactions" })
+  @ApiResponse({
+    status: 200,
+    description: "List of transactions",
+    type: [Transaction],
+  })
   findAll() {
     return this.transactionsService.findAll();
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get transaction by ID' })
-  @ApiResponse({ status: 200, description: 'Transaction details', type: Transaction })
-  findOne(@Param('id') id: string) {
+  @Get(":id")
+  @ApiOperation({ summary: "Get transaction by ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Transaction details",
+    type: Transaction,
+  })
+  findOne(@Param("id") id: string) {
     return this.transactionsService.findOne(id);
   }
 
-  @Get('signature/:signature')
-  @ApiOperation({ summary: 'Get transaction by signature' })
-  @ApiResponse({ status: 200, description: 'Transaction details', type: Transaction })
-  findBySignature(@Param('signature') signature: string) {
+  @Get("signature/:signature")
+  @ApiOperation({ summary: "Get transaction by signature" })
+  @ApiResponse({
+    status: 200,
+    description: "Transaction details",
+    type: Transaction,
+  })
+  findBySignature(@Param("signature") signature: string) {
     return this.transactionsService.findBySignature(signature);
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Update transaction' })
-  @ApiResponse({ status: 200, description: 'Transaction updated successfully', type: Transaction })
-  update(@Param('id') id: string, @Body() updateTransactionDto: Partial<Transaction>) {
+  @Put(":id")
+  @ApiOperation({ summary: "Update transaction" })
+  @ApiResponse({
+    status: 200,
+    description: "Transaction updated successfully",
+    type: Transaction,
+  })
+  update(
+    @Param("id") id: string,
+    @Body() updateTransactionDto: Partial<Transaction>,
+  ) {
     return this.transactionsService.update(id, updateTransactionDto);
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete transaction' })
-  @ApiResponse({ status: 200, description: 'Transaction deleted successfully' })
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  @ApiOperation({ summary: "Delete transaction" })
+  @ApiResponse({ status: 200, description: "Transaction deleted successfully" })
+  remove(@Param("id") id: string) {
     return this.transactionsService.remove(id);
   }
 
-  @Get('details/:signature')
-  @ApiOperation({ summary: 'Get transaction details from Solana' })
-  @ApiResponse({ status: 200, description: 'Transaction details from Solana' })
-  getTransaction(@Param('signature') signature: string) {
+  @Get("details/:signature")
+  @ApiOperation({ summary: "Get transaction details from Solana" })
+  @ApiResponse({ status: 200, description: "Transaction details from Solana" })
+  getTransaction(@Param("signature") signature: string) {
     return this.transactionsService.getTransaction(signature);
   }
 
-  @Post('transfer')
-  @ApiOperation({ summary: 'Send SOL transfer transaction' })
-  @ApiResponse({ status: 201, description: 'Transfer transaction sent successfully' })
-  sendTransfer(@Body() transferDto: { fromPrivateKey: string; toAddress: string; amount: number }) {
+  @Post("transfer")
+  @ApiOperation({ summary: "Send SOL transfer transaction" })
+  @ApiResponse({
+    status: 201,
+    description: "Transfer transaction sent successfully",
+  })
+  sendTransfer(
+    @Body()
+    transferDto: {
+      fromPrivateKey: string;
+      toAddress: string;
+      amount: number;
+    },
+  ) {
     return this.transactionsService.sendTransfer(
       transferDto.fromPrivateKey,
       transferDto.toAddress,
@@ -76,30 +118,35 @@ export class TransactionsController {
     );
   }
 
-  @Get('recent/list')
-  @ApiOperation({ summary: 'Get recent transactions' })
-  @ApiResponse({ status: 200, description: 'List of recent transactions' })
-  getRecentTransactions(@Query('limit') limit?: number) {
+  @Get("recent/list")
+  @ApiOperation({ summary: "Get recent transactions" })
+  @ApiResponse({ status: 200, description: "List of recent transactions" })
+  getRecentTransactions(@Query("limit") limit?: number) {
     return this.transactionsService.getRecentTransactions(limit);
   }
 
-  @Get('fee/estimate')
-  @ApiOperation({ summary: 'Get fee estimate' })
-  @ApiResponse({ status: 200, description: 'Fee estimate' })
+  @Get("fee/estimate")
+  @ApiOperation({ summary: "Get fee estimate" })
+  @ApiResponse({ status: 200, description: "Fee estimate" })
   getFeeEstimate() {
     return this.transactionsService.getFeeEstimate();
   }
 
-  @Post('events/test')
-  @ApiOperation({ summary: 'Create a test transaction to demonstrate event publishing' })
-  @ApiResponse({ status: 201, description: 'Test transaction created and event published' })
+  @Post("events/test")
+  @ApiOperation({
+    summary: "Create a test transaction to demonstrate event publishing",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Test transaction created and event published",
+  })
   async createTestTransaction() {
     const testTransaction = {
       signature: `test-${Date.now()}`,
-      type: 'transfer' as any,
-      status: 'pending' as any,
-      fromAddress: '11111111111111111111111111111112',
-      toAddress: '11111111111111111111111111111113',
+      type: "transfer" as any,
+      status: "pending" as any,
+      fromAddress: "11111111111111111111111111111112",
+      toAddress: "11111111111111111111111111111113",
       amount: 1000000, // 0.001 SOL
       metadata: { test: true, createdAt: new Date() },
     };
@@ -107,12 +154,17 @@ export class TransactionsController {
     return this.transactionsService.create(testTransaction);
   }
 
-  @Post(':id/events/status-update')
-  @ApiOperation({ summary: 'Update transaction status to demonstrate status update events' })
-  @ApiResponse({ status: 200, description: 'Transaction status updated and event published' })
+  @Post(":id/events/status-update")
+  @ApiOperation({
+    summary: "Update transaction status to demonstrate status update events",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Transaction status updated and event published",
+  })
   async updateTransactionStatus(
-    @Param('id') id: string,
-    @Body() statusUpdate: { status: string; metadata?: any }
+    @Param("id") id: string,
+    @Body() statusUpdate: { status: string; metadata?: any },
   ) {
     return this.transactionsService.update(id, {
       status: statusUpdate.status as any,
@@ -120,9 +172,9 @@ export class TransactionsController {
     });
   }
 
-  @Get('events/publisher/status')
-  @ApiOperation({ summary: 'Get message publisher status' })
-  @ApiResponse({ status: 200, description: 'Message publisher status' })
+  @Get("events/publisher/status")
+  @ApiOperation({ summary: "Get message publisher status" })
+  @ApiResponse({ status: 200, description: "Message publisher status" })
   getPublisherStatus() {
     return {
       bufferStatus: this.messagePublisher.getBufferStatus(),
@@ -130,11 +182,11 @@ export class TransactionsController {
     };
   }
 
-  @Post('events/publisher/flush')
-  @ApiOperation({ summary: 'Force flush buffered events' })
-  @ApiResponse({ status: 200, description: 'Events flushed successfully' })
+  @Post("events/publisher/flush")
+  @ApiOperation({ summary: "Force flush buffered events" })
+  @ApiResponse({ status: 200, description: "Events flushed successfully" })
   async forceFlushEvents() {
     await this.messagePublisher.forceFlush();
-    return { message: 'Events flushed successfully' };
+    return { message: "Events flushed successfully" };
   }
 }

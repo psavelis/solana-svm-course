@@ -274,7 +274,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 #### Associated Token Accounts (ATAs)
 - **Application**: Automatic token account management
 - **Implementation**: Deterministic token account addresses per wallet-token pair
-- **Relation**: Implemented in token services for seamless token operations
+- **Relation**: Implemented in token services for straightforward token operations
 - **Example**: `getAssociatedTokenAddress(mint, owner)` for automatic account discovery
 
 #### Cross-Program Invocation (CPI)

@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Account } from './account.entity';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Account } from "./account.entity";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 @Injectable()
 /**
@@ -16,7 +16,9 @@ export class AccountsService {
     @InjectRepository(Account)
     private accountsRepository: Repository<Account>,
   ) {
-    this.connection = new Connection(process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com');
+    this.connection = new Connection(
+      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+    );
   }
 
   async create(accountData: Partial<Account>): Promise<Account> {
@@ -55,7 +57,7 @@ export class AccountsService {
         lamports: accountInfo?.lamports || 0,
         owner: accountInfo?.owner?.toString(),
         executable: accountInfo?.executable || false,
-        data: accountInfo?.data?.toString('base64'),
+        data: accountInfo?.data?.toString("base64"),
       };
     } catch (error) {
       throw new Error(`Failed to get account info: ${error.message}`);

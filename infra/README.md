@@ -78,7 +78,7 @@ kubectl apply -f monitoring/grafana.yaml
 
 ## Health Checks
 
-The application includes comprehensive health checks at `/health` endpoint, monitoring:
+The application includes in-depth health checks at `/health` endpoint, monitoring:
 - Database connectivity
 - Kafka connectivity
 - Redis connectivity

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Connection, Transaction, PublicKey } from '@solana/web3.js';
-import { FeeService, FeeEstimate, FeeRecommendation } from '../fee/fee.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Connection, Transaction, PublicKey } from "@solana/web3.js";
+import { FeeService, FeeEstimate, FeeRecommendation } from "../fee/fee.service";
 
 export interface FeeOptimizationStrategy {
   name: string;
@@ -8,12 +8,12 @@ export interface FeeOptimizationStrategy {
   calculateOptimalFee(
     transaction: Transaction,
     networkConditions: NetworkConditions,
-    userPreferences: UserFeePreferences
+    userPreferences: UserFeePreferences,
   ): Promise<OptimizedFeeResult>;
 }
 
 export interface NetworkConditions {
-  congestion: 'low' | 'medium' | 'high';
+  congestion: "low" | "medium" | "high";
   recentBlockTime: number;
   priorityFeePercentile: number;
   networkLoad: number;
@@ -23,8 +23,8 @@ export interface NetworkConditions {
 export interface UserFeePreferences {
   maxFeeLamports?: number;
   targetSuccessRate?: number; // 0-1
-  speed: 'slow' | 'normal' | 'fast' | 'urgent';
-  riskTolerance: 'conservative' | 'moderate' | 'aggressive';
+  speed: "slow" | "normal" | "fast" | "urgent";
+  riskTolerance: "conservative" | "moderate" | "aggressive";
 }
 
 export interface OptimizedFeeResult {
@@ -51,7 +51,9 @@ export class FeeOptimizationService {
   private connection: Connection;
 
   constructor(private readonly feeService: FeeService) {
-    this.connection = new Connection(process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com');
+    this.connection = new Connection(
+      process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com",
+    );
     this.initializeStrategies();
   }
 
@@ -64,7 +66,7 @@ export class FeeOptimizationService {
       new BalancedFeeStrategy(),
       new AggressiveFeeStrategy(),
       new PredictiveFeeStrategy(),
-      new AdaptiveFeeStrategy()
+      new AdaptiveFeeStrategy(),
     );
   }
 
@@ -73,32 +75,47 @@ export class FeeOptimizationService {
    */
   async optimizeFee(
     transaction: Transaction,
-    userPreferences: UserFeePreferences = { speed: 'normal', riskTolerance: 'moderate' }
+    userPreferences: UserFeePreferences = {
+      speed: "normal",
+      riskTolerance: "moderate",
+    },
   ): Promise<FeeOptimizationResult> {
     try {
       // Analyze current network conditions
       const networkConditions = await this.analyzeNetworkConditions();
 
       // Get base fee recommendations
-      const baseRecommendations = await this.feeService.getFeeRecommendations(transaction);
+      const baseRecommendations =
+        await this.feeService.getFeeRecommendations(transaction);
 
       // Apply optimization strategies
       const optimizationResults = await Promise.all(
-        this.strategies.map(strategy =>
-          strategy.calculateOptimalFee(transaction, networkConditions, userPreferences)
-        )
+        this.strategies.map((strategy) =>
+          strategy.calculateOptimalFee(
+            transaction,
+            networkConditions,
+            userPreferences,
+          ),
+        ),
       );
 
       // Select best strategy based on user preferences
-      const optimalFee = this.selectOptimalStrategy(optimizationResults, userPreferences);
+      const optimalFee = this.selectOptimalStrategy(
+        optimizationResults,
+        userPreferences,
+      );
 
       // Generate alternative options
       const alternatives = optimizationResults
-        .filter(result => result !== optimalFee)
+        .filter((result) => result !== optimalFee)
         .slice(0, 2); // Top 2 alternatives
 
       // Generate recommendations
-      const recommendations = this.generateRecommendations(optimalFee, networkConditions, userPreferences);
+      const recommendations = this.generateRecommendations(
+        optimalFee,
+        networkConditions,
+        userPreferences,
+      );
 
       return {
         optimalFee,
@@ -107,7 +124,7 @@ export class FeeOptimizationService {
         recommendations,
       };
     } catch (error) {
-      this.logger.error('Failed to optimize fee', error);
+      this.logger.error("Failed to optimize fee", error);
       throw new Error(`Fee optimization failed: ${error.message}`);
     }
   }
@@ -126,19 +143,28 @@ export class FeeOptimizationService {
       const recentBlockTime = block?.blockTime || Date.now() / 1000;
 
       // Estimate transaction success rate (simplified)
-      const recentTransactionSuccessRate = await this.calculateRecentSuccessRate();
+      const recentTransactionSuccessRate =
+        await this.calculateRecentSuccessRate();
 
       return {
-        congestion: feeStats.networkLoad > 0.7 ? 'high' : feeStats.networkLoad > 0.4 ? 'medium' : 'low',
+        congestion:
+          feeStats.networkLoad > 0.7
+            ? "high"
+            : feeStats.networkLoad > 0.4
+              ? "medium"
+              : "low",
         recentBlockTime,
         priorityFeePercentile: feeStats.percentile95,
         networkLoad: feeStats.networkLoad,
         recentTransactionSuccessRate,
       };
     } catch (error) {
-      this.logger.warn('Failed to analyze network conditions, using defaults', error);
+      this.logger.warn(
+        "Failed to analyze network conditions, using defaults",
+        error,
+      );
       return {
-        congestion: 'medium',
+        congestion: "medium",
         recentBlockTime: Date.now() / 1000,
         priorityFeePercentile: 0.000002,
         networkLoad: 0.5,
@@ -162,7 +188,9 @@ export class FeeOptimizationService {
           const block = await this.connection.getConfirmedBlock(slot - i);
           if (block?.transactions) {
             totalCount += block.transactions.length;
-            successCount += block.transactions.filter(tx => tx.meta?.err === null).length;
+            successCount += block.transactions.filter(
+              (tx) => tx.meta?.err === null,
+            ).length;
           }
         } catch (error) {
           continue;
@@ -180,10 +208,10 @@ export class FeeOptimizationService {
    */
   private selectOptimalStrategy(
     results: OptimizedFeeResult[],
-    preferences: UserFeePreferences
+    preferences: UserFeePreferences,
   ): OptimizedFeeResult {
     // Score each result based on user preferences
-    const scoredResults = results.map(result => ({
+    const scoredResults = results.map((result) => ({
       result,
       score: this.scoreResult(result, preferences),
     }));
@@ -195,12 +223,17 @@ export class FeeOptimizationService {
   /**
    * Score a fee optimization result based on user preferences
    */
-  private scoreResult(result: OptimizedFeeResult, preferences: UserFeePreferences): number {
+  private scoreResult(
+    result: OptimizedFeeResult,
+    preferences: UserFeePreferences,
+  ): number {
     let score = 0;
 
     // Success rate preference
     const targetSuccessRate = preferences.targetSuccessRate || 0.95;
-    const successRateDiff = Math.abs(result.estimatedSuccessRate - targetSuccessRate);
+    const successRateDiff = Math.abs(
+      result.estimatedSuccessRate - targetSuccessRate,
+    );
     score += (1 - successRateDiff) * 40; // 40% weight on success rate
 
     // Speed preference
@@ -211,12 +244,16 @@ export class FeeOptimizationService {
       urgent: 2.0,
     }[preferences.speed];
 
-    const confirmationTimeScore = Math.max(0, 60 - result.estimatedConfirmationTime) / 60; // Normalize to 0-1
+    const confirmationTimeScore =
+      Math.max(0, 60 - result.estimatedConfirmationTime) / 60; // Normalize to 0-1
     score += confirmationTimeScore * speedMultiplier * 30; // 30% weight on speed
 
     // Cost preference (lower cost is better, but balanced with success)
     const maxFee = preferences.maxFeeLamports || 100000; // 0.0001 SOL default
-    const costEfficiency = Math.max(0, 1 - (result.recommendedFee.totalFee / maxFee));
+    const costEfficiency = Math.max(
+      0,
+      1 - result.recommendedFee.totalFee / maxFee,
+    );
     score += costEfficiency * 20; // 20% weight on cost
 
     // Confidence bonus
@@ -231,30 +268,44 @@ export class FeeOptimizationService {
   private generateRecommendations(
     optimalFee: OptimizedFeeResult,
     networkConditions: NetworkConditions,
-    preferences: UserFeePreferences
+    preferences: UserFeePreferences,
   ): string[] {
     const recommendations: string[] = [];
 
     // Network condition recommendations
-    if (networkConditions.congestion === 'high') {
-      recommendations.push('Network is congested. Consider using higher priority fees for faster confirmation.');
-    } else if (networkConditions.congestion === 'low') {
-      recommendations.push('Network activity is low. You may be able to use lower fees.');
+    if (networkConditions.congestion === "high") {
+      recommendations.push(
+        "Network is congested. Consider using higher priority fees for faster confirmation.",
+      );
+    } else if (networkConditions.congestion === "low") {
+      recommendations.push(
+        "Network activity is low. You may be able to use lower fees.",
+      );
     }
 
     // Success rate recommendations
     if (optimalFee.estimatedSuccessRate < 0.9) {
-      recommendations.push('Estimated success rate is below 90%. Consider increasing fees or waiting for network conditions to improve.');
+      recommendations.push(
+        "Estimated success rate is below 90%. Consider increasing fees or waiting for network conditions to improve.",
+      );
     }
 
     // Cost optimization recommendations
-    if (optimalFee.recommendedFee.totalFee > 50000) { // 0.00005 SOL
-      recommendations.push('Recommended fee is relatively high. Monitor transaction status and consider alternatives if cost is a concern.');
+    if (optimalFee.recommendedFee.totalFee > 50000) {
+      // 0.00005 SOL
+      recommendations.push(
+        "Recommended fee is relatively high. Monitor transaction status and consider alternatives if cost is a concern.",
+      );
     }
 
     // Speed recommendations
-    if (preferences.speed === 'urgent' && optimalFee.estimatedConfirmationTime > 30) {
-      recommendations.push('For urgent transactions, consider using the "aggressive" alternative option.');
+    if (
+      preferences.speed === "urgent" &&
+      optimalFee.estimatedConfirmationTime > 30
+    ) {
+      recommendations.push(
+        'For urgent transactions, consider using the "aggressive" alternative option.',
+      );
     }
 
     return recommendations;
@@ -264,7 +315,7 @@ export class FeeOptimizationService {
    * Get fee optimization strategies
    */
   getAvailableStrategies(): { name: string; description: string }[] {
-    return this.strategies.map(strategy => ({
+    return this.strategies.map((strategy) => ({
       name: strategy.name,
       description: strategy.description,
     }));
@@ -277,7 +328,7 @@ export class FeeOptimizationService {
     averageFee: number;
     feeVolatility: number;
     bestTimes: { hour: number; averageFee: number }[];
-    trend: 'increasing' | 'decreasing' | 'stable';
+    trend: "increasing" | "decreasing" | "stable";
   }> {
     // This would analyze historical fee data
     // For now, return mock data
@@ -288,7 +339,7 @@ export class FeeOptimizationService {
         { hour: 2, averageFee: 0.0000005 },
         { hour: 14, averageFee: 0.0000008 },
       ],
-      trend: 'stable',
+      trend: "stable",
     };
   }
 }
@@ -297,24 +348,38 @@ export class FeeOptimizationService {
  * Conservative Fee Strategy - Prioritizes reliability over cost
  */
 class ConservativeFeeStrategy implements FeeOptimizationStrategy {
-  name = 'conservative';
-  description = 'Prioritizes transaction success with higher fees for reliability';
+  name = "conservative";
+  description =
+    "Prioritizes transaction success with higher fees for reliability";
 
   async calculateOptimalFee(
     transaction: Transaction,
     networkConditions: NetworkConditions,
-    userPreferences: UserFeePreferences
+    userPreferences: UserFeePreferences,
   ): Promise<OptimizedFeeResult> {
     const baseFee = 5000; // Base fee per signature
-    const priorityMultiplier = networkConditions.congestion === 'high' ? 3.0 :
-                              networkConditions.congestion === 'medium' ? 2.0 : 1.5;
+    const priorityMultiplier =
+      networkConditions.congestion === "high"
+        ? 3.0
+        : networkConditions.congestion === "medium"
+          ? 2.0
+          : 1.5;
 
-    const priorityFee = Math.floor(networkConditions.priorityFeePercentile * priorityMultiplier);
+    const priorityFee = Math.floor(
+      networkConditions.priorityFeePercentile * priorityMultiplier,
+    );
     const totalFee = baseFee + priorityFee;
 
-    const estimatedSuccessRate = Math.min(0.98, networkConditions.recentTransactionSuccessRate + 0.1);
-    const estimatedConfirmationTime = networkConditions.congestion === 'high' ? 15 :
-                                    networkConditions.congestion === 'medium' ? 30 : 60;
+    const estimatedSuccessRate = Math.min(
+      0.98,
+      networkConditions.recentTransactionSuccessRate + 0.1,
+    );
+    const estimatedConfirmationTime =
+      networkConditions.congestion === "high"
+        ? 15
+        : networkConditions.congestion === "medium"
+          ? 30
+          : 60;
 
     return {
       recommendedFee: {
@@ -322,7 +387,7 @@ class ConservativeFeeStrategy implements FeeOptimizationStrategy {
         priorityFee,
         totalFee,
         computeUnits: 5000,
-        feePayer: transaction.feePayer?.toString() || '',
+        feePayer: transaction.feePayer?.toString() || "",
       },
       strategy: this.name,
       confidence: 0.9,
@@ -330,9 +395,9 @@ class ConservativeFeeStrategy implements FeeOptimizationStrategy {
       estimatedConfirmationTime,
       alternativeOptions: [],
       reasoning: [
-        'Uses higher fee multipliers for network congestion',
-        'Prioritizes transaction success over cost savings',
-        'Suitable for important transactions requiring high reliability',
+        "Uses higher fee multipliers for network congestion",
+        "Prioritizes transaction success over cost savings",
+        "Suitable for important transactions requiring high reliability",
       ],
     };
   }
@@ -342,24 +407,34 @@ class ConservativeFeeStrategy implements FeeOptimizationStrategy {
  * Balanced Fee Strategy - Balances cost and speed
  */
 class BalancedFeeStrategy implements FeeOptimizationStrategy {
-  name = 'balanced';
-  description = 'Balances cost efficiency with reasonable confirmation times';
+  name = "balanced";
+  description = "Balances cost efficiency with reasonable confirmation times";
 
   async calculateOptimalFee(
     transaction: Transaction,
     networkConditions: NetworkConditions,
-    userPreferences: UserFeePreferences
+    userPreferences: UserFeePreferences,
   ): Promise<OptimizedFeeResult> {
     const baseFee = 5000;
-    const priorityMultiplier = networkConditions.congestion === 'high' ? 2.0 :
-                              networkConditions.congestion === 'medium' ? 1.5 : 1.0;
+    const priorityMultiplier =
+      networkConditions.congestion === "high"
+        ? 2.0
+        : networkConditions.congestion === "medium"
+          ? 1.5
+          : 1.0;
 
-    const priorityFee = Math.floor(networkConditions.priorityFeePercentile * priorityMultiplier);
+    const priorityFee = Math.floor(
+      networkConditions.priorityFeePercentile * priorityMultiplier,
+    );
     const totalFee = baseFee + priorityFee;
 
     const estimatedSuccessRate = networkConditions.recentTransactionSuccessRate;
-    const estimatedConfirmationTime = networkConditions.congestion === 'high' ? 30 :
-                                    networkConditions.congestion === 'medium' ? 45 : 90;
+    const estimatedConfirmationTime =
+      networkConditions.congestion === "high"
+        ? 30
+        : networkConditions.congestion === "medium"
+          ? 45
+          : 90;
 
     return {
       recommendedFee: {
@@ -367,7 +442,7 @@ class BalancedFeeStrategy implements FeeOptimizationStrategy {
         priorityFee,
         totalFee,
         computeUnits: 5000,
-        feePayer: transaction.feePayer?.toString() || '',
+        feePayer: transaction.feePayer?.toString() || "",
       },
       strategy: this.name,
       confidence: 0.8,
@@ -375,9 +450,9 @@ class BalancedFeeStrategy implements FeeOptimizationStrategy {
       estimatedConfirmationTime,
       alternativeOptions: [],
       reasoning: [
-        'Uses moderate fee multipliers based on network conditions',
-        'Balances cost and confirmation time',
-        'Good default choice for most transactions',
+        "Uses moderate fee multipliers based on network conditions",
+        "Balances cost and confirmation time",
+        "Good default choice for most transactions",
       ],
     };
   }
@@ -387,24 +462,37 @@ class BalancedFeeStrategy implements FeeOptimizationStrategy {
  * Aggressive Fee Strategy - Prioritizes speed over cost
  */
 class AggressiveFeeStrategy implements FeeOptimizationStrategy {
-  name = 'aggressive';
-  description = 'Uses higher fees for fastest possible confirmation';
+  name = "aggressive";
+  description = "Uses higher fees for fastest possible confirmation";
 
   async calculateOptimalFee(
     transaction: Transaction,
     networkConditions: NetworkConditions,
-    userPreferences: UserFeePreferences
+    userPreferences: UserFeePreferences,
   ): Promise<OptimizedFeeResult> {
     const baseFee = 5000;
-    const priorityMultiplier = networkConditions.congestion === 'high' ? 5.0 :
-                              networkConditions.congestion === 'medium' ? 3.0 : 2.0;
+    const priorityMultiplier =
+      networkConditions.congestion === "high"
+        ? 5.0
+        : networkConditions.congestion === "medium"
+          ? 3.0
+          : 2.0;
 
-    const priorityFee = Math.floor(networkConditions.priorityFeePercentile * priorityMultiplier);
+    const priorityFee = Math.floor(
+      networkConditions.priorityFeePercentile * priorityMultiplier,
+    );
     const totalFee = baseFee + priorityFee;
 
-    const estimatedSuccessRate = Math.min(0.99, networkConditions.recentTransactionSuccessRate + 0.05);
-    const estimatedConfirmationTime = networkConditions.congestion === 'high' ? 5 :
-                                    networkConditions.congestion === 'medium' ? 10 : 20;
+    const estimatedSuccessRate = Math.min(
+      0.99,
+      networkConditions.recentTransactionSuccessRate + 0.05,
+    );
+    const estimatedConfirmationTime =
+      networkConditions.congestion === "high"
+        ? 5
+        : networkConditions.congestion === "medium"
+          ? 10
+          : 20;
 
     return {
       recommendedFee: {
@@ -412,7 +500,7 @@ class AggressiveFeeStrategy implements FeeOptimizationStrategy {
         priorityFee,
         totalFee,
         computeUnits: 5000,
-        feePayer: transaction.feePayer?.toString() || '',
+        feePayer: transaction.feePayer?.toString() || "",
       },
       strategy: this.name,
       confidence: 0.95,
@@ -420,9 +508,9 @@ class AggressiveFeeStrategy implements FeeOptimizationStrategy {
       estimatedConfirmationTime,
       alternativeOptions: [],
       reasoning: [
-        'Uses highest fee multipliers for maximum priority',
-        'Prioritizes speed over cost efficiency',
-        'Best for time-sensitive transactions',
+        "Uses highest fee multipliers for maximum priority",
+        "Prioritizes speed over cost efficiency",
+        "Best for time-sensitive transactions",
       ],
     };
   }
@@ -432,13 +520,13 @@ class AggressiveFeeStrategy implements FeeOptimizationStrategy {
  * Predictive Fee Strategy - Uses historical data and ML-like predictions
  */
 class PredictiveFeeStrategy implements FeeOptimizationStrategy {
-  name = 'predictive';
-  description = 'Uses historical patterns to predict optimal fees';
+  name = "predictive";
+  description = "Uses historical patterns to predict optimal fees";
 
   async calculateOptimalFee(
     transaction: Transaction,
     networkConditions: NetworkConditions,
-    userPreferences: UserFeePreferences
+    userPreferences: UserFeePreferences,
   ): Promise<OptimizedFeeResult> {
     // Simplified predictive logic based on network patterns
     const baseFee = 5000;
@@ -446,22 +534,38 @@ class PredictiveFeeStrategy implements FeeOptimizationStrategy {
 
     // Adjust fees based on time of day (simplified model)
     let timeMultiplier = 1.0;
-    if (timeOfDay >= 9 && timeOfDay <= 17) { // Business hours
+    if (timeOfDay >= 9 && timeOfDay <= 17) {
+      // Business hours
       timeMultiplier = 1.3;
-    } else if (timeOfDay >= 20 && timeOfDay <= 6) { // Off-peak hours
+    } else if (timeOfDay >= 20 && timeOfDay <= 6) {
+      // Off-peak hours
       timeMultiplier = 0.8;
     }
 
-    const congestionMultiplier = networkConditions.congestion === 'high' ? 2.5 :
-                                networkConditions.congestion === 'medium' ? 1.8 : 1.2;
+    const congestionMultiplier =
+      networkConditions.congestion === "high"
+        ? 2.5
+        : networkConditions.congestion === "medium"
+          ? 1.8
+          : 1.2;
 
-    const priorityFee = Math.floor(networkConditions.priorityFeePercentile * timeMultiplier * congestionMultiplier);
+    const priorityFee = Math.floor(
+      networkConditions.priorityFeePercentile *
+        timeMultiplier *
+        congestionMultiplier,
+    );
     const totalFee = baseFee + priorityFee;
 
-    const estimatedSuccessRate = Math.min(0.97, networkConditions.recentTransactionSuccessRate + 0.02);
+    const estimatedSuccessRate = Math.min(
+      0.97,
+      networkConditions.recentTransactionSuccessRate + 0.02,
+    );
     const estimatedConfirmationTime = Math.floor(
-      (networkConditions.congestion === 'high' ? 20 :
-       networkConditions.congestion === 'medium' ? 35 : 70) / timeMultiplier
+      (networkConditions.congestion === "high"
+        ? 20
+        : networkConditions.congestion === "medium"
+          ? 35
+          : 70) / timeMultiplier,
     );
 
     return {
@@ -470,7 +574,7 @@ class PredictiveFeeStrategy implements FeeOptimizationStrategy {
         priorityFee,
         totalFee,
         computeUnits: 5000,
-        feePayer: transaction.feePayer?.toString() || '',
+        feePayer: transaction.feePayer?.toString() || "",
       },
       strategy: this.name,
       confidence: 0.85,
@@ -478,9 +582,9 @@ class PredictiveFeeStrategy implements FeeOptimizationStrategy {
       estimatedConfirmationTime,
       alternativeOptions: [],
       reasoning: [
-        'Analyzes time-of-day patterns for fee optimization',
-        'Uses historical network data for predictions',
-        'Adapts to both congestion and temporal patterns',
+        "Analyzes time-of-day patterns for fee optimization",
+        "Uses historical network data for predictions",
+        "Adapts to both congestion and temporal patterns",
       ],
     };
   }
@@ -490,13 +594,14 @@ class PredictiveFeeStrategy implements FeeOptimizationStrategy {
  * Adaptive Fee Strategy - Dynamically adjusts based on recent transaction outcomes
  */
 class AdaptiveFeeStrategy implements FeeOptimizationStrategy {
-  name = 'adaptive';
-  description = 'Adapts fees based on recent transaction success/failure patterns';
+  name = "adaptive";
+  description =
+    "Adapts fees based on recent transaction success/failure patterns";
 
   async calculateOptimalFee(
     transaction: Transaction,
     networkConditions: NetworkConditions,
-    userPreferences: UserFeePreferences
+    userPreferences: UserFeePreferences,
   ): Promise<OptimizedFeeResult> {
     const baseFee = 5000;
 
@@ -508,15 +613,27 @@ class AdaptiveFeeStrategy implements FeeOptimizationStrategy {
       adaptiveMultiplier = 0.7; // Decrease fees if success rate is high
     }
 
-    const congestionMultiplier = networkConditions.congestion === 'high' ? 2.0 :
-                                networkConditions.congestion === 'medium' ? 1.5 : 1.0;
+    const congestionMultiplier =
+      networkConditions.congestion === "high"
+        ? 2.0
+        : networkConditions.congestion === "medium"
+          ? 1.5
+          : 1.0;
 
-    const priorityFee = Math.floor(networkConditions.priorityFeePercentile * adaptiveMultiplier * congestionMultiplier);
+    const priorityFee = Math.floor(
+      networkConditions.priorityFeePercentile *
+        adaptiveMultiplier *
+        congestionMultiplier,
+    );
     const totalFee = baseFee + priorityFee;
 
     const estimatedSuccessRate = networkConditions.recentTransactionSuccessRate;
-    const estimatedConfirmationTime = networkConditions.congestion === 'high' ? 25 :
-                                    networkConditions.congestion === 'medium' ? 40 : 80;
+    const estimatedConfirmationTime =
+      networkConditions.congestion === "high"
+        ? 25
+        : networkConditions.congestion === "medium"
+          ? 40
+          : 80;
 
     return {
       recommendedFee: {
@@ -524,7 +641,7 @@ class AdaptiveFeeStrategy implements FeeOptimizationStrategy {
         priorityFee,
         totalFee,
         computeUnits: 5000,
-        feePayer: transaction.feePayer?.toString() || '',
+        feePayer: transaction.feePayer?.toString() || "",
       },
       strategy: this.name,
       confidence: 0.75,
@@ -532,9 +649,9 @@ class AdaptiveFeeStrategy implements FeeOptimizationStrategy {
       estimatedConfirmationTime,
       alternativeOptions: [],
       reasoning: [
-        'Adapts fees based on recent transaction success rates',
-        'Increases fees when success rates are low',
-        'Decreases fees when network conditions are favorable',
+        "Adapts fees based on recent transaction success rates",
+        "Increases fees when success rates are low",
+        "Decreases fees when network conditions are favorable",
       ],
     };
   }

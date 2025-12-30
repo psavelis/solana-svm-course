@@ -1,8 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
-@Entity('tokens')
+@Entity("tokens")
 export class Token {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -14,7 +20,7 @@ export class Token {
   @Column()
   symbol: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   decimals: number;
 
   @Column({ nullable: true })
@@ -26,7 +32,7 @@ export class Token {
   @Column({ default: false })
   isNft: boolean;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   metadata: any;
 
   @CreateDateColumn()

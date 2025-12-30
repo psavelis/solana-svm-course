@@ -6,7 +6,7 @@ This repository implements a NestJS-based API service for Solana and SVM integra
 ## Objectives
 - Educational: Structured learning path for Solana development with EVM comparisons
 - Practical: Functional API demonstrating Solana integrations
-- Architectural: Enterprise-grade design patterns and best practices
+- Architectural: Built for business design patterns and best practices
 - Iterative: Documentation-driven development with continuous refinement
 
 ## Design Patterns and Principles

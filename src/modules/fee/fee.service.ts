@@ -1,5 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
+import { Injectable } from "@nestjs/common";
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+} from "@solana/web3.js";
 
 export interface FeeEstimate {
   baseFee: number; // lamports per signature
@@ -13,12 +18,12 @@ export interface FeeRecommendation {
   conservative: FeeEstimate;
   moderate: FeeEstimate;
   aggressive: FeeEstimate;
-  networkCongestion: 'low' | 'medium' | 'high';
+  networkCongestion: "low" | "medium" | "high";
   recentBlockhash: string;
 }
 
 export interface PriorityFeeOptions {
-  priorityLevel: 'min' | 'low' | 'medium' | 'high' | 'veryHigh' | 'unsafeMax';
+  priorityLevel: "min" | "low" | "medium" | "high" | "veryHigh" | "unsafeMax";
   includeVotes?: boolean; // Include vote transactions in calculation
 }
 
@@ -31,7 +36,9 @@ export class FeeService {
   private connection: Connection;
 
   constructor() {
-    this.connection = new Connection(process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com');
+    this.connection = new Connection(
+      process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com",
+    );
   }
 
   /**
@@ -53,7 +60,7 @@ export class FeeService {
         priorityFee,
         totalFee: baseFee + priorityFee,
         computeUnits,
-        feePayer: transaction?.feePayer?.toString() || '',
+        feePayer: transaction?.feePayer?.toString() || "",
       };
     } catch (error) {
       throw new Error(`Failed to get fee estimate: ${error.message}`);
@@ -61,14 +68,15 @@ export class FeeService {
   }
 
   /**
-   * Get comprehensive fee recommendations with multiple options
+   * Get in-depth fee recommendations with multiple options
    */
   async getFeeRecommendations(
     transaction?: Transaction,
-    options: PriorityFeeOptions = { priorityLevel: 'medium' }
+    options: PriorityFeeOptions = { priorityLevel: "medium" },
   ): Promise<FeeRecommendation> {
     try {
-      const { blockhash, feeCalculator } = await this.connection.getRecentBlockhash();
+      const { blockhash, feeCalculator } =
+        await this.connection.getRecentBlockhash();
       const baseFee = feeCalculator.lamportsPerSignature;
       const computeUnits = this.estimateComputeUnits(transaction);
 
@@ -76,14 +84,17 @@ export class FeeService {
       const networkCongestion = await this.getNetworkCongestion();
 
       // Calculate priority fees for different levels
-      const priorityFees = await this.calculatePriorityFeeLevels(computeUnits, options);
+      const priorityFees = await this.calculatePriorityFeeLevels(
+        computeUnits,
+        options,
+      );
 
       const createEstimate = (priorityFee: number): FeeEstimate => ({
         baseFee,
         priorityFee,
         totalFee: baseFee + priorityFee,
         computeUnits,
-        feePayer: transaction?.feePayer?.toString() || '',
+        feePayer: transaction?.feePayer?.toString() || "",
       });
 
       return {
@@ -123,7 +134,10 @@ export class FeeService {
         }
       }
       // Token program instructions (basic estimate)
-      else if (instruction.programId.toString() === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') {
+      else if (
+        instruction.programId.toString() ===
+        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+      ) {
         totalComputeUnits += 8000; // Token operations
       }
       // Other programs - conservative estimate
@@ -165,7 +179,7 @@ export class FeeService {
    */
   private async calculatePriorityFeeLevels(
     computeUnits: number,
-    options: PriorityFeeOptions
+    options: PriorityFeeOptions,
   ): Promise<{ conservative: number; moderate: number; aggressive: number }> {
     const basePriorityFee = await this.calculatePriorityFee(computeUnits);
 
@@ -233,26 +247,28 @@ export class FeeService {
   /**
    * Estimate network congestion level
    */
-  private async getNetworkCongestion(): Promise<'low' | 'medium' | 'high'> {
+  private async getNetworkCongestion(): Promise<"low" | "medium" | "high"> {
     try {
       // Get recent performance samples
-      const performanceSamples = await this.connection.getRecentPerformanceSamples(5);
+      const performanceSamples =
+        await this.connection.getRecentPerformanceSamples(5);
 
       if (performanceSamples.length === 0) {
-        return 'low';
+        return "low";
       }
 
       // Calculate average slot utilization
-      const avgUtilization = performanceSamples.reduce((sum, sample) => {
-        return sum + (sample.numTransactions / sample.samplePeriodSecs);
-      }, 0) / performanceSamples.length;
+      const avgUtilization =
+        performanceSamples.reduce((sum, sample) => {
+          return sum + sample.numTransactions / sample.samplePeriodSecs;
+        }, 0) / performanceSamples.length;
 
       // Thresholds for congestion levels
-      if (avgUtilization > 5000) return 'high'; // Very busy
-      if (avgUtilization > 2000) return 'medium'; // Moderately busy
-      return 'low'; // Normal activity
+      if (avgUtilization > 5000) return "high"; // Very busy
+      if (avgUtilization > 2000) return "medium"; // Moderately busy
+      return "low"; // Normal activity
     } catch (error) {
-      return 'medium'; // Default to medium on error
+      return "medium"; // Default to medium on error
     }
   }
 
@@ -261,16 +277,22 @@ export class FeeService {
    */
   validateFeeEstimate(estimate: FeeEstimate): boolean {
     // Basic validation rules
-    if (estimate.baseFee < 0 || estimate.priorityFee < 0 || estimate.totalFee < 0) {
+    if (
+      estimate.baseFee < 0 ||
+      estimate.priorityFee < 0 ||
+      estimate.totalFee < 0
+    ) {
       return false;
     }
 
-    if (estimate.computeUnits < 0 || estimate.computeUnits > 1400000) { // Max compute units per transaction
+    if (estimate.computeUnits < 0 || estimate.computeUnits > 1400000) {
+      // Max compute units per transaction
       return false;
     }
 
     // Total fee should not exceed reasonable limits (e.g., 1 SOL = 1e9 lamports)
-    if (estimate.totalFee > 100000000) { // 0.1 SOL max
+    if (estimate.totalFee > 100000000) {
+      // 0.1 SOL max
       return false;
     }
 
@@ -301,9 +323,12 @@ export class FeeService {
       }
 
       const sortedFees = recentFees.sort((a, b) => a - b);
-      const averageFee = recentFees.reduce((sum, fee) => sum + fee, 0) / recentFees.length;
+      const averageFee =
+        recentFees.reduce((sum, fee) => sum + fee, 0) / recentFees.length;
       const medianFee = sortedFees[Math.floor(sortedFees.length / 2)];
-      const percentile95 = sortedFees[Math.floor(sortedFees.length * 0.95)] || sortedFees[sortedFees.length - 1];
+      const percentile95 =
+        sortedFees[Math.floor(sortedFees.length * 0.95)] ||
+        sortedFees[sortedFees.length - 1];
 
       const networkLoad = await this.getNetworkLoad();
 
@@ -326,10 +351,14 @@ export class FeeService {
     try {
       const congestion = await this.getNetworkCongestion();
       switch (congestion) {
-        case 'low': return 0.3;
-        case 'medium': return 0.6;
-        case 'high': return 0.9;
-        default: return 0.5;
+        case "low":
+          return 0.3;
+        case "medium":
+          return 0.6;
+        case "high":
+          return 0.9;
+        default:
+          return 0.5;
       }
     } catch (error) {
       return 0.5;

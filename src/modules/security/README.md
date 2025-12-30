@@ -1,6 +1,6 @@
 # Security Module
 
-This module implements comprehensive security features for the Solana SVM Study API, including authentication, authorization, and cryptographic security measures.
+This module implements in-depth security features for the Solana SVM Study API, including authentication, authorization, and cryptographic security measures.
 
 ## Features Implemented
 

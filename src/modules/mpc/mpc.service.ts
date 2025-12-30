@@ -1,10 +1,19 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { MpcWallet, MpcWalletStatus, ThresholdScheme } from './mpc-wallet.entity';
-import { KeyShare, KeyShareStatus, KeyShareType } from './key-share.entity';
-import { randomBytes } from 'crypto';
-import { createHash } from 'crypto';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Logger,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  MpcWallet,
+  MpcWalletStatus,
+  ThresholdScheme,
+} from "./mpc-wallet.entity";
+import { KeyShare, KeyShareStatus, KeyShareType } from "./key-share.entity";
+import { randomBytes } from "crypto";
+import { createHash } from "crypto";
 
 export interface CreateMpcWalletRequest {
   name: string;
@@ -78,26 +87,34 @@ export class MpcService {
   /**
    * Create a new MPC wallet with distributed key generation
    */
-  async createMpcWallet(request: CreateMpcWalletRequest): Promise<MpcWalletResponse> {
+  async createMpcWallet(
+    request: CreateMpcWalletRequest,
+  ): Promise<MpcWalletResponse> {
     const { name, thresholdScheme, participants, metadata } = request;
 
     // Validate participants
     if (participants.length < 2) {
-      throw new BadRequestException('MPC wallet requires at least 2 participants');
+      throw new BadRequestException(
+        "MPC wallet requires at least 2 participants",
+      );
     }
 
     // Determine threshold parameters
-    const { totalShares, threshold } = this.getThresholdParameters(thresholdScheme);
+    const { totalShares, threshold } =
+      this.getThresholdParameters(thresholdScheme);
 
     if (participants.length !== totalShares) {
       throw new BadRequestException(
-        `Threshold scheme ${thresholdScheme} requires exactly ${totalShares} participants, got ${participants.length}`
+        `Threshold scheme ${thresholdScheme} requires exactly ${totalShares} participants, got ${participants.length}`,
       );
     }
 
     try {
       // Generate distributed key shares (simplified implementation)
-      const { publicKey, keyShares } = await this.generateDistributedKey(totalShares, participants);
+      const { publicKey, keyShares } = await this.generateDistributedKey(
+        totalShares,
+        participants,
+      );
 
       // Create wallet
       const wallet = this.mpcWalletRepository.create({
@@ -137,17 +154,19 @@ export class MpcService {
       // Reload wallet with key shares
       const walletWithShares = await this.mpcWalletRepository.findOne({
         where: { id: savedWallet.id },
-        relations: ['keyShares'],
+        relations: ["keyShares"],
       });
 
       if (!walletWithShares) {
-        throw new Error('Failed to load wallet with shares');
+        throw new Error("Failed to load wallet with shares");
       }
 
       return this.mapWalletToResponse(walletWithShares);
     } catch (error) {
-      this.logger.error('Failed to create MPC wallet', error);
-      throw new BadRequestException(`Failed to create MPC wallet: ${error.message}`);
+      this.logger.error("Failed to create MPC wallet", error);
+      throw new BadRequestException(
+        `Failed to create MPC wallet: ${error.message}`,
+      );
     }
   }
 
@@ -156,11 +175,11 @@ export class MpcService {
    */
   async getMpcWallets(): Promise<MpcWalletResponse[]> {
     const wallets = await this.mpcWalletRepository.find({
-      relations: ['keyShares'],
-      order: { createdAt: 'DESC' },
+      relations: ["keyShares"],
+      order: { createdAt: "DESC" },
     });
 
-    return wallets.map(wallet => this.mapWalletToResponse(wallet));
+    return wallets.map((wallet) => this.mapWalletToResponse(wallet));
   }
 
   /**
@@ -169,7 +188,7 @@ export class MpcService {
   async getMpcWallet(walletId: string): Promise<MpcWalletResponse> {
     const wallet = await this.mpcWalletRepository.findOne({
       where: { walletId },
-      relations: ['keyShares'],
+      relations: ["keyShares"],
     });
 
     if (!wallet) {
@@ -182,23 +201,28 @@ export class MpcService {
   /**
    * Get key shares for a wallet (for a specific participant)
    */
-  async getWalletKeyShares(walletId: string, participantId: string): Promise<KeyShareResponse[]> {
+  async getWalletKeyShares(
+    walletId: string,
+    participantId: string,
+  ): Promise<KeyShareResponse[]> {
     const shares = await this.keyShareRepository.find({
       where: {
         walletId: (await this.getWalletByWalletId(walletId)).id,
         participantId,
         status: KeyShareStatus.ACTIVE,
       },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
 
-    return shares.map(share => this.mapKeyShareToResponse(share));
+    return shares.map((share) => this.mapKeyShareToResponse(share));
   }
 
   /**
    * Sign a transaction using MPC threshold signatures
    */
-  async signTransaction(request: SignTransactionRequest): Promise<SignatureReconstructionResult> {
+  async signTransaction(
+    request: SignTransactionRequest,
+  ): Promise<SignatureReconstructionResult> {
     const { walletId, transactionData, participantShares } = request;
 
     const wallet = await this.getWalletByWalletId(walletId);
@@ -209,22 +233,28 @@ export class MpcService {
 
     if (participantShares.length < wallet.threshold) {
       throw new BadRequestException(
-        `Insufficient shares: got ${participantShares.length}, need ${wallet.threshold}`
+        `Insufficient shares: got ${participantShares.length}, need ${wallet.threshold}`,
       );
     }
 
     try {
       // Validate participant shares
-      const validShares = await this.validateParticipantShares(wallet, participantShares);
+      const validShares = await this.validateParticipantShares(
+        wallet,
+        participantShares,
+      );
 
       if (validShares.length < wallet.threshold) {
         throw new BadRequestException(
-          `Insufficient valid shares: got ${validShares.length}, need ${wallet.threshold}`
+          `Insufficient valid shares: got ${validShares.length}, need ${wallet.threshold}`,
         );
       }
 
       // Reconstruct signature from shares (simplified implementation)
-      const signature = await this.reconstructSignature(transactionData, validShares);
+      const signature = await this.reconstructSignature(
+        transactionData,
+        validShares,
+      );
 
       // Update last used timestamps
       await this.updateShareUsage(validShares);
@@ -236,7 +266,7 @@ export class MpcService {
         participantsUsed: validShares.length,
       };
     } catch (error) {
-      this.logger.error('Failed to sign transaction with MPC', error);
+      this.logger.error("Failed to sign transaction with MPC", error);
       throw new BadRequestException(`MPC signing failed: ${error.message}`);
     }
   }
@@ -244,7 +274,11 @@ export class MpcService {
   /**
    * Revoke a key share (for security or recovery)
    */
-  async revokeKeyShare(walletId: string, participantId: string, shareIndex: number): Promise<void> {
+  async revokeKeyShare(
+    walletId: string,
+    participantId: string,
+    shareIndex: number,
+  ): Promise<void> {
     const wallet = await this.getWalletByWalletId(walletId);
 
     const share = await this.keyShareRepository.findOne({
@@ -256,7 +290,9 @@ export class MpcService {
     });
 
     if (!share) {
-      throw new NotFoundException(`Key share not found for participant ${participantId}`);
+      throw new NotFoundException(
+        `Key share not found for participant ${participantId}`,
+      );
     }
 
     if (share.status === KeyShareStatus.REVOKED) {
@@ -276,7 +312,10 @@ export class MpcService {
 
   // Private helper methods
 
-  private getThresholdParameters(scheme: ThresholdScheme): { totalShares: number; threshold: number } {
+  private getThresholdParameters(scheme: ThresholdScheme): {
+    totalShares: number;
+    threshold: number;
+  } {
     switch (scheme) {
       case ThresholdScheme.TSS_2_3:
         return { totalShares: 3, threshold: 2 };
@@ -285,18 +324,20 @@ export class MpcService {
       case ThresholdScheme.TSS_4_7:
         return { totalShares: 7, threshold: 4 };
       default:
-        throw new BadRequestException(`Unsupported threshold scheme: ${scheme}`);
+        throw new BadRequestException(
+          `Unsupported threshold scheme: ${scheme}`,
+        );
     }
   }
 
   private generateWalletId(): string {
-    return `mpc_${randomBytes(8).toString('hex')}`;
+    return `mpc_${randomBytes(8).toString("hex")}`;
   }
 
   private async getWalletByWalletId(walletId: string): Promise<MpcWallet> {
     const wallet = await this.mpcWalletRepository.findOne({
       where: { walletId },
-      relations: ['keyShares'],
+      relations: ["keyShares"],
     });
 
     if (!wallet) {
@@ -308,14 +349,20 @@ export class MpcService {
 
   private async generateDistributedKey(
     totalShares: number,
-    participants: Array<{ participantId: string; participantPublicKey: string }>
-  ): Promise<{ publicKey: string; keyShares: Array<{ encryptedData: string }> }> {
+    participants: Array<{
+      participantId: string;
+      participantPublicKey: string;
+    }>,
+  ): Promise<{
+    publicKey: string;
+    keyShares: Array<{ encryptedData: string }>;
+  }> {
     // Simplified distributed key generation
     // In a real implementation, this would use proper threshold cryptography
 
     // Generate a master key (simplified)
     const masterKey = randomBytes(32);
-    const publicKey = createHash('sha256').update(masterKey).digest('hex');
+    const publicKey = createHash("sha256").update(masterKey).digest("hex");
 
     // Create shares (simplified - in reality would use Shamir's secret sharing)
     const keyShares = participants.map((participant, index) => {
@@ -327,7 +374,9 @@ export class MpcService {
       ]);
 
       // Encrypt the share (simplified encryption)
-      const encryptedData = createHash('sha256').update(shareData).digest('base64');
+      const encryptedData = createHash("sha256")
+        .update(shareData)
+        .digest("base64");
 
       return { encryptedData };
     });
@@ -337,26 +386,36 @@ export class MpcService {
 
   private async validateParticipantShares(
     wallet: MpcWallet,
-    participantShares: Array<{ participantId: string; signatureShare: string }>
-  ): Promise<Array<{ participantId: string; signatureShare: string; share: KeyShare }>> {
-    const validShares: Array<{ participantId: string; signatureShare: string; share: KeyShare }> = [];
+    participantShares: Array<{ participantId: string; signatureShare: string }>,
+  ): Promise<
+    Array<{ participantId: string; signatureShare: string; share: KeyShare }>
+  > {
+    const validShares: Array<{
+      participantId: string;
+      signatureShare: string;
+      share: KeyShare;
+    }> = [];
 
     for (const participantShare of participantShares) {
       const { participantId, signatureShare } = participantShare;
 
       // Find the participant's key share
       const share = wallet.keyShares.find(
-        s => s.participantId === participantId && s.isActive()
+        (s) => s.participantId === participantId && s.isActive(),
       );
 
       if (!share) {
-        this.logger.warn(`Invalid or inactive share for participant ${participantId}`);
+        this.logger.warn(
+          `Invalid or inactive share for participant ${participantId}`,
+        );
         continue;
       }
 
       // Validate signature share format (simplified)
       if (!signatureShare || signatureShare.length < 10) {
-        this.logger.warn(`Invalid signature share format for participant ${participantId}`);
+        this.logger.warn(
+          `Invalid signature share format for participant ${participantId}`,
+        );
         continue;
       }
 
@@ -368,31 +427,37 @@ export class MpcService {
 
   private async reconstructSignature(
     transactionData: string,
-    validShares: Array<{ participantId: string; signatureShare: string; share: KeyShare }>
+    validShares: Array<{
+      participantId: string;
+      signatureShare: string;
+      share: KeyShare;
+    }>,
   ): Promise<string> {
     // Simplified signature reconstruction
     // In a real implementation, this would combine signature shares using threshold cryptography
 
     // Combine signature shares (simplified)
     const combinedData = validShares
-      .map(s => s.signatureShare)
+      .map((s) => s.signatureShare)
       .sort()
-      .join('');
+      .join("");
 
     // Create final signature (simplified)
-    const signature = createHash('sha256')
+    const signature = createHash("sha256")
       .update(Buffer.from(combinedData + transactionData))
-      .digest('base64');
+      .digest("base64");
 
     return signature;
   }
 
-  private async updateShareUsage(validShares: Array<{ share: KeyShare }>): Promise<void> {
+  private async updateShareUsage(
+    validShares: Array<{ share: KeyShare }>,
+  ): Promise<void> {
     for (const { share } of validShares) {
       share.markAsUsed();
     }
 
-    await this.keyShareRepository.save(validShares.map(s => s.share));
+    await this.keyShareRepository.save(validShares.map((s) => s.share));
   }
 
   private mapWalletToResponse(wallet: MpcWallet): MpcWalletResponse {

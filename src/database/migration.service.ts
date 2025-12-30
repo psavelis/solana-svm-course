@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { DataSource, MigrationInterface, QueryRunner } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Injectable } from "@nestjs/common";
+import { DataSource, MigrationInterface, QueryRunner } from "typeorm";
+import { InjectDataSource } from "@nestjs/typeorm";
+import * as fs from "fs";
+import * as path from "path";
 
 export interface MigrationInfo {
   name: string;
@@ -32,16 +32,18 @@ export class MigrationService {
     const migrations = this.dataSource.migrations as MigrationInterface[];
     const executedMigrations = await this.getExecutedMigrations();
 
-    return migrations.map(migration => {
-      const migrationName = this.getMigrationName(migration);
-      const timestamp = this.extractTimestamp(migrationName);
+    return migrations
+      .map((migration) => {
+        const migrationName = this.getMigrationName(migration);
+        const timestamp = this.extractTimestamp(migrationName);
 
-      return {
-        name: migrationName,
-        timestamp,
-        executed: executedMigrations.includes(migrationName),
-      };
-    }).sort((a, b) => a.timestamp - b.timestamp);
+        return {
+          name: migrationName,
+          timestamp,
+          executed: executedMigrations.includes(migrationName),
+        };
+      })
+      .sort((a, b) => a.timestamp - b.timestamp);
   }
 
   /**
@@ -68,13 +70,20 @@ export class MigrationService {
           result.executedMigrations.push(this.getMigrationName(migration));
 
           // Log successful migration
-          console.log(`✅ Migration ${this.getMigrationName(migration)} executed successfully in ${executionTime}ms`);
+          console.log(
+            `√ Migration ${this.getMigrationName(migration)} executed successfully in ${executionTime}ms`,
+          );
         } catch (error) {
           result.success = false;
           result.failedMigrations.push(this.getMigrationName(migration));
-          result.errors.push(`Migration ${this.getMigrationName(migration)} failed: ${error.message}`);
+          result.errors.push(
+            `Migration ${this.getMigrationName(migration)} failed: ${error.message}`,
+          );
 
-          console.error(`❌ Migration ${this.getMigrationName(migration)} failed:`, error);
+          console.error(
+            `x Migration ${this.getMigrationName(migration)} failed:`,
+            error,
+          );
           break; // Stop on first failure
         }
       }
@@ -101,12 +110,13 @@ export class MigrationService {
       const executedMigrations = await this.getExecutedMigrations();
 
       if (executedMigrations.length === 0) {
-        result.errors.push('No migrations to rollback');
+        result.errors.push("No migrations to rollback");
         return result;
       }
 
       // Get the last executed migration
-      const lastMigrationName = executedMigrations[executedMigrations.length - 1];
+      const lastMigrationName =
+        executedMigrations[executedMigrations.length - 1];
       const migration = this.findMigrationByName(lastMigrationName);
 
       if (!migration) {
@@ -117,12 +127,16 @@ export class MigrationService {
       try {
         await migration.down(this.dataSource.createQueryRunner());
         result.executedMigrations.push(lastMigrationName);
-        console.log(`✅ Migration ${lastMigrationName} rolled back successfully`);
+        console.log(
+          `√ Migration ${lastMigrationName} rolled back successfully`,
+        );
       } catch (error) {
         result.success = false;
         result.failedMigrations.push(lastMigrationName);
-        result.errors.push(`Rollback of ${lastMigrationName} failed: ${error.message}`);
-        console.error(`❌ Rollback of ${lastMigrationName} failed:`, error);
+        result.errors.push(
+          `Rollback of ${lastMigrationName} failed: ${error.message}`,
+        );
+        console.error(`x Rollback of ${lastMigrationName} failed:`, error);
       }
     } catch (error) {
       result.success = false;
@@ -138,7 +152,7 @@ export class MigrationService {
   async createMigration(name: string): Promise<string> {
     const timestamp = Date.now();
     const fileName = `${timestamp}-${name}.ts`;
-    const filePath = path.join(__dirname, 'migrations', fileName);
+    const filePath = path.join(__dirname, "migrations", fileName);
 
     const migrationTemplate = `import { MigrationInterface, QueryRunner } from 'typeorm';
 
@@ -156,7 +170,7 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
 `;
 
     fs.writeFileSync(filePath, migrationTemplate);
-    console.log(`✅ Migration file created: ${filePath}`);
+    console.log(`√ Migration file created: ${filePath}`);
 
     return filePath;
   }
@@ -168,8 +182,9 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
     const allMigrations = this.dataSource.migrations as MigrationInterface[];
     const executedMigrations = await this.getExecutedMigrations();
 
-    return allMigrations.filter(migration =>
-      !executedMigrations.includes(this.getMigrationName(migration))
+    return allMigrations.filter(
+      (migration) =>
+        !executedMigrations.includes(this.getMigrationName(migration)),
     );
   }
 
@@ -182,7 +197,7 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
         SELECT name FROM migrations
         ORDER BY id ASC
       `);
-      return result.map(row => row.name);
+      return result.map((row) => row.name);
     } catch (error) {
       // Migrations table might not exist yet
       return [];
@@ -194,7 +209,9 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
    */
   private findMigrationByName(name: string): MigrationInterface | undefined {
     const migrations = this.dataSource.migrations as MigrationInterface[];
-    return migrations.find(migration => this.getMigrationName(migration) === name);
+    return migrations.find(
+      (migration) => this.getMigrationName(migration) === name,
+    );
   }
 
   /**
@@ -218,8 +235,8 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
   private toPascalCase(str: string): string {
     return str
       .split(/[-_\s]+/)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join('');
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join("");
   }
 
   /**
@@ -232,14 +249,15 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
     lastExecuted?: string;
   }> {
     const migrations = await this.getMigrations();
-    const executed = migrations.filter(m => m.executed);
-    const pending = migrations.filter(m => !m.executed);
+    const executed = migrations.filter((m) => m.executed);
+    const pending = migrations.filter((m) => !m.executed);
 
     return {
       total: migrations.length,
       executed: executed.length,
       pending: pending.length,
-      lastExecuted: executed.length > 0 ? executed[executed.length - 1].name : undefined,
+      lastExecuted:
+        executed.length > 0 ? executed[executed.length - 1].name : undefined,
     };
   }
 }

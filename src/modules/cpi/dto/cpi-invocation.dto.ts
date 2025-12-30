@@ -1,5 +1,12 @@
-import { IsString, IsOptional, IsObject, IsArray, ValidateNested, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsOptional,
+  IsObject,
+  IsArray,
+  ValidateNested,
+  IsBoolean,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class CreateCpiInvocationDto {
   @IsString()

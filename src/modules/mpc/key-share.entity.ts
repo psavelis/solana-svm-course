@@ -1,31 +1,42 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { MpcWallet } from './mpc-wallet.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from "typeorm";
+import { MpcWallet } from "./mpc-wallet.entity";
 
 export enum KeyShareStatus {
-  ACTIVE = 'active',
-  REVOKED = 'revoked',
-  LOST = 'lost',
-  RECOVERING = 'recovering',
+  ACTIVE = "active",
+  REVOKED = "revoked",
+  LOST = "lost",
+  RECOVERING = "recovering",
 }
 
 export enum KeyShareType {
-  ORIGINAL = 'original', // Original share during creation
-  RECOVERY = 'recovery', // New share during recovery
-  BACKUP = 'backup', // Backup share
+  ORIGINAL = "original", // Original share during creation
+  RECOVERY = "recovery", // New share during recovery
+  BACKUP = "backup", // Backup share
 }
 
-@Entity('key_shares')
-@Index(['walletId', 'participantId'], { unique: true })
+@Entity("key_shares")
+@Index(["walletId", "participantId"], { unique: true })
 export class KeyShare {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
   @Index()
   walletId: string;
 
-  @ManyToOne(() => MpcWallet, wallet => wallet.keyShares, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'walletId' })
+  @ManyToOne(() => MpcWallet, (wallet) => wallet.keyShares, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "walletId" })
   wallet: MpcWallet;
 
   @Column()
@@ -34,27 +45,27 @@ export class KeyShare {
   @Column()
   shareIndex: number; // Index of this share (0, 1, 2, etc.)
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   encryptedShare: string; // Encrypted key share data
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   participantPublicKey: string; // Public key of the participant
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: KeyShareStatus,
     default: KeyShareStatus.ACTIVE,
   })
   status: KeyShareStatus;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: KeyShareType,
     default: KeyShareType.ORIGINAL,
   })
   type: KeyShareType;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   metadata: {
     deviceId?: string;
     location?: string;
@@ -62,7 +73,7 @@ export class KeyShare {
     recoveryAttempts?: number;
   };
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastUsedAt: Date;
 
   @CreateDateColumn()

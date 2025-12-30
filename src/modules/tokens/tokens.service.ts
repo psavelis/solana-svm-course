@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Token } from './token.entity';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Token } from "./token.entity";
+import { Connection, PublicKey } from "@solana/web3.js";
+import {
+  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  getAccount,
+} from "@solana/spl-token";
 
 @Injectable()
 /**
@@ -17,7 +21,9 @@ export class TokensService {
     @InjectRepository(Token)
     private tokensRepository: Repository<Token>,
   ) {
-    this.connection = new Connection(process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com');
+    this.connection = new Connection(
+      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+    );
   }
 
   async create(tokenData: Partial<Token>): Promise<Token> {
@@ -52,7 +58,7 @@ export class TokensService {
       const mintInfo = await this.connection.getAccountInfo(mintPublicKey);
 
       if (!mintInfo) {
-        throw new Error('Token mint not found');
+        throw new Error("Token mint not found");
       }
 
       // Parse mint data (simplified)
@@ -67,7 +73,10 @@ export class TokensService {
     }
   }
 
-  async getTokenBalance(ownerAddress: string, mintAddress: string): Promise<string> {
+  async getTokenBalance(
+    ownerAddress: string,
+    mintAddress: string,
+  ): Promise<string> {
     try {
       const ownerPublicKey = new PublicKey(ownerAddress);
       const mintPublicKey = new PublicKey(mintAddress);
@@ -77,7 +86,10 @@ export class TokensService {
         ownerPublicKey,
       );
 
-      const accountInfo = await getAccount(this.connection, associatedTokenAddress);
+      const accountInfo = await getAccount(
+        this.connection,
+        associatedTokenAddress,
+      );
       return accountInfo.amount.toString();
     } catch (error) {
       throw new Error(`Failed to get token balance: ${error.message}`);
@@ -87,11 +99,14 @@ export class TokensService {
   async getTokenAccounts(ownerAddress: string) {
     try {
       const ownerPublicKey = new PublicKey(ownerAddress);
-      const tokenAccounts = await this.connection.getTokenAccountsByOwner(ownerPublicKey, {
-        programId: TOKEN_PROGRAM_ID,
-      });
+      const tokenAccounts = await this.connection.getTokenAccountsByOwner(
+        ownerPublicKey,
+        {
+          programId: TOKEN_PROGRAM_ID,
+        },
+      );
 
-      return tokenAccounts.value.map(account => ({
+      return tokenAccounts.value.map((account) => ({
         address: account.account.owner.toString(),
         mint: account.account.data.slice(0, 32).toString(),
         amount: account.account.data.slice(64, 72).readBigUInt64LE().toString(),

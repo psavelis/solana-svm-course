@@ -32,7 +32,7 @@ for (const file of files) {
         // We capture output to avoid noise, but print if error
         execSync(`"./node_modules/.bin/mmdc" -i "${inputPath}" -o "${outputPath}"`, { stdio: 'pipe' });
     } catch (e) {
-        console.error(`❌ Error in ${file}:`);
+        console.error(`x Error in ${file}:`);
         console.error(e.stderr.toString());
         hasError = true;
     }
@@ -45,6 +45,6 @@ if (hasError) {
     console.error('Validation failed!');
     process.exit(1);
 } else {
-    console.log('✅ All diagrams are valid.');
+    console.log('√ All diagrams are valid.');
     process.exit(0);
 }

@@ -1,6 +1,6 @@
 # Fee Estimation Service
 
-This module provides comprehensive fee estimation and optimization services for Solana transactions, implementing both base fees and priority fees similar to EVM's EIP-1559 mechanism.
+This module provides in-depth fee estimation and optimization services for Solana transactions, implementing both base fees and priority fees similar to EVM's EIP-1559 mechanism.
 
 ## Features
 
@@ -280,7 +280,7 @@ console.log(`Current network load: ${(stats.networkLoad * 100).toFixed(1)}%`);
 
 ## Testing
 
-The service includes comprehensive unit tests covering:
+The service includes in-depth unit tests covering:
 - Fee calculation algorithms
 - Network congestion detection
 - Compute unit estimation

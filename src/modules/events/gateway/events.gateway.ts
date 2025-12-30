@@ -6,25 +6,28 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
-import { EventsService } from '../events.service';
-import { EventSubscriptionService } from '../event-subscription.service';
-import { SubscriptionType } from '../event-subscription.entity';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { Logger, UseGuards } from "@nestjs/common";
+import { EventsService } from "../events.service";
+import { EventSubscriptionService } from "../event-subscription.service";
+import { SubscriptionType } from "../event-subscription.entity";
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: "*",
   },
-  namespace: '/events',
+  namespace: "/events",
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private readonly logger = new Logger(EventsGateway.name);
-  private connectedClients = new Map<string, { clientId: string; subscriptions: string[] }>();
+  private connectedClients = new Map<
+    string,
+    { clientId: string; subscriptions: string[] }
+  >();
 
   constructor(
     private readonly eventsService: EventsService,
@@ -48,19 +51,21 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleDisconnect(client: Socket) {
     const clientData = this.connectedClients.get(client.id);
     if (clientData) {
-      this.logger.log(`Client disconnected: ${clientData.clientId} (${client.id})`);
+      this.logger.log(
+        `Client disconnected: ${clientData.clientId} (${client.id})`,
+      );
       this.connectedClients.delete(client.id);
     }
   }
 
-  @SubscribeMessage('subscribe')
+  @SubscribeMessage("subscribe")
   async handleSubscribe(
     @MessageBody() data: { eventTypes: string[]; filters?: any },
     @ConnectedSocket() client: Socket,
   ) {
     const clientData = this.connectedClients.get(client.id);
     if (!clientData) {
-      return { success: false, error: 'Client not authenticated' };
+      return { success: false, error: "Client not authenticated" };
     }
 
     try {
@@ -78,22 +83,27 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         clientData.subscriptions.push(eventType);
       }
 
-      this.logger.log(`Client ${clientData.clientId} subscribed to: ${data.eventTypes.join(', ')}`);
+      this.logger.log(
+        `Client ${clientData.clientId} subscribed to: ${data.eventTypes.join(", ")}`,
+      );
       return { success: true, subscribed: data.eventTypes };
     } catch (error) {
-      this.logger.error(`Subscription error for client ${clientData.clientId}:`, error);
+      this.logger.error(
+        `Subscription error for client ${clientData.clientId}:`,
+        error,
+      );
       return { success: false, error: error.message };
     }
   }
 
-  @SubscribeMessage('unsubscribe')
+  @SubscribeMessage("unsubscribe")
   async handleUnsubscribe(
     @MessageBody() data: { eventTypes: string[] },
     @ConnectedSocket() client: Socket,
   ) {
     const clientData = this.connectedClients.get(client.id);
     if (!clientData) {
-      return { success: false, error: 'Client not authenticated' };
+      return { success: false, error: "Client not authenticated" };
     }
 
     try {
@@ -102,7 +112,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.subscriptionService.updateSubscriptionByClientAndType(
           clientData.clientId,
           eventType,
-          { status: 'inactive' },
+          { status: "inactive" },
         );
 
         // Leave event-specific room
@@ -113,15 +123,20 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       }
 
-      this.logger.log(`Client ${clientData.clientId} unsubscribed from: ${data.eventTypes.join(', ')}`);
+      this.logger.log(
+        `Client ${clientData.clientId} unsubscribed from: ${data.eventTypes.join(", ")}`,
+      );
       return { success: true, unsubscribed: data.eventTypes };
     } catch (error) {
-      this.logger.error(`Unsubscription error for client ${clientData.clientId}:`, error);
+      this.logger.error(
+        `Unsubscription error for client ${clientData.clientId}:`,
+        error,
+      );
       return { success: false, error: error.message };
     }
   }
 
-  @SubscribeMessage('ping')
+  @SubscribeMessage("ping")
   handlePing(@ConnectedSocket() client: Socket) {
     return { pong: true, timestamp: new Date().toISOString() };
   }
@@ -129,7 +144,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Method to emit events to subscribed clients
   async emitEvent(eventType: string, data: any, source?: string) {
     // Emit to all clients subscribed to this event type
-    this.server.to(`event:${eventType}`).emit('event', {
+    this.server.to(`event:${eventType}`).emit("event", {
       eventType,
       data,
       source,
@@ -138,7 +153,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Also emit to specific client rooms if needed
     if (source) {
-      this.server.to(`client:${source}`).emit('event', {
+      this.server.to(`client:${source}`).emit("event", {
         eventType,
         data,
         source,

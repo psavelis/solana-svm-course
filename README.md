@@ -9,11 +9,11 @@ This repository implements a NestJS-based API service that demonstrates Solana i
 - Kafka for asynchronous messaging
 - Docker Compose for containerized deployment
 - Solana feature implementations
-- Enterprise-grade architecture following SOLID principles
+- Built for business architecture following SOLID principles
 
 ## Study Materials
 
-📚 **[Complete Course Curriculum](docs/COURSE.md)** - Comprehensive 16-week learning path
+📚 **[Complete Course Curriculum](docs/COURSE.md)** - In-depth 16-week learning path
 
 📖 **[Study Guide](docs/STUDY.md)** - Breakdown of Solana concepts with EVM comparisons
 
@@ -111,7 +111,7 @@ REDIS_URL=redis://localhost:6379
 Once running, access the API documentation at `http://localhost:3000/api`
 
 ### Health Checks
-- `GET /health` - Comprehensive health check for all services (database, Kafka, Redis)
+- `GET /health` - In-depth health check for all services (database, Kafka, Redis)
 
 ### Database APIs
 
@@ -123,7 +123,7 @@ Once running, access the API documentation at `http://localhost:3000/api`
 - `POST /migrations/create` - Generate new migration files
 
 #### Connection Pooling
-- `GET /database/health` - Comprehensive database health status
+- `GET /database/health` - In-depth database health status
 - `GET /database/pool/stats` - Connection pool statistics and utilization
 - `GET /database/info` - Database connection information
 - `GET /database/health/check` - Manual health check
@@ -131,7 +131,7 @@ Once running, access the API documentation at `http://localhost:3000/api`
 - `POST /database/pool/close-idle` - Close idle connections
 
 #### Database Performance
-- `GET /database/performance/report` - Comprehensive performance analysis
+- `GET /database/performance/report` - In-depth performance analysis
 - `GET /database/performance/config/recommendations` - PostgreSQL configuration guidance
 - `GET /database/performance/index/recommendations` - Index optimization suggestions
 - `POST /database/performance/query/analyze` - Individual query performance analysis
@@ -181,7 +181,7 @@ For detailed information, see [Database Migration Documentation](src/database/RE
 
 ## Database Migrations
 
-The project includes a comprehensive database migration system for managing PostgreSQL schema changes:
+The project includes a in-depth database migration system for managing PostgreSQL schema changes:
 
 ### Migration Commands
 ```bash

@@ -4,7 +4,7 @@ This module implements **Run 9** in the Solana SVM study course, demonstrating S
 
 ## Overview
 
-The SVM module provides comprehensive Solana Virtual Machine functionality including:
+The SVM module provides in-depth Solana Virtual Machine functionality including:
 
 - **Program Management**: Deploy, manage, and execute Solana programs
 - **Runtime Execution**: Single and parallel program execution with gas metering
@@ -141,14 +141,14 @@ await svmService.consumeGas('program1', 50000, 'token-transfer');
 ## Architecture Benefits
 
 1. **Parallel Processing**: Leverages Solana's Sealevel runtime for concurrent execution
-2. **Resource Management**: Comprehensive gas metering prevents abuse and ensures fair resource allocation
+2. **Resource Management**: In-depth gas metering prevents abuse and ensures fair resource allocation
 3. **Monitoring & Analytics**: Detailed execution metrics and program statistics
 4. **Scalability**: Efficient database design and query optimization
 5. **Security**: Input validation, access control, and secure key management
 
 ## Testing
 
-The module includes comprehensive unit tests covering:
+The module includes in-depth unit tests covering:
 - Program lifecycle management
 - Runtime execution scenarios
 - Gas metering functionality

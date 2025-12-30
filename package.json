@@ -1,7 +1,7 @@
 {
   "name": "solana-svm-study",
   "version": "1.0.0",
-  "description": "A comprehensive NestJS API for Solana and SVM integrations with PostgreSQL and Kafka",
+  "description": "A in-depth NestJS API for Solana and SVM integrations with PostgreSQL and Kafka",
   "author": "",
   "private": true,
   "license": "MIT",

@@ -1,12 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { SvmService } from '../svm.service';
-import { Program, ProgramStatus, ProgramType } from '../program.entity';
-import { RuntimeExecution, ExecutionStatus, ExecutionType } from '../runtime-execution.entity';
-import { GasMeter, GasMeterType, GasMeterStatus } from '../gas-meter.entity';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { SvmService } from "../svm.service";
+import { Program, ProgramStatus, ProgramType } from "../program.entity";
+import {
+  RuntimeExecution,
+  ExecutionStatus,
+  ExecutionType,
+} from "../runtime-execution.entity";
+import { GasMeter, GasMeterType, GasMeterStatus } from "../gas-meter.entity";
 
-describe('SvmService', () => {
+describe("SvmService", () => {
   let service: SvmService;
   let programRepository: Repository<Program>;
   let executionRepository: Repository<RuntimeExecution>;
@@ -81,25 +85,31 @@ describe('SvmService', () => {
     }).compile();
 
     service = module.get<SvmService>(SvmService);
-    programRepository = module.get<Repository<Program>>(getRepositoryToken(Program));
-    executionRepository = module.get<Repository<RuntimeExecution>>(getRepositoryToken(RuntimeExecution));
-    gasMeterRepository = module.get<Repository<GasMeter>>(getRepositoryToken(GasMeter));
+    programRepository = module.get<Repository<Program>>(
+      getRepositoryToken(Program),
+    );
+    executionRepository = module.get<Repository<RuntimeExecution>>(
+      getRepositoryToken(RuntimeExecution),
+    );
+    gasMeterRepository = module.get<Repository<GasMeter>>(
+      getRepositoryToken(GasMeter),
+    );
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('createProgram', () => {
-    it('should create a program successfully', async () => {
+  describe("createProgram", () => {
+    it("should create a program successfully", async () => {
       const createProgramDto = {
-        name: 'Test Program',
-        description: 'A test program',
+        name: "Test Program",
+        description: "A test program",
         programType: ProgramType.CUSTOM,
       };
-      const owner = 'test-owner';
+      const owner = "test-owner";
       const mockProgram = {
-        id: 'test-id',
+        id: "test-id",
         ...createProgramDto,
         owner,
         status: ProgramStatus.DEPLOYING,
@@ -122,32 +132,36 @@ describe('SvmService', () => {
     });
   });
 
-  describe('getProgram', () => {
-    it('should return a program if found', async () => {
-      const mockProgram = { id: 'test-id', name: 'Test Program' };
+  describe("getProgram", () => {
+    it("should return a program if found", async () => {
+      const mockProgram = { id: "test-id", name: "Test Program" };
       mockProgramRepository.findOne.mockResolvedValue(mockProgram);
 
-      const result = await service.getProgram('test-id');
+      const result = await service.getProgram("test-id");
 
       expect(result).toEqual(mockProgram);
-      expect(mockProgramRepository.findOne).toHaveBeenCalledWith({ where: { id: 'test-id' } });
+      expect(mockProgramRepository.findOne).toHaveBeenCalledWith({
+        where: { id: "test-id" },
+      });
     });
 
-    it('should throw NotFoundException if program not found', async () => {
+    it("should throw NotFoundException if program not found", async () => {
       mockProgramRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getProgram('non-existent-id')).rejects.toThrow('Program with ID non-existent-id not found');
+      await expect(service.getProgram("non-existent-id")).rejects.toThrow(
+        "Program with ID non-existent-id not found",
+      );
     });
   });
 
-  describe('createGasMeter', () => {
-    it('should create a gas meter successfully', async () => {
+  describe("createGasMeter", () => {
+    it("should create a gas meter successfully", async () => {
       const createGasMeterDto = {
         meterType: GasMeterType.PROGRAM,
         gasAllocated: 1000000,
       };
       const mockGasMeter = {
-        id: 'test-id',
+        id: "test-id",
         ...createGasMeterDto,
         gasRemaining: 1000000,
         gasUsed: 0,
@@ -181,22 +195,24 @@ describe('SvmService', () => {
     });
   });
 
-  describe('consumeGas', () => {
-    it('should throw error if gas meter is not active', async () => {
+  describe("consumeGas", () => {
+    it("should throw error if gas meter is not active", async () => {
       const mockGasMeter = {
-        id: 'test-id',
+        id: "test-id",
         gasRemaining: 1000000,
         status: GasMeterStatus.PAUSED,
       };
 
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      await expect(service.consumeGas('test-id', 50000)).rejects.toThrow('Gas meter is paused');
+      await expect(service.consumeGas("test-id", 50000)).rejects.toThrow(
+        "Gas meter is paused",
+      );
     });
 
-    it('should throw error if insufficient gas remaining', async () => {
+    it("should throw error if insufficient gas remaining", async () => {
       const mockGasMeter = {
-        id: 'test-id',
+        id: "test-id",
         gasRemaining: 10000,
         status: GasMeterStatus.ACTIVE,
         autoPauseOnThreshold: false,
@@ -204,33 +220,39 @@ describe('SvmService', () => {
 
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      await expect(service.consumeGas('test-id', 50000)).rejects.toThrow('Insufficient gas remaining');
+      await expect(service.consumeGas("test-id", 50000)).rejects.toThrow(
+        "Insufficient gas remaining",
+      );
     });
   });
 
-  describe('executeProgram', () => {
-    it('should throw error if program not found', async () => {
+  describe("executeProgram", () => {
+    it("should throw error if program not found", async () => {
       const executeProgramDto = {
-        programId: 'non-existent-program',
-        instructionData: 'base64-data',
-        accounts: ['account1'],
+        programId: "non-existent-program",
+        instructionData: "base64-data",
+        accounts: ["account1"],
       };
 
       mockProgramRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.executeProgram(executeProgramDto, {})).rejects.toThrow('Program with programId non-existent-program not found');
+      await expect(
+        service.executeProgram(executeProgramDto, {}),
+      ).rejects.toThrow(
+        "Program with programId non-existent-program not found",
+      );
     });
   });
 
-  describe('getRuntimeInfo', () => {
-    it('should return runtime information', async () => {
+  describe("getRuntimeInfo", () => {
+    it("should return runtime information", async () => {
       const result = await service.getRuntimeInfo();
 
-      expect(result).toHaveProperty('version');
-      expect(result).toHaveProperty('currentSlot');
-      expect(result).toHaveProperty('blockHeight');
-      expect(result).toHaveProperty('rpcUrl');
-      expect(result).toHaveProperty('commitment');
+      expect(result).toHaveProperty("version");
+      expect(result).toHaveProperty("currentSlot");
+      expect(result).toHaveProperty("blockHeight");
+      expect(result).toHaveProperty("rpcUrl");
+      expect(result).toHaveProperty("commitment");
     });
   });
 });

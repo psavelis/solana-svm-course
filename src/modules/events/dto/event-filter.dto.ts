@@ -1,5 +1,11 @@
-import { IsString, IsOptional, IsEnum, IsObject, IsBoolean } from 'class-validator';
-import { FilterType, FilterStatus } from '../event-filter.entity';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsBoolean,
+} from "class-validator";
+import { FilterType, FilterStatus } from "../event-filter.entity";
 
 export class CreateEventFilterDto {
   @IsString()

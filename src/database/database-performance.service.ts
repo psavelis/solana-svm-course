@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
-import { DatabaseConnectionService } from './database-connection.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectConnection } from "@nestjs/typeorm";
+import { Connection } from "typeorm";
+import { DatabaseConnectionService } from "./database-connection.service";
 
 export interface IndexUsageStats {
   indexName: string;
@@ -44,7 +44,7 @@ export class DatabasePerformanceService {
   ) {}
 
   /**
-   * Get comprehensive database performance report
+   * Get in-depth database performance report
    */
   async getPerformanceReport(): Promise<DatabasePerformanceReport> {
     const report: DatabasePerformanceReport = {
@@ -67,9 +67,8 @@ export class DatabasePerformanceService {
 
       // Generate optimization recommendations
       report.recommendations = this.generateRecommendations(report);
-
     } catch (error) {
-      this.logger.error('Failed to generate performance report', error);
+      this.logger.error("Failed to generate performance report", error);
     }
 
     return report;
@@ -106,7 +105,7 @@ export class DatabasePerformanceService {
         isUsed: parseInt(row.usage_count) > 0,
       }));
     } catch (error) {
-      this.logger.error('Failed to get index usage stats', error);
+      this.logger.error("Failed to get index usage stats", error);
       return [];
     }
   }
@@ -114,7 +113,7 @@ export class DatabasePerformanceService {
   /**
    * Get table statistics
    */
-  async getTableStats(): Promise<DatabasePerformanceReport['tableStats']> {
+  async getTableStats(): Promise<DatabasePerformanceReport["tableStats"]> {
     try {
       const query = `
         SELECT
@@ -142,7 +141,7 @@ export class DatabasePerformanceService {
         indexSize: this.parseSize(row.index_size),
       }));
     } catch (error) {
-      this.logger.error('Failed to get table stats', error);
+      this.logger.error("Failed to get table stats", error);
       return [];
     }
   }
@@ -163,38 +162,47 @@ export class DatabasePerformanceService {
     const recommendations: string[] = [];
 
     // Analyze unused indexes
-    const unusedIndexes = report.indexStats.filter(idx => !idx.isUsed);
+    const unusedIndexes = report.indexStats.filter((idx) => !idx.isUsed);
     if (unusedIndexes.length > 0) {
       recommendations.push(
-        `Consider removing ${unusedIndexes.length} unused indexes: ${unusedIndexes.map(idx => idx.indexName).join(', ')}`
+        `Consider removing ${unusedIndexes.length} unused indexes: ${unusedIndexes.map((idx) => idx.indexName).join(", ")}`,
       );
     }
 
     // Analyze table sizes
-    const largeTables = report.tableStats.filter(table => table.tableSize > 100 * 1024 * 1024); // > 100MB
+    const largeTables = report.tableStats.filter(
+      (table) => table.tableSize > 100 * 1024 * 1024,
+    ); // > 100MB
     if (largeTables.length > 0) {
       recommendations.push(
-        `Consider partitioning large tables: ${largeTables.map(table => table.tableName).join(', ')}`
+        `Consider partitioning large tables: ${largeTables.map((table) => table.tableName).join(", ")}`,
       );
     }
 
     // Analyze index to table size ratio
-    report.tableStats.forEach(table => {
+    report.tableStats.forEach((table) => {
       const ratio = table.indexSize / (table.tableSize + table.indexSize);
-      if (ratio > 0.5) { // Indexes > 50% of total size
+      if (ratio > 0.5) {
+        // Indexes > 50% of total size
         recommendations.push(
-          `High index-to-table ratio for ${table.tableName} (${(ratio * 100).toFixed(1)}%). Consider index optimization.`
+          `High index-to-table ratio for ${table.tableName} (${(ratio * 100).toFixed(1)}%). Consider index optimization.`,
         );
       }
     });
 
     // General recommendations
     if (report.indexStats.length === 0) {
-      recommendations.push('Enable pg_stat_statements extension for detailed query analysis');
+      recommendations.push(
+        "Enable pg_stat_statements extension for detailed query analysis",
+      );
     }
 
-    recommendations.push('Consider running ANALYZE on tables after bulk operations');
-    recommendations.push('Monitor for long-running queries and optimize as needed');
+    recommendations.push(
+      "Consider running ANALYZE on tables after bulk operations",
+    );
+    recommendations.push(
+      "Monitor for long-running queries and optimize as needed",
+    );
 
     return recommendations;
   }
@@ -202,7 +210,10 @@ export class DatabasePerformanceService {
   /**
    * Analyze specific query performance
    */
-  async analyzeQuery(query: string, params?: any[]): Promise<QueryPerformanceStats> {
+  async analyzeQuery(
+    query: string,
+    params?: any[],
+  ): Promise<QueryPerformanceStats> {
     const startTime = Date.now();
 
     try {
@@ -233,12 +244,12 @@ export class DatabasePerformanceService {
    */
   getConfigurationRecommendations(): string[] {
     return [
-      'Set work_mem appropriately for your query complexity (16-64MB)',
-      'Configure maintenance_work_mem for index creation (256MB+)',
-      'Set shared_buffers to 25% of available RAM',
-      'Enable autovacuum and monitor its performance',
-      'Consider enabling pg_stat_statements for query analysis',
-      'Set appropriate checkpoint_segments or use PostgreSQL 9.5+ with automatic tuning',
+      "Set work_mem appropriately for your query complexity (16-64MB)",
+      "Configure maintenance_work_mem for index creation (256MB+)",
+      "Set shared_buffers to 25% of available RAM",
+      "Enable autovacuum and monitor its performance",
+      "Consider enabling pg_stat_statements for query analysis",
+      "Set appropriate checkpoint_segments or use PostgreSQL 9.5+ with automatic tuning",
     ];
   }
 
@@ -270,12 +281,12 @@ export class DatabasePerformanceService {
    */
   getIndexRecommendations(): string[] {
     return [
-      'Create composite indexes for multi-column WHERE clauses',
-      'Consider partial indexes for status-based queries',
-      'Add indexes on foreign key columns',
-      'Use covering indexes for SELECT queries with specific columns',
-      'Consider BRIN indexes for time-series data',
-      'Monitor index bloat and reindex when necessary',
+      "Create composite indexes for multi-column WHERE clauses",
+      "Consider partial indexes for status-based queries",
+      "Add indexes on foreign key columns",
+      "Use covering indexes for SELECT queries with specific columns",
+      "Consider BRIN indexes for time-series data",
+      "Monitor index bloat and reindex when necessary",
     ];
   }
 }

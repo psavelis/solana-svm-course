@@ -1,25 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getConnectionToken } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
-import { DatabaseConnectionService } from '../database-connection.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getConnectionToken } from "@nestjs/typeorm";
+import { Connection } from "typeorm";
+import { DatabaseConnectionService } from "../database-connection.service";
 
-describe('DatabaseConnectionService', () => {
+describe("DatabaseConnectionService", () => {
   let service: DatabaseConnectionService;
   let mockConnection: Partial<Connection>;
 
   beforeEach(async () => {
     mockConnection = {
-      name: 'test-connection',
+      name: "test-connection",
       options: {
-        type: 'postgres',
-        host: 'localhost',
+        type: "postgres",
+        host: "localhost",
         port: 5432,
-        database: 'test_db',
+        database: "test_db",
       },
       isConnected: true,
       entityMetadatas: [
-        { name: 'Account' } as any,
-        { name: 'Transaction' } as any,
+        { name: "Account" } as any,
+        { name: "Transaction" } as any,
       ],
       createQueryRunner: jest.fn().mockReturnValue({
         query: jest.fn().mockResolvedValue([{ result: 1 }]),
@@ -62,15 +62,15 @@ describe('DatabaseConnectionService', () => {
     (service as any).startTime = new Date();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('getHealthStatus', () => {
-    it('should return healthy status with pool information', async () => {
+  describe("getHealthStatus", () => {
+    it("should return healthy status with pool information", async () => {
       const status = await service.getHealthStatus();
 
-      expect(status.status).toBe('healthy');
+      expect(status.status).toBe("healthy");
       expect(status.connectionCount).toBe(10);
       expect(status.activeConnections).toBe(5);
       expect(status.idleConnections).toBe(5);
@@ -79,36 +79,38 @@ describe('DatabaseConnectionService', () => {
       expect(status.poolConfig.max).toBe(20);
     });
 
-    it('should return unhealthy status when pool is not available', async () => {
+    it("should return unhealthy status when pool is not available", async () => {
       (mockConnection.driver as any).pool = null;
 
       const status = await service.getHealthStatus();
 
-      expect(status.status).toBe('unhealthy');
+      expect(status.status).toBe("unhealthy");
       expect(status.connectionCount).toBe(0);
     });
   });
 
-  describe('performHealthCheck', () => {
-    it('should return true when query succeeds', async () => {
+  describe("performHealthCheck", () => {
+    it("should return true when query succeeds", async () => {
       const result = await service.performHealthCheck();
       expect(result).toBe(true);
     });
 
-    it('should return false when query fails', async () => {
+    it("should return false when query fails", async () => {
       const mockQueryRunner = {
-        query: jest.fn().mockRejectedValue(new Error('Connection failed')),
+        query: jest.fn().mockRejectedValue(new Error("Connection failed")),
         release: jest.fn().mockResolvedValue(undefined),
       };
-      mockConnection.createQueryRunner = jest.fn().mockReturnValue(mockQueryRunner);
+      mockConnection.createQueryRunner = jest
+        .fn()
+        .mockReturnValue(mockQueryRunner);
 
       const result = await service.performHealthCheck();
       expect(result).toBe(false);
     });
   });
 
-  describe('getPoolStats', () => {
-    it('should return pool statistics', async () => {
+  describe("getPoolStats", () => {
+    it("should return pool statistics", async () => {
       const stats = await service.getPoolStats();
 
       expect(stats.totalConnections).toBe(10);
@@ -119,24 +121,29 @@ describe('DatabaseConnectionService', () => {
     });
   });
 
-  describe('executeQuery', () => {
-    it('should execute query and return results', async () => {
+  describe("executeQuery", () => {
+    it("should execute query and return results", async () => {
       const mockQueryRunner = {
-        query: jest.fn().mockResolvedValue([{ id: 1, name: 'test' }]),
+        query: jest.fn().mockResolvedValue([{ id: 1, name: "test" }]),
         release: jest.fn().mockResolvedValue(undefined),
       };
-      mockConnection.createQueryRunner = jest.fn().mockReturnValue(mockQueryRunner);
+      mockConnection.createQueryRunner = jest
+        .fn()
+        .mockReturnValue(mockQueryRunner);
 
-      const result = await service.executeQuery('SELECT * FROM test');
+      const result = await service.executeQuery("SELECT * FROM test");
 
-      expect(result).toEqual([{ id: 1, name: 'test' }]);
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SELECT * FROM test', undefined);
+      expect(result).toEqual([{ id: 1, name: "test" }]);
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        "SELECT * FROM test",
+        undefined,
+      );
       expect(mockQueryRunner.release).toHaveBeenCalled();
     });
   });
 
-  describe('executeTransaction', () => {
-    it('should execute transaction successfully', async () => {
+  describe("executeTransaction", () => {
+    it("should execute transaction successfully", async () => {
       const mockQueryRunner = {
         connect: jest.fn().mockResolvedValue(undefined),
         startTransaction: jest.fn().mockResolvedValue(undefined),
@@ -145,19 +152,21 @@ describe('DatabaseConnectionService', () => {
         release: jest.fn().mockResolvedValue(undefined),
         manager: {},
       };
-      mockConnection.createQueryRunner = jest.fn().mockReturnValue(mockQueryRunner);
+      mockConnection.createQueryRunner = jest
+        .fn()
+        .mockReturnValue(mockQueryRunner);
 
-      const operation = jest.fn().mockResolvedValue('success');
+      const operation = jest.fn().mockResolvedValue("success");
       const result = await service.executeTransaction(operation);
 
-      expect(result).toBe('success');
+      expect(result).toBe("success");
       expect(mockQueryRunner.connect).toHaveBeenCalled();
       expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.release).toHaveBeenCalled();
     });
 
-    it('should rollback transaction on error', async () => {
+    it("should rollback transaction on error", async () => {
       const mockQueryRunner = {
         connect: jest.fn().mockResolvedValue(undefined),
         startTransaction: jest.fn().mockResolvedValue(undefined),
@@ -166,46 +175,52 @@ describe('DatabaseConnectionService', () => {
         release: jest.fn().mockResolvedValue(undefined),
         manager: {},
       };
-      mockConnection.createQueryRunner = jest.fn().mockReturnValue(mockQueryRunner);
+      mockConnection.createQueryRunner = jest
+        .fn()
+        .mockReturnValue(mockQueryRunner);
 
-      const operation = jest.fn().mockRejectedValue(new Error('Operation failed'));
+      const operation = jest
+        .fn()
+        .mockRejectedValue(new Error("Operation failed"));
 
-      await expect(service.executeTransaction(operation)).rejects.toThrow('Operation failed');
+      await expect(service.executeTransaction(operation)).rejects.toThrow(
+        "Operation failed",
+      );
 
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.release).toHaveBeenCalled();
     });
   });
 
-  describe('getConnectionInfo', () => {
-    it('should return connection information', () => {
+  describe("getConnectionInfo", () => {
+    it("should return connection information", () => {
       const info = service.getConnectionInfo();
 
-      expect(info.name).toBe('test-connection');
-      expect(info.type).toBe('postgres');
-      expect(info.host).toBe('localhost');
+      expect(info.name).toBe("test-connection");
+      expect(info.type).toBe("postgres");
+      expect(info.host).toBe("localhost");
       expect(info.port).toBe(5432);
-      expect(info.database).toBe('test_db');
+      expect(info.database).toBe("test_db");
       expect(info.isConnected).toBe(true);
-      expect(info.entities).toEqual(['Account', 'Transaction']);
+      expect(info.entities).toEqual(["Account", "Transaction"]);
     });
   });
 
-  describe('closeIdleConnections', () => {
-    it('should close idle connections', async () => {
+  describe("closeIdleConnections", () => {
+    it("should close idle connections", async () => {
       await service.closeIdleConnections();
 
       expect((mockConnection.driver as any).pool.closeIdle).toHaveBeenCalled();
     });
   });
 
-  describe('getConnectionCount', () => {
-    it('should return connection count', () => {
+  describe("getConnectionCount", () => {
+    it("should return connection count", () => {
       const count = service.getConnectionCount();
       expect(count).toBe(10);
     });
 
-    it('should return 0 when pool is not available', () => {
+    it("should return 0 when pool is not available", () => {
       (mockConnection.driver as any).pool = null;
 
       const count = service.getConnectionCount();

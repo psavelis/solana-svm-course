@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CpiService } from '../cpi/cpi.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { CpiService } from "../cpi/cpi.service";
 
 @Injectable()
 export class DexService {
@@ -22,9 +22,9 @@ export class DexService {
     // Create CPI instruction for the swap
     const swapInstruction = await this.cpiService.createInstruction({
       programId: dexProgramId,
-      callerProgramId: 'dex-service-program', // This would be a real program ID
+      callerProgramId: "dex-service-program", // This would be a real program ID
       instructionData: {
-        method: 'swap',
+        method: "swap",
         fromMint,
         toMint,
         amount,
@@ -36,17 +36,17 @@ export class DexService {
         { pubkey: toMint, isSigner: false, isWritable: false },
       ],
       requiresPermission: true,
-      permissionLevel: 'write',
+      permissionLevel: "write",
     });
 
     // Execute the CPI
     const result = await this.cpiService.executeCpi({
       transactionId: `swap-${Date.now()}`,
-      callerProgramId: 'dex-service-program',
+      callerProgramId: "dex-service-program",
       targetProgramId: dexProgramId,
-      instructionName: 'swap',
+      instructionName: "swap",
       instructionData: {
-        method: 'swap',
+        method: "swap",
         fromMint,
         toMint,
         amount,

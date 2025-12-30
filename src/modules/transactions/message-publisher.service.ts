@@ -1,12 +1,12 @@
-import { Injectable, Inject, Logger, OnModuleDestroy } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
-import { Transaction } from '../transactions/transaction.entity';
+import { Injectable, Inject, Logger, OnModuleDestroy } from "@nestjs/common";
+import { ClientKafka } from "@nestjs/microservices";
+import { Transaction } from "../transactions/transaction.entity";
 
 export enum TransactionEventType {
-  CREATED = 'transaction.created',
-  STATUS_UPDATED = 'transaction.status_updated',
-  CONFIRMED = 'transaction.confirmed',
-  FAILED = 'transaction.failed',
+  CREATED = "transaction.created",
+  STATUS_UPDATED = "transaction.status_updated",
+  CONFIRMED = "transaction.confirmed",
+  FAILED = "transaction.failed",
 }
 
 export interface TransactionEvent {
@@ -36,10 +36,10 @@ export class MessagePublisherService implements OnModuleDestroy {
   private flushInterval?: NodeJS.Timeout;
 
   constructor(
-    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
+    @Inject("KAFKA_SERVICE") private readonly kafkaClient: ClientKafka,
   ) {
     // Start periodic flush of buffered events (skip in test environment)
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== "test") {
       this.flushInterval = setInterval(() => {
         this.flushEvents();
       }, 5000); // Flush every 5 seconds
@@ -71,8 +71,10 @@ export class MessagePublisherService implements OnModuleDestroy {
       metadata: transaction.metadata,
     };
 
-    await this.publishEvent('transactions', event, transaction.signature);
-    this.logger.log(`Published transaction created event: ${transaction.signature}`);
+    await this.publishEvent("transactions", event, transaction.signature);
+    this.logger.log(
+      `Published transaction created event: ${transaction.signature}`,
+    );
   }
 
   /**
@@ -80,7 +82,7 @@ export class MessagePublisherService implements OnModuleDestroy {
    */
   async publishTransactionStatusUpdated(
     transaction: Transaction,
-    previousStatus: string
+    previousStatus: string,
   ): Promise<void> {
     const event: TransactionEvent = {
       eventType: TransactionEventType.STATUS_UPDATED,
@@ -98,8 +100,10 @@ export class MessagePublisherService implements OnModuleDestroy {
       },
     };
 
-    await this.publishEvent('transactions', event, transaction.signature);
-    this.logger.log(`Published transaction status update: ${transaction.signature} (${previousStatus} -> ${transaction.status})`);
+    await this.publishEvent("transactions", event, transaction.signature);
+    this.logger.log(
+      `Published transaction status update: ${transaction.signature} (${previousStatus} -> ${transaction.status})`,
+    );
   }
 
   /**
@@ -123,8 +127,10 @@ export class MessagePublisherService implements OnModuleDestroy {
       },
     };
 
-    await this.publishEvent('transactions', event, transaction.signature);
-    this.logger.log(`Published transaction confirmed event: ${transaction.signature}`);
+    await this.publishEvent("transactions", event, transaction.signature);
+    this.logger.log(
+      `Published transaction confirmed event: ${transaction.signature}`,
+    );
   }
 
   /**
@@ -132,7 +138,7 @@ export class MessagePublisherService implements OnModuleDestroy {
    */
   async publishTransactionFailed(
     transaction: Transaction,
-    error?: string
+    error?: string,
   ): Promise<void> {
     const event: TransactionEvent = {
       eventType: TransactionEventType.FAILED,
@@ -150,8 +156,11 @@ export class MessagePublisherService implements OnModuleDestroy {
       },
     };
 
-    await this.publishEvent('transactions', event, transaction.signature);
-    this.logger.error(`Published transaction failed event: ${transaction.signature}`, error);
+    await this.publishEvent("transactions", event, transaction.signature);
+    this.logger.error(
+      `Published transaction failed event: ${transaction.signature}`,
+      error,
+    );
   }
 
   /**
@@ -160,15 +169,15 @@ export class MessagePublisherService implements OnModuleDestroy {
   private async publishEvent(
     topic: string,
     event: TransactionEvent,
-    key: string
+    key: string,
   ): Promise<void> {
     const message: TransactionEventMessage = {
       key,
       value: event,
       headers: {
-        'event-type': event.eventType,
-        'transaction-id': event.transactionId,
-        'timestamp': event.timestamp.toISOString(),
+        "event-type": event.eventType,
+        "transaction-id": event.transactionId,
+        timestamp: event.timestamp.toISOString(),
       },
     };
 
@@ -200,12 +209,12 @@ export class MessagePublisherService implements OnModuleDestroy {
     try {
       // Publish events in batch
       for (const event of eventsToFlush) {
-        await this.kafkaClient.emit('transactions', event).toPromise();
+        await this.kafkaClient.emit("transactions", event).toPromise();
       }
 
       this.logger.debug(`Flushed ${eventsToFlush.length} events to Kafka`);
     } catch (error) {
-      this.logger.error('Failed to flush events to Kafka', error);
+      this.logger.error("Failed to flush events to Kafka", error);
 
       // Re-queue failed events (simplified retry logic)
       // In production, you might want more sophisticated retry logic
@@ -238,7 +247,7 @@ export class MessagePublisherService implements OnModuleDestroy {
   async publishBlockchainEvent(
     eventType: string,
     data: any,
-    key?: string
+    key?: string,
   ): Promise<void> {
     const event = {
       eventType,
@@ -250,12 +259,12 @@ export class MessagePublisherService implements OnModuleDestroy {
       key: key || eventType,
       value: event,
       headers: {
-        'event-type': eventType,
-        'timestamp': event.timestamp.toISOString(),
+        "event-type": eventType,
+        timestamp: event.timestamp.toISOString(),
       },
     };
 
-    await this.kafkaClient.emit('blockchain-events', message).toPromise();
+    await this.kafkaClient.emit("blockchain-events", message).toPromise();
     this.logger.log(`Published blockchain event: ${eventType}`);
   }
 }

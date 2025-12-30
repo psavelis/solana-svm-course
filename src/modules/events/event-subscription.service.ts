@@ -1,8 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EventSubscription, SubscriptionStatus } from './event-subscription.entity';
-import { CreateEventSubscriptionDto, UpdateEventSubscriptionDto } from './dto/event-subscription.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  EventSubscription,
+  SubscriptionStatus,
+} from "./event-subscription.entity";
+import {
+  CreateEventSubscriptionDto,
+  UpdateEventSubscriptionDto,
+} from "./dto/event-subscription.dto";
 
 @Injectable()
 export class EventSubscriptionService {
@@ -16,8 +22,12 @@ export class EventSubscriptionService {
   /**
    * Create a new event subscription
    */
-  async createSubscription(dto: CreateEventSubscriptionDto): Promise<EventSubscription> {
-    this.logger.log(`Creating subscription for client ${dto.clientId}: ${dto.eventType}`);
+  async createSubscription(
+    dto: CreateEventSubscriptionDto,
+  ): Promise<EventSubscription> {
+    this.logger.log(
+      `Creating subscription for client ${dto.clientId}: ${dto.eventType}`,
+    );
 
     // Check if subscription already exists
     const existing = await this.subscriptionRepository.findOne({
@@ -45,7 +55,10 @@ export class EventSubscriptionService {
   /**
    * Update a subscription
    */
-  async updateSubscription(id: string, dto: UpdateEventSubscriptionDto): Promise<EventSubscription> {
+  async updateSubscription(
+    id: string,
+    dto: UpdateEventSubscriptionDto,
+  ): Promise<EventSubscription> {
     const updateData: Partial<EventSubscription> = {};
     if (dto.eventType) updateData.eventType = dto.eventType;
     if (dto.filters) updateData.filters = dto.filters;
@@ -71,7 +84,9 @@ export class EventSubscriptionService {
     });
 
     if (!subscription) {
-      throw new Error(`Subscription not found for client ${clientId} and event type ${eventType}`);
+      throw new Error(
+        `Subscription not found for client ${clientId} and event type ${eventType}`,
+      );
     }
 
     Object.assign(subscription, dto);
@@ -81,17 +96,21 @@ export class EventSubscriptionService {
   /**
    * Get subscriptions for a client
    */
-  async getSubscriptionsByClient(clientId: string): Promise<EventSubscription[]> {
+  async getSubscriptionsByClient(
+    clientId: string,
+  ): Promise<EventSubscription[]> {
     return await this.subscriptionRepository.find({
       where: { clientId, status: SubscriptionStatus.ACTIVE },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
   /**
    * Get active subscriptions for an event type
    */
-  async getActiveSubscriptionsByEventType(eventType: string): Promise<EventSubscription[]> {
+  async getActiveSubscriptionsByEventType(
+    eventType: string,
+  ): Promise<EventSubscription[]> {
     return await this.subscriptionRepository.find({
       where: { eventType, status: SubscriptionStatus.ACTIVE },
     });
@@ -111,7 +130,7 @@ export class EventSubscriptionService {
     const result = await this.subscriptionRepository
       .createQueryBuilder()
       .delete()
-      .where('expires_at IS NOT NULL AND expires_at < NOW()')
+      .where("expires_at IS NOT NULL AND expires_at < NOW()")
       .execute();
 
     this.logger.log(`Cleaned up ${result.affected} expired subscriptions`);
@@ -128,19 +147,23 @@ export class EventSubscriptionService {
     });
 
     const subscriptionsByType = await this.subscriptionRepository
-      .createQueryBuilder('subscription')
-      .select('subscription.subscriptionType', 'type')
-      .addSelect('COUNT(*)', 'count')
-      .where('subscription.status = :status', { status: SubscriptionStatus.ACTIVE })
-      .groupBy('subscription.subscriptionType')
+      .createQueryBuilder("subscription")
+      .select("subscription.subscriptionType", "type")
+      .addSelect("COUNT(*)", "count")
+      .where("subscription.status = :status", {
+        status: SubscriptionStatus.ACTIVE,
+      })
+      .groupBy("subscription.subscriptionType")
       .getRawMany();
 
     const subscriptionsByEventType = await this.subscriptionRepository
-      .createQueryBuilder('subscription')
-      .select('subscription.eventType', 'eventType')
-      .addSelect('COUNT(*)', 'count')
-      .where('subscription.status = :status', { status: SubscriptionStatus.ACTIVE })
-      .groupBy('subscription.eventType')
+      .createQueryBuilder("subscription")
+      .select("subscription.eventType", "eventType")
+      .addSelect("COUNT(*)", "count")
+      .where("subscription.status = :status", {
+        status: SubscriptionStatus.ACTIVE,
+      })
+      .groupBy("subscription.eventType")
       .getRawMany();
 
     return {

@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
-import { DatabaseConnectionService } from '../../database/database-connection.service';
+import { Injectable } from "@nestjs/common";
+import { HealthIndicator, HealthIndicatorResult } from "@nestjs/terminus";
+import { DatabaseConnectionService } from "../../database/database-connection.service";
 
 @Injectable()
 export class DatabaseHealthIndicator extends HealthIndicator {

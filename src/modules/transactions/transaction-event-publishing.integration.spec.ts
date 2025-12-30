@@ -1,25 +1,29 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TransactionsService } from './transactions.service';
-import { MessagePublisherService } from './message-publisher.service';
-import { Transaction, TransactionStatus, TransactionType } from './transaction.entity';
-import { ClientKafka } from '@nestjs/microservices';
-import { of } from 'rxjs';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { TransactionsService } from "./transactions.service";
+import { MessagePublisherService } from "./message-publisher.service";
+import {
+  Transaction,
+  TransactionStatus,
+  TransactionType,
+} from "./transaction.entity";
+import { ClientKafka } from "@nestjs/microservices";
+import { of } from "rxjs";
 
-describe('Transaction Event Publishing Integration', () => {
+describe("Transaction Event Publishing Integration", () => {
   let service: TransactionsService;
   let messagePublisher: MessagePublisherService;
   let transactionRepository: Repository<Transaction>;
   let kafkaClientMock: jest.Mocked<ClientKafka>;
 
   const mockTransaction: Transaction = {
-    id: 'test-id',
-    signature: 'test-signature',
+    id: "test-id",
+    signature: "test-signature",
     type: TransactionType.TRANSFER,
     status: TransactionStatus.PENDING,
-    fromAddress: '11111111111111111111111111111112',
-    toAddress: '11111111111111111111111111111113',
+    fromAddress: "11111111111111111111111111111112",
+    toAddress: "11111111111111111111111111111113",
     amount: 1000000,
     fee: 5000,
     slot: null,
@@ -51,29 +55,33 @@ describe('Transaction Event Publishing Integration', () => {
           },
         },
         {
-          provide: 'KAFKA_SERVICE',
+          provide: "KAFKA_SERVICE",
           useValue: kafkaClientMock,
         },
       ],
     }).compile();
 
     service = module.get<TransactionsService>(TransactionsService);
-    messagePublisher = module.get<MessagePublisherService>(MessagePublisherService);
-    transactionRepository = module.get<Repository<Transaction>>(getRepositoryToken(Transaction));
+    messagePublisher = module.get<MessagePublisherService>(
+      MessagePublisherService,
+    );
+    transactionRepository = module.get<Repository<Transaction>>(
+      getRepositoryToken(Transaction),
+    );
   });
 
   afterEach(async () => {
     await messagePublisher.onModuleDestroy();
   });
 
-  describe('Event Publishing Integration', () => {
-    it('should publish transaction created event when creating transaction', async () => {
+  describe("Event Publishing Integration", () => {
+    it("should publish transaction created event when creating transaction", async () => {
       const createData = {
-        signature: 'new-signature',
+        signature: "new-signature",
         type: TransactionType.TRANSFER,
         status: TransactionStatus.PENDING,
-        fromAddress: '11111111111111111111111111111112',
-        toAddress: '11111111111111111111111111111113',
+        fromAddress: "11111111111111111111111111111112",
+        toAddress: "11111111111111111111111111111113",
         amount: 500000,
       };
 
@@ -82,73 +90,80 @@ describe('Transaction Event Publishing Integration', () => {
       // Force flush to ensure events are published
       await messagePublisher.forceFlush();
 
-      expect(kafkaClientMock.emit).toHaveBeenCalledWith('transactions', expect.objectContaining({
-        key: mockTransaction.signature, // The saved transaction's signature
-        value: expect.objectContaining({
-          eventType: 'transaction.created',
-          transactionId: mockTransaction.id,
-          signature: mockTransaction.signature,
-          status: 'pending',
-          type: 'transfer',
+      expect(kafkaClientMock.emit).toHaveBeenCalledWith(
+        "transactions",
+        expect.objectContaining({
+          key: mockTransaction.signature, // The saved transaction's signature
+          value: expect.objectContaining({
+            eventType: "transaction.created",
+            transactionId: mockTransaction.id,
+            signature: mockTransaction.signature,
+            status: "pending",
+            type: "transfer",
+          }),
         }),
-      }));
+      );
     });
 
-    it('should publish status update event when transaction status changes', async () => {
+    it("should publish status update event when transaction status changes", async () => {
       // Mock finding existing transaction
-      jest.spyOn(service, 'findOne').mockResolvedValueOnce(mockTransaction);
-      jest.spyOn(service, 'findOne').mockResolvedValueOnce({
+      jest.spyOn(service, "findOne").mockResolvedValueOnce(mockTransaction);
+      jest.spyOn(service, "findOne").mockResolvedValueOnce({
         ...mockTransaction,
-        status: TransactionStatus.CONFIRMED
+        status: TransactionStatus.CONFIRMED,
       });
 
-      await service.update('test-id', { status: TransactionStatus.CONFIRMED });
+      await service.update("test-id", { status: TransactionStatus.CONFIRMED });
 
       // Force flush to ensure events are published
       await messagePublisher.forceFlush();
 
-      expect(kafkaClientMock.emit).toHaveBeenCalledWith('transactions', expect.objectContaining({
-        value: expect.objectContaining({
-          eventType: 'transaction.status_updated',
-          transactionId: 'test-id',
-          status: 'confirmed',
-          metadata: expect.objectContaining({
-            previousStatus: 'pending',
+      expect(kafkaClientMock.emit).toHaveBeenCalledWith(
+        "transactions",
+        expect.objectContaining({
+          value: expect.objectContaining({
+            eventType: "transaction.status_updated",
+            transactionId: "test-id",
+            status: "confirmed",
+            metadata: expect.objectContaining({
+              previousStatus: "pending",
+            }),
           }),
         }),
-      }));
+      );
     });
 
-    it('should not publish event when status does not change', async () => {
+    it("should not publish event when status does not change", async () => {
       const updateData = { metadata: { updated: true } };
 
-      jest.spyOn(service, 'findOne').mockResolvedValueOnce(mockTransaction);
-      jest.spyOn(service, 'findOne').mockResolvedValueOnce({
+      jest.spyOn(service, "findOne").mockResolvedValueOnce(mockTransaction);
+      jest.spyOn(service, "findOne").mockResolvedValueOnce({
         ...mockTransaction,
-        metadata: { updated: true }
+        metadata: { updated: true },
       });
 
-      await service.update('test-id', updateData);
+      await service.update("test-id", updateData);
 
       // Force flush
       await messagePublisher.forceFlush();
 
       // Should not have called emit for status update
-      const calls = kafkaClientMock.emit.mock.calls.filter((call: any) =>
-        call[1]?.value?.eventType === 'transaction.status_updated'
+      const calls = kafkaClientMock.emit.mock.calls.filter(
+        (call: any) =>
+          call[1]?.value?.eventType === "transaction.status_updated",
       );
       expect(calls).toHaveLength(0);
     });
 
-    it('should provide buffer status information', () => {
+    it("should provide buffer status information", () => {
       const status = messagePublisher.getBufferStatus();
 
-      expect(status).toHaveProperty('bufferedEvents');
-      expect(status).toHaveProperty('maxBufferSize');
-      expect(status).toHaveProperty('isBufferFull');
-      expect(typeof status.bufferedEvents).toBe('number');
-      expect(typeof status.maxBufferSize).toBe('number');
-      expect(typeof status.isBufferFull).toBe('boolean');
+      expect(status).toHaveProperty("bufferedEvents");
+      expect(status).toHaveProperty("maxBufferSize");
+      expect(status).toHaveProperty("isBufferFull");
+      expect(typeof status.bufferedEvents).toBe("number");
+      expect(typeof status.maxBufferSize).toBe("number");
+      expect(typeof status.isBufferFull).toBe("boolean");
     });
   });
 });

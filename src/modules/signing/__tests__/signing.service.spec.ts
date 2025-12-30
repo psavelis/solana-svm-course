@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { SigningService } from '../signing.service';
-import { Transaction } from '../../transactions/transaction.entity';
-import { Keypair } from '@solana/web3.js';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { SigningService } from "../signing.service";
+import { Transaction } from "../../transactions/transaction.entity";
+import { Keypair } from "@solana/web3.js";
 
-describe('SigningService', () => {
+describe("SigningService", () => {
   let service: SigningService;
   let transactionRepository: Repository<Transaction>;
 
@@ -25,28 +25,30 @@ describe('SigningService', () => {
     }).compile();
 
     service = module.get<SigningService>(SigningService);
-    transactionRepository = module.get<Repository<Transaction>>(getRepositoryToken(Transaction));
+    transactionRepository = module.get<Repository<Transaction>>(
+      getRepositoryToken(Transaction),
+    );
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('generateKeyPair', () => {
-    it('should generate a valid Ed25519 keypair', () => {
+  describe("generateKeyPair", () => {
+    it("should generate a valid Ed25519 keypair", () => {
       const result = service.generateKeyPair();
 
-      expect(result).toHaveProperty('publicKey');
-      expect(typeof result.publicKey).toBe('string');
+      expect(result).toHaveProperty("publicKey");
+      expect(typeof result.publicKey).toBe("string");
       expect(result.publicKey).toMatch(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/); // Base58 pattern
 
       // Verify it's a valid public key by trying to create PublicKey object
       expect(() => {
-        new (require('@solana/web3.js').PublicKey)(result.publicKey);
+        new (require("@solana/web3.js").PublicKey)(result.publicKey);
       }).not.toThrow();
     });
 
-    it('should generate different keypairs on multiple calls', () => {
+    it("should generate different keypairs on multiple calls", () => {
       const result1 = service.generateKeyPair();
       const result2 = service.generateKeyPair();
 
@@ -54,7 +56,7 @@ describe('SigningService', () => {
     });
   });
 
-  describe('signMessage', () => {
+  describe("signMessage", () => {
     let testKeypair: Keypair;
     let privateKeyString: string;
 
@@ -63,26 +65,26 @@ describe('SigningService', () => {
       privateKeyString = JSON.stringify(Array.from(testKeypair.secretKey));
     });
 
-    it('should sign a message successfully', () => {
+    it("should sign a message successfully", () => {
       const message = new Uint8Array([1, 2, 3, 4, 5]);
       const result = service.signMessage(privateKeyString, message);
 
-      expect(result).toHaveProperty('signature');
-      expect(result).toHaveProperty('publicKey');
-      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty("signature");
+      expect(result).toHaveProperty("publicKey");
+      expect(result).toHaveProperty("success", true);
       expect(result.signature).toMatch(/^[A-Za-z0-9+/=]+$/); // Base64 pattern
       expect(result.publicKey).toBe(testKeypair.publicKey.toString());
     });
 
-    it('should throw error for invalid private key', () => {
+    it("should throw error for invalid private key", () => {
       const message = new Uint8Array([1, 2, 3]);
       expect(() => {
-        service.signMessage('invalid-key', message);
-      }).toThrow('Failed to sign message');
+        service.signMessage("invalid-key", message);
+      }).toThrow("Failed to sign message");
     });
   });
 
-  describe('verifySignature', () => {
+  describe("verifySignature", () => {
     let testKeypair: Keypair;
     let privateKeyString: string;
     let message: Uint8Array;
@@ -96,32 +98,47 @@ describe('SigningService', () => {
       signature = signResult.signature;
     });
 
-    it('should verify a valid signature', () => {
-      const result = service.verifySignature(signature, message, testKeypair.publicKey.toString());
+    it("should verify a valid signature", () => {
+      const result = service.verifySignature(
+        signature,
+        message,
+        testKeypair.publicKey.toString(),
+      );
 
-      expect(result).toHaveProperty('isValid', true);
-      expect(result).toHaveProperty('publicKey', testKeypair.publicKey.toString());
-      expect(result.message).toBe('Signature is valid');
+      expect(result).toHaveProperty("isValid", true);
+      expect(result).toHaveProperty(
+        "publicKey",
+        testKeypair.publicKey.toString(),
+      );
+      expect(result.message).toBe("Signature is valid");
     });
 
-    it('should reject an invalid signature', () => {
-      const invalidSignature = Buffer.from('invalid').toString('base64');
-      const result = service.verifySignature(invalidSignature, message, testKeypair.publicKey.toString());
+    it("should reject an invalid signature", () => {
+      const invalidSignature = Buffer.from("invalid").toString("base64");
+      const result = service.verifySignature(
+        invalidSignature,
+        message,
+        testKeypair.publicKey.toString(),
+      );
 
-      expect(result).toHaveProperty('isValid', false);
-      expect(result.message).toContain('Verification error');
+      expect(result).toHaveProperty("isValid", false);
+      expect(result.message).toContain("Verification error");
     });
 
-    it('should handle invalid public key', () => {
-      const result = service.verifySignature(signature, message, 'invalid-public-key');
+    it("should handle invalid public key", () => {
+      const result = service.verifySignature(
+        signature,
+        message,
+        "invalid-public-key",
+      );
 
-      expect(result).toHaveProperty('isValid', false);
-      expect(result.message).toContain('Verification error');
+      expect(result).toHaveProperty("isValid", false);
+      expect(result.message).toContain("Verification error");
     });
   });
 
-  describe('getPublicKeyFromPrivateKey', () => {
-    it('should extract public key from private key', () => {
+  describe("getPublicKeyFromPrivateKey", () => {
+    it("should extract public key from private key", () => {
       const keypair = Keypair.generate();
       const privateKeyString = JSON.stringify(Array.from(keypair.secretKey));
 
@@ -130,14 +147,14 @@ describe('SigningService', () => {
       expect(publicKey).toBe(keypair.publicKey.toString());
     });
 
-    it('should throw error for invalid private key', () => {
+    it("should throw error for invalid private key", () => {
       expect(() => {
-        service.getPublicKeyFromPrivateKey('invalid-key');
-      }).toThrow('Invalid private key');
+        service.getPublicKeyFromPrivateKey("invalid-key");
+      }).toThrow("Invalid private key");
     });
   });
 
-  describe('createAndSignTransfer', () => {
+  describe("createAndSignTransfer", () => {
     let testKeypair: Keypair;
     let privateKeyString: string;
     let recipientPublicKey: string;
@@ -151,7 +168,7 @@ describe('SigningService', () => {
       mockTransactionRepository.save.mockResolvedValue({});
     });
 
-    it('should create and sign a transfer transaction', async () => {
+    it("should create and sign a transfer transaction", async () => {
       // Note: This test would require mocking the Solana connection
       // For now, we'll test the error handling
       const amount = 1000000; // 0.001 SOL
@@ -159,8 +176,12 @@ describe('SigningService', () => {
       // This will fail because we're not connected to a real Solana network
       // but it tests the service logic up to the network call
       await expect(
-        service.createAndSignTransfer(privateKeyString, recipientPublicKey, amount)
-      ).rejects.toThrow('Failed to sign and send transaction');
+        service.createAndSignTransfer(
+          privateKeyString,
+          recipientPublicKey,
+          amount,
+        ),
+      ).rejects.toThrow("Failed to sign and send transaction");
     });
   });
 });

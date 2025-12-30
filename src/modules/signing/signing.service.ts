@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from "@nestjs/common";
 import {
   Keypair,
   PublicKey,
@@ -7,11 +7,15 @@ import {
   sendAndConfirmTransaction,
   Connection,
   Signer,
-} from '@solana/web3.js';
-import { sign } from 'tweetnacl';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Transaction, TransactionStatus, TransactionType } from '../transactions/transaction.entity';
+} from "@solana/web3.js";
+import { sign } from "tweetnacl";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  Transaction,
+  TransactionStatus,
+  TransactionType,
+} from "../transactions/transaction.entity";
 
 export interface KeyPairResponse {
   publicKey: string;
@@ -42,7 +46,9 @@ export class SigningService {
     @InjectRepository(Transaction)
     private transactionsRepository: Repository<Transaction>,
   ) {
-    this.connection = new Connection(process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com');
+    this.connection = new Connection(
+      process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com",
+    );
   }
 
   /**
@@ -57,7 +63,9 @@ export class SigningService {
         publicKey: keypair.publicKey.toString(),
       };
     } catch (error) {
-      throw new BadRequestException(`Failed to generate keypair: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to generate keypair: ${error.message}`,
+      );
     }
   }
 
@@ -75,7 +83,7 @@ export class SigningService {
       const signature = sign.detached(message, keypair.secretKey);
 
       return {
-        signature: Buffer.from(signature).toString('base64'),
+        signature: Buffer.from(signature).toString("base64"),
         publicKey: keypair.publicKey.toString(),
         success: true,
       };
@@ -94,14 +102,16 @@ export class SigningService {
   ): VerificationResult {
     try {
       const pubKey = new PublicKey(publicKey);
-      const sigBytes = Buffer.from(signature, 'base64');
+      const sigBytes = Buffer.from(signature, "base64");
 
       const isValid = sign.detached.verify(message, sigBytes, pubKey.toBytes());
 
       return {
         isValid,
         publicKey,
-        message: isValid ? 'Signature is valid' : 'Signature verification failed',
+        message: isValid
+          ? "Signature is valid"
+          : "Signature verification failed",
       };
     } catch (error) {
       return {
@@ -149,7 +159,9 @@ export class SigningService {
         success: true,
       };
     } catch (error) {
-      throw new BadRequestException(`Failed to sign and send transaction: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to sign and send transaction: ${error.message}`,
+      );
     }
   }
 
@@ -175,7 +187,9 @@ export class SigningService {
 
       return this.signAndSendTransaction(privateKey, transaction);
     } catch (error) {
-      throw new BadRequestException(`Failed to create and sign transfer: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to create and sign transfer: ${error.message}`,
+      );
     }
   }
 

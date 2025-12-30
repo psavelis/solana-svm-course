@@ -1,6 +1,6 @@
 # Database Connection Pooling
 
-This module implements comprehensive database connection pooling for PostgreSQL with monitoring, health checks, and performance optimization. It provides production-ready connection management with detailed metrics and administrative controls.
+This module implements in-depth database connection pooling for PostgreSQL with monitoring, health checks, and performance optimization. It provides stable and reliable connection management with detailed metrics and administrative controls.
 
 ## Features
 

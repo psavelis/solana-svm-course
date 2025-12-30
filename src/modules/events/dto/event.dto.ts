@@ -1,5 +1,12 @@
-import { IsString, IsOptional, IsEnum, IsObject, IsDateString, IsBoolean } from 'class-validator';
-import { EventType } from '../event.entity';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsDateString,
+  IsBoolean,
+} from "class-validator";
+import { EventType } from "../event.entity";
 
 export class CreateEventDto {
   @IsEnum(EventType)

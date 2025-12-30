@@ -1,8 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
-@Entity('accounts')
+@Entity("accounts")
 export class Account {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -11,7 +17,7 @@ export class Account {
   @Column({ nullable: true })
   owner: string;
 
-  @Column({ type: 'bigint', default: 0 })
+  @Column({ type: "bigint", default: 0 })
   balance: number;
 
   @Column({ default: false })
@@ -20,7 +26,7 @@ export class Account {
   @Column({ nullable: true })
   programId: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   metadata: any;
 
   @CreateDateColumn()

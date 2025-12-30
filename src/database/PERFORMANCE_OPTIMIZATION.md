@@ -1,6 +1,6 @@
 # Database Performance Optimization
 
-This module provides comprehensive database performance monitoring, analysis, and optimization tools for PostgreSQL. It includes advanced indexing strategies, performance metrics, and optimization recommendations.
+This module provides in-depth database performance monitoring, analysis, and optimization tools for PostgreSQL. It includes advanced indexing strategies, performance metrics, and optimization recommendations.
 
 ## Features
 

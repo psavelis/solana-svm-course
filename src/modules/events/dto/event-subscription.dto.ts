@@ -1,5 +1,11 @@
-import { IsString, IsOptional, IsEnum, IsObject, IsDateString } from 'class-validator';
-import { SubscriptionType } from '../event-subscription.entity';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsDateString,
+} from "class-validator";
+import { SubscriptionType } from "../event-subscription.entity";
 
 export class CreateEventSubscriptionDto {
   @IsString()

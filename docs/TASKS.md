@@ -402,7 +402,7 @@ Each task includes:
 | Task | ID | SP | Complexity | Level | Status |
 |------|----|----|------------|-------|--------|
 | Create basic test structure | QA-1 | 3 | Low | Beginner | ✅ |
-| Implement comprehensive unit tests (>80% coverage) | QA-2 | 13 | High | Intermediate | ⏳ |
+| Implement in-depth unit tests (>80% coverage) | QA-2 | 13 | High | Intermediate | ⏳ |
 | Add mock services for blockchain interactions | QA-3 | 8 | High | Advanced | ⏳ |
 | Create test utilities and fixtures | QA-4 | 5 | Medium | Intermediate | ⏳ |
 
@@ -453,7 +453,7 @@ Each task includes:
 ### High Priority (P0) - Core Functionality
 - Complete basic CRUD operations for accounts, tokens, transactions
 - Implement transaction signing and submission
-- Add comprehensive error handling
+- Add in-depth error handling
 - Complete unit and integration testing
 
 ### Medium Priority (P1) - Enhanced Features

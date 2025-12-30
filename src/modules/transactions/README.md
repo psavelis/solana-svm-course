@@ -9,7 +9,7 @@ The transaction event publishing system consists of:
 - **MessagePublisherService**: Handles event publishing with buffering and batching
 - **TransactionEventConsumer**: Processes published events asynchronously
 - **Event Types**: Structured event schemas for different transaction states
-- **Integration**: Seamless integration with transaction CRUD operations
+- **Integration**: Straightforward integration with transaction CRUD operations
 
 ## Architecture
 
@@ -257,7 +257,7 @@ All messages include standard headers:
 ### Consumer Errors
 - Processing failures trigger dead letter queue
 - Offset commits are skipped for failed messages
-- Comprehensive error logging for debugging
+- In-depth error logging for debugging
 
 ### Dead Letter Queue
 Failed messages are sent to DLQ with:
@@ -315,7 +315,7 @@ Failed messages are sent to DLQ with:
 ### Audit Trail
 - All events include timestamps and transaction IDs
 - Dead letter queue provides failure audit trail
-- Comprehensive logging for security events
+- In-depth logging for security events
 
 ## Future Enhancements
 

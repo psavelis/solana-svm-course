@@ -1,6 +1,17 @@
-import { IsString, IsEnum, IsArray, IsObject, IsOptional, IsNumber, Min, Max, ArrayMinSize, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ThresholdScheme } from '../mpc-wallet.entity';
+import {
+  IsString,
+  IsEnum,
+  IsArray,
+  IsObject,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  ArrayMinSize,
+  ValidateNested,
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ThresholdScheme } from "../mpc-wallet.entity";
 
 export class ParticipantDto {
   @IsString()

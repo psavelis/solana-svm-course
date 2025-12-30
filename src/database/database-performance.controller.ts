@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body, Logger } from '@nestjs/common';
-import { DatabasePerformanceService, DatabasePerformanceReport } from './database-performance.service';
+import { Controller, Get, Post, Body, Logger } from "@nestjs/common";
+import {
+  DatabasePerformanceService,
+  DatabasePerformanceReport,
+} from "./database-performance.service";
 
-@Controller('database/performance')
+@Controller("database/performance")
 export class DatabasePerformanceController {
   private readonly logger = new Logger(DatabasePerformanceController.name);
 
@@ -10,22 +13,23 @@ export class DatabasePerformanceController {
   ) {}
 
   /**
-   * Get comprehensive database performance report
+   * Get in-depth database performance report
    */
-  @Get('report')
+  @Get("report")
   async getPerformanceReport(): Promise<DatabasePerformanceReport> {
-    this.logger.debug('Performance report requested');
+    this.logger.debug("Performance report requested");
     return this.performanceService.getPerformanceReport();
   }
 
   /**
    * Get database configuration recommendations
    */
-  @Get('config/recommendations')
+  @Get("config/recommendations")
   getConfigurationRecommendations() {
-    this.logger.debug('Configuration recommendations requested');
+    this.logger.debug("Configuration recommendations requested");
     return {
-      recommendations: this.performanceService.getConfigurationRecommendations(),
+      recommendations:
+        this.performanceService.getConfigurationRecommendations(),
       timestamp: new Date().toISOString(),
     };
   }
@@ -33,9 +37,9 @@ export class DatabasePerformanceController {
   /**
    * Get index creation recommendations
    */
-  @Get('index/recommendations')
+  @Get("index/recommendations")
   getIndexRecommendations() {
-    this.logger.debug('Index recommendations requested');
+    this.logger.debug("Index recommendations requested");
     return {
       recommendations: this.performanceService.getIndexRecommendations(),
       timestamp: new Date().toISOString(),
@@ -45,10 +49,13 @@ export class DatabasePerformanceController {
   /**
    * Analyze a specific query's performance
    */
-  @Post('query/analyze')
+  @Post("query/analyze")
   async analyzeQuery(@Body() body: { query: string; params?: any[] }) {
-    this.logger.debug('Query analysis requested');
-    const result = await this.performanceService.analyzeQuery(body.query, body.params);
+    this.logger.debug("Query analysis requested");
+    const result = await this.performanceService.analyzeQuery(
+      body.query,
+      body.params,
+    );
     return {
       analysis: result,
       timestamp: new Date().toISOString(),

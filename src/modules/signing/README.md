@@ -95,7 +95,7 @@ Content-Type: application/json
 
 ## Testing
 
-The service includes comprehensive unit tests covering:
+The service includes in-depth unit tests covering:
 - Keypair generation
 - Message signing and verification
 - Error handling for invalid inputs

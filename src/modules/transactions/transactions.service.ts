@@ -1,9 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Transaction, TransactionStatus, TransactionType } from './transaction.entity';
-import { Connection, PublicKey, SystemProgram, Transaction as SolanaTransaction, sendAndConfirmTransaction, Keypair } from '@solana/web3.js';
-import { MessagePublisherService } from './message-publisher.service';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  Transaction,
+  TransactionStatus,
+  TransactionType,
+} from "./transaction.entity";
+import {
+  Connection,
+  PublicKey,
+  SystemProgram,
+  Transaction as SolanaTransaction,
+  sendAndConfirmTransaction,
+  Keypair,
+} from "@solana/web3.js";
+import { MessagePublisherService } from "./message-publisher.service";
 
 @Injectable()
 /**
@@ -18,12 +29,15 @@ export class TransactionsService {
     private transactionsRepository: Repository<Transaction>,
     private messagePublisher: MessagePublisherService,
   ) {
-    this.connection = new Connection(process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com');
+    this.connection = new Connection(
+      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+    );
   }
 
   async create(transactionData: Partial<Transaction>): Promise<Transaction> {
     const transaction = this.transactionsRepository.create(transactionData);
-    const savedTransaction = await this.transactionsRepository.save(transaction);
+    const savedTransaction =
+      await this.transactionsRepository.save(transaction);
 
     // Publish transaction created event
     await this.messagePublisher.publishTransactionCreated(savedTransaction);
@@ -32,7 +46,7 @@ export class TransactionsService {
   }
 
   async findAll(): Promise<Transaction[]> {
-    return this.transactionsRepository.find({ order: { createdAt: 'DESC' } });
+    return this.transactionsRepository.find({ order: { createdAt: "DESC" } });
   }
 
   async findOne(id: string): Promise<Transaction> {
@@ -43,7 +57,10 @@ export class TransactionsService {
     return this.transactionsRepository.findOne({ where: { signature } });
   }
 
-  async update(id: string, updateData: Partial<Transaction>): Promise<Transaction> {
+  async update(
+    id: string,
+    updateData: Partial<Transaction>,
+  ): Promise<Transaction> {
     const existingTransaction = await this.findOne(id);
     const previousStatus = existingTransaction.status;
 
@@ -52,7 +69,10 @@ export class TransactionsService {
 
     // Publish status update event if status changed
     if (updateData.status && updateData.status !== previousStatus) {
-      await this.messagePublisher.publishTransactionStatusUpdated(updatedTransaction, previousStatus);
+      await this.messagePublisher.publishTransactionStatusUpdated(
+        updatedTransaction,
+        previousStatus,
+      );
     }
 
     return updatedTransaction;
@@ -66,20 +86,29 @@ export class TransactionsService {
     try {
       const transaction = await this.connection.getTransaction(signature);
       if (!transaction) {
-        throw new Error('Transaction not found');
+        throw new Error("Transaction not found");
       }
 
       return {
         signature,
         slot: transaction.slot,
-        blockTime: transaction.blockTime ? new Date(transaction.blockTime * 1000) : null,
+        blockTime: transaction.blockTime
+          ? new Date(transaction.blockTime * 1000)
+          : null,
         fee: transaction.meta?.fee,
-        status: transaction.meta?.err ? 'failed' : 'confirmed',
-        instructions: transaction.transaction.message.instructions.map((inst, index) => ({
-          programId: transaction.transaction.message.accountKeys[inst.programIdIndex].toString(),
-          accounts: inst.accounts.map(accIndex => transaction.transaction.message.accountKeys[accIndex].toString()),
-          data: inst.data.toString(),
-        })),
+        status: transaction.meta?.err ? "failed" : "confirmed",
+        instructions: transaction.transaction.message.instructions.map(
+          (inst, index) => ({
+            programId:
+              transaction.transaction.message.accountKeys[
+                inst.programIdIndex
+              ].toString(),
+            accounts: inst.accounts.map((accIndex) =>
+              transaction.transaction.message.accountKeys[accIndex].toString(),
+            ),
+            data: inst.data.toString(),
+          }),
+        ),
         logs: transaction.meta?.logMessages || [],
       };
     } catch (error) {
@@ -87,10 +116,16 @@ export class TransactionsService {
     }
   }
 
-  async sendTransfer(fromPrivateKey: string, toAddress: string, amount: number): Promise<string> {
+  async sendTransfer(
+    fromPrivateKey: string,
+    toAddress: string,
+    amount: number,
+  ): Promise<string> {
     let fromKeypair: Keypair;
     try {
-      fromKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fromPrivateKey)));
+      fromKeypair = Keypair.fromSecretKey(
+        new Uint8Array(JSON.parse(fromPrivateKey)),
+      );
       const toPublicKey = new PublicKey(toAddress);
 
       const transaction = new SolanaTransaction().add(
@@ -101,7 +136,11 @@ export class TransactionsService {
         }),
       );
 
-      const signature = await sendAndConfirmTransaction(this.connection, transaction, [fromKeypair]);
+      const signature = await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [fromKeypair],
+      );
 
       // Save to database
       const savedTransaction = await this.create({
@@ -120,17 +159,20 @@ export class TransactionsService {
     } catch (error) {
       // Create failed transaction record
       const failedTransaction = await this.create({
-        signature: 'failed-' + Date.now(),
+        signature: "failed-" + Date.now(),
         type: TransactionType.TRANSFER,
         status: TransactionStatus.FAILED,
-        fromAddress: fromKeypair ? fromKeypair.publicKey.toString() : 'unknown',
+        fromAddress: fromKeypair ? fromKeypair.publicKey.toString() : "unknown",
         toAddress,
         amount,
         metadata: { error: error.message },
       });
 
       // Publish failure event
-      await this.messagePublisher.publishTransactionFailed(failedTransaction, error.message);
+      await this.messagePublisher.publishTransactionFailed(
+        failedTransaction,
+        error.message,
+      );
 
       throw new Error(`Failed to send transfer: ${error.message}`);
     }
@@ -138,12 +180,13 @@ export class TransactionsService {
 
   async getRecentTransactions(limit: number = 10) {
     try {
-      const confirmedSignatures = await this.connection.getConfirmedSignaturesForAddress2(
-        new PublicKey('11111111111111111111111111111112'), // System Program
-        { limit },
-      );
+      const confirmedSignatures =
+        await this.connection.getConfirmedSignaturesForAddress2(
+          new PublicKey("11111111111111111111111111111112"), // System Program
+          { limit },
+        );
 
-      return confirmedSignatures.map(sig => ({
+      return confirmedSignatures.map((sig) => ({
         signature: sig.signature,
         slot: sig.slot,
         blockTime: sig.blockTime ? new Date(sig.blockTime * 1000) : null,
