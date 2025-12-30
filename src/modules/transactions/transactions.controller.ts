@@ -1,12 +1,20 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
+import { MessagePublisherService } from './message-publisher.service';
 import { Transaction } from './transaction.entity';
 
 @ApiTags('transactions')
 @Controller('transactions')
+/**
+ * Controller for managing Solana transactions.
+ * @see docs/diagrams/02-transactions-instructions.md
+ */
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly messagePublisher: MessagePublisherService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new transaction record' })
@@ -80,5 +88,53 @@ export class TransactionsController {
   @ApiResponse({ status: 200, description: 'Fee estimate' })
   getFeeEstimate() {
     return this.transactionsService.getFeeEstimate();
+  }
+
+  @Post('events/test')
+  @ApiOperation({ summary: 'Create a test transaction to demonstrate event publishing' })
+  @ApiResponse({ status: 201, description: 'Test transaction created and event published' })
+  async createTestTransaction() {
+    const testTransaction = {
+      signature: `test-${Date.now()}`,
+      type: 'transfer' as any,
+      status: 'pending' as any,
+      fromAddress: '11111111111111111111111111111112',
+      toAddress: '11111111111111111111111111111113',
+      amount: 1000000, // 0.001 SOL
+      metadata: { test: true, createdAt: new Date() },
+    };
+
+    return this.transactionsService.create(testTransaction);
+  }
+
+  @Post(':id/events/status-update')
+  @ApiOperation({ summary: 'Update transaction status to demonstrate status update events' })
+  @ApiResponse({ status: 200, description: 'Transaction status updated and event published' })
+  async updateTransactionStatus(
+    @Param('id') id: string,
+    @Body() statusUpdate: { status: string; metadata?: any }
+  ) {
+    return this.transactionsService.update(id, {
+      status: statusUpdate.status as any,
+      metadata: statusUpdate.metadata,
+    });
+  }
+
+  @Get('events/publisher/status')
+  @ApiOperation({ summary: 'Get message publisher status' })
+  @ApiResponse({ status: 200, description: 'Message publisher status' })
+  getPublisherStatus() {
+    return {
+      bufferStatus: this.messagePublisher.getBufferStatus(),
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post('events/publisher/flush')
+  @ApiOperation({ summary: 'Force flush buffered events' })
+  @ApiResponse({ status: 200, description: 'Events flushed successfully' })
+  async forceFlushEvents() {
+    await this.messagePublisher.forceFlush();
+    return { message: 'Events flushed successfully' };
   }
 }

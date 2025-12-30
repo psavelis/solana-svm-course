@@ -5,6 +5,10 @@ import { Account } from './account.entity';
 
 @ApiTags('accounts')
 @Controller('accounts')
+/**
+ * Controller for managing Solana accounts.
+ * @see docs/diagrams/01-accounts-programs.md
+ */
 export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
 

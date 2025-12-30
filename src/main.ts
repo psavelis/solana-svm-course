@@ -19,11 +19,32 @@ async function bootstrap() {
   // Setup Swagger
   const config = new DocumentBuilder()
     .setTitle('Solana SVM Study API')
-    .setDescription('API for managing Solana and SVM integrations')
+    .setDescription('API for managing Solana and SVM integrations with secure authentication')
     .setVersion('1.0')
     .addTag('solana')
     .addTag('svm')
     .addTag('blockchain')
+    .addTag('Authentication')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'X-API-Key',
+        in: 'header',
+        description: 'Enter API key',
+      },
+      'api-key',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

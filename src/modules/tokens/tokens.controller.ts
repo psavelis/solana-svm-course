@@ -5,6 +5,10 @@ import { Token } from './token.entity';
 
 @ApiTags('tokens')
 @Controller('tokens')
+/**
+ * Controller for managing SPL tokens.
+ * @see docs/diagrams/03-token-standards.md
+ */
 export class TokensController {
   constructor(private readonly tokensService: TokensService) {}
 
