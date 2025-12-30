@@ -13,7 +13,9 @@ This repository implements a NestJS-based API service that demonstrates Solana i
 
 ## Study Materials
 
-📚 **[Study Guide](docs/STUDY.md)** - Breakdown of Solana concepts with EVM comparisons
+📚 **[Complete Course Curriculum](docs/COURSE.md)** - Comprehensive 16-week learning path
+
+📖 **[Study Guide](docs/STUDY.md)** - Breakdown of Solana concepts with EVM comparisons
 
 📋 **[Master Iteration Plan](docs/MASTER-ITERATION.md)** - Project objectives, design patterns, and development roadmap
 
@@ -33,9 +35,27 @@ This repository implements a NestJS-based API service that demonstrates Solana i
 - Backend: NestJS (Node.js framework)
 - Database: PostgreSQL
 - Message Queue: Apache Kafka
-- Blockchain: Solana Web3.js, SVM integrations
+- Caching: Redis
+- Blockchain: Solana Web3.js, SVM integrations, Local Test Validator
 - Containerization: Docker & Docker Compose
+- Orchestration: Kubernetes
+- Monitoring: Prometheus & Grafana
 - Testing: Jest with code coverage reporting
+
+## Infrastructure
+
+🏗️ **[Infrastructure Guide](infra/README.md)** - Kubernetes manifests, monitoring setup, and deployment instructions
+
+### Local Development
+- Docker Compose for containerized services
+- Hot reload development server
+- Integrated health checks
+
+### Production Deployment
+- Kubernetes manifests for cloud-native deployment
+- Persistent storage for databases
+- Service mesh configuration
+- Monitoring and observability stack
 
 ## Quick Start
 
@@ -57,12 +77,17 @@ cd solana-svm-study
 npm install
 ```
 
-3. Start the services:
+3. Start the services (including local Solana validator):
 ```bash
 docker-compose up -d
 ```
 
-4. Run the application:
+4. Wait for Solana validator to initialize (may take 1-2 minutes):
+```bash
+docker-compose logs solana-validator
+```
+
+5. Run the application:
 ```bash
 npm run start:dev
 ```
@@ -73,13 +98,51 @@ Create a `.env` file with the following variables:
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/solana_study
 KAFKA_BROKERS=localhost:9092
-SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+SOLANA_RPC_URL=http://localhost:8899
+SOLANA_WS_URL=ws://localhost:8900
+SOLANA_FAUCET_URL=http://localhost:9900
+SOLANA_NETWORK=local
 SOLANA_PRIVATE_KEY=your_private_key_here
+REDIS_URL=redis://localhost:6379
 ```
 
 ## API Documentation
 
 Once running, access the API documentation at `http://localhost:3000/api`
+
+### Health Checks
+- `GET /health` - Comprehensive health check for all services (database, Kafka, Redis)
+
+### Database APIs
+
+#### Migration Management
+- `GET /migrations` - List all migrations with execution status
+- `GET /migrations/stats` - Migration statistics and summary
+- `POST /migrations/run` - Execute pending migrations
+- `POST /migrations/rollback` - Rollback last migration
+- `POST /migrations/create` - Generate new migration files
+
+#### Connection Pooling
+- `GET /database/health` - Comprehensive database health status
+- `GET /database/pool/stats` - Connection pool statistics and utilization
+- `GET /database/info` - Database connection information
+- `GET /database/health/check` - Manual health check
+- `GET /database/connections/count` - Current connection count
+- `POST /database/pool/close-idle` - Close idle connections
+
+#### Database Performance
+- `GET /database/performance/report` - Comprehensive performance analysis
+- `GET /database/performance/config/recommendations` - PostgreSQL configuration guidance
+- `GET /database/performance/index/recommendations` - Index optimization suggestions
+- `POST /database/performance/query/analyze` - Individual query performance analysis
+
+#### Transaction Event Publishing
+- `POST /transactions/events/test` - Create test transaction to demonstrate event publishing
+- `POST /transactions/:id/events/status-update` - Update transaction status and publish event
+- `GET /transactions/events/publisher/status` - Get message publisher buffer status
+- `POST /transactions/events/publisher/flush` - Force flush buffered events
+
+For detailed information, see [Database Migration Documentation](src/database/README.md), [Connection Pooling Documentation](src/database/CONNECTION_POOLING.md), [Performance Optimization Documentation](src/database/PERFORMANCE_OPTIMIZATION.md), and [Transaction Event Publishing Documentation](src/modules/transactions/README.md).
 
 ## Key Features
 
@@ -91,10 +154,61 @@ Once running, access the API documentation at `http://localhost:3000/api`
 - Event monitoring
 
 ### Advanced Capabilities
-- Multi-party computation (MPC) for secure signing
+- **Multi-Party Computation (MPC)**: Threshold cryptography for secure distributed signing
+  - 2-of-3, 3-of-5, and 4-of-7 threshold schemes
+  - Distributed key generation and share management
+  - Secure transaction signing across multiple participants
+  - Key share recovery and revocation mechanisms
 - Account abstraction patterns
-- Fee optimization
+- **Fee Optimization**: Advanced fee strategies with dynamic adjustment
+  - Conservative, balanced, aggressive, predictive, and adaptive strategies
+  - Real-time network congestion analysis
+  - Historical fee pattern analysis
+  - User preference-based optimization
 - Cross-program invocations
+
+### Database Management
+- **Schema Migrations**: Version-controlled database schema changes
+- **Migration Tracking**: Automatic tracking of executed migrations
+- **Rollback Support**: Safe rollback of schema changes
+- **Migration API**: REST endpoints for migration management
+- **CLI Tools**: TypeORM CLI integration for development workflow
+- **Connection Pooling**: Optimized PostgreSQL connection management
+- **Health Monitoring**: Real-time database health checks and metrics
+- **Pool Statistics**: Connection pool utilization and performance tracking
+- **Performance Optimization**: Advanced indexing and query optimization
+- **Index Monitoring**: Index usage statistics and optimization recommendations
+
+## Database Migrations
+
+The project includes a comprehensive database migration system for managing PostgreSQL schema changes:
+
+### Migration Commands
+```bash
+# Generate migration from entity changes
+npm run migration:generate -- -n AddUserTable
+
+# Create empty migration file
+npm run migration:create -- -n AddUserTable
+
+# Run pending migrations
+npm run migration:run
+
+# Revert last migration
+npm run migration:revert
+
+# Show migration status
+npm run migration:show
+```
+
+### Migration API
+- `GET /migrations` - List all migrations
+- `GET /migrations/stats` - Get migration statistics
+- `POST /migrations/run` - Execute pending migrations
+- `POST /migrations/rollback` - Rollback last migration
+- `POST /migrations/create` - Create new migration file
+
+For detailed information, see [Database Migration Documentation](src/database/README.md).
 
 ## Development
 
@@ -132,6 +246,13 @@ docker-compose logs -f app
 
 ```
 src/
+├── database/          # Database migration system
+│   ├── migrations/    # Migration files
+│   ├── migration.service.ts
+│   ├── migration.controller.ts
+│   ├── database.module.ts
+│   ├── data-source.ts
+│   └── README.md      # Migration documentation
 ├── modules/           # Feature modules
 │   ├── accounts/      # Account management
 │   ├── tokens/        # SPL token operations

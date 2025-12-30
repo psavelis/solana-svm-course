@@ -42,12 +42,48 @@ services:
     networks:
       - solana-study
 
+  redis:
+    image: redis:7-alpine
+    container_name: solana-study-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - solana-study
+
+  solana-validator:
+    image: solanalabs/solana:v1.18.4
+    container_name: solana-study-validator
+    ports:
+      - "8899:8899"   # RPC
+      - "8900:8900"   # WebSocket
+      - "9900:9900"   # Faucet
+      - "8001:8001"   # Metrics
+    command: ["solana-test-validator", "--rpc-port", "8899", "--faucet-port", "9900", "--log", "--accounts-db-cache-size-mb", "1024", "--faucet-sol", "1000"]
+    volumes:
+      - solana_ledger:/tmp/solana-ledger
+    networks:
+      - solana-study
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8899/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   app:
     build: .
     container_name: solana-study-app
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      solana-validator:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
@@ -58,7 +94,12 @@ services:
       DB_PASSWORD: password
       DB_DATABASE: solana_study
       KAFKA_BROKERS: kafka:29092
-      SOLANA_RPC_URL: https://api.mainnet-beta.solana.com
+      SOLANA_RPC_URL: http://solana-validator:8899
+      SOLANA_WS_URL: ws://solana-validator:8900
+      SOLANA_FAUCET_URL: http://solana-validator:9900
+      SOLANA_NETWORK: local
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     volumes:
       - .:/app
       - /app/node_modules
@@ -68,6 +109,8 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
+  solana_ledger:
 
 networks:
   solana-study:

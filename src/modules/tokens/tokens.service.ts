@@ -6,6 +6,10 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 
 @Injectable()
+/**
+ * Service for managing SPL tokens.
+ * @see docs/diagrams/03-token-standards.md
+ */
 export class TokensService {
   private connection: Connection;
 

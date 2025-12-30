@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solana-validator
+  namespace: solana-study
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: solana-validator
+  template:
+    metadata:
+      labels:
+        app: solana-validator
+    spec:
+      containers:
+      - name: solana-validator
+        image: solanalabs/solana:v1.18.4  # Use latest stable version
+        ports:
+        - containerPort: 8899  # RPC
+        - containerPort: 8900  # WebSocket
+        - containerPort: 8001  # Metrics
+        - containerPort: 9900  # TVU
+        command:
+        - solana-test-validator
+        args:
+        - --rpc-port
+        - "8899"
+        - --faucet-port
+        - "9900"
+        - --log
+        - --
+        - --log-level
+        - "info"
+        - --accounts-db-cache-size-mb
+        - "1024"
+        - --faucet-sol
+        - "1000"
+        volumeMounts:
+        - name: solana-ledger
+          mountPath: /tmp/solana-ledger
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8899
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8899
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+      volumes:
+      - name: solana-ledger
+        persistentVolumeClaim:
+          claimName: solana-ledger-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: solana-validator-service
+  namespace: solana-study
+spec:
+  selector:
+    app: solana-validator
+  ports:
+  - name: rpc
+    port: 8899
+    targetPort: 8899
+  - name: websocket
+    port: 8900
+    targetPort: 8900
+  - name: metrics
+    port: 8001
+    targetPort: 8001
+  - name: faucet
+    port: 9900
+    targetPort: 9900

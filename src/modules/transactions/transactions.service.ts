@@ -3,23 +3,32 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction, TransactionStatus, TransactionType } from './transaction.entity';
 import { Connection, PublicKey, SystemProgram, Transaction as SolanaTransaction, sendAndConfirmTransaction, Keypair } from '@solana/web3.js';
-import { ClientKafka } from '@nestjs/microservices';
+import { MessagePublisherService } from './message-publisher.service';
 
 @Injectable()
+/**
+ * Service for managing Solana transactions.
+ * @see docs/diagrams/02-transactions-instructions.md
+ */
 export class TransactionsService {
   private connection: Connection;
 
   constructor(
     @InjectRepository(Transaction)
     private transactionsRepository: Repository<Transaction>,
-    // private kafkaClient: ClientKafka,
+    private messagePublisher: MessagePublisherService,
   ) {
     this.connection = new Connection(process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com');
   }
 
   async create(transactionData: Partial<Transaction>): Promise<Transaction> {
     const transaction = this.transactionsRepository.create(transactionData);
-    return this.transactionsRepository.save(transaction);
+    const savedTransaction = await this.transactionsRepository.save(transaction);
+
+    // Publish transaction created event
+    await this.messagePublisher.publishTransactionCreated(savedTransaction);
+
+    return savedTransaction;
   }
 
   async findAll(): Promise<Transaction[]> {
@@ -35,8 +44,18 @@ export class TransactionsService {
   }
 
   async update(id: string, updateData: Partial<Transaction>): Promise<Transaction> {
+    const existingTransaction = await this.findOne(id);
+    const previousStatus = existingTransaction.status;
+
     await this.transactionsRepository.update(id, updateData);
-    return this.findOne(id);
+    const updatedTransaction = await this.findOne(id);
+
+    // Publish status update event if status changed
+    if (updateData.status && updateData.status !== previousStatus) {
+      await this.messagePublisher.publishTransactionStatusUpdated(updatedTransaction, previousStatus);
+    }
+
+    return updatedTransaction;
   }
 
   async remove(id: string): Promise<void> {
@@ -69,8 +88,9 @@ export class TransactionsService {
   }
 
   async sendTransfer(fromPrivateKey: string, toAddress: string, amount: number): Promise<string> {
+    let fromKeypair: Keypair;
     try {
-      const fromKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fromPrivateKey)));
+      fromKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fromPrivateKey)));
       const toPublicKey = new PublicKey(toAddress);
 
       const transaction = new SolanaTransaction().add(
@@ -84,7 +104,7 @@ export class TransactionsService {
       const signature = await sendAndConfirmTransaction(this.connection, transaction, [fromKeypair]);
 
       // Save to database
-      await this.create({
+      const savedTransaction = await this.create({
         signature,
         type: TransactionType.TRANSFER,
         status: TransactionStatus.CONFIRMED,
@@ -93,11 +113,25 @@ export class TransactionsService {
         amount,
       });
 
-      // Publish to Kafka
-      // this.kafkaClient.emit('transaction.confirmed', { signature, type: 'transfer' });
+      // Publish confirmation event
+      await this.messagePublisher.publishTransactionConfirmed(savedTransaction);
 
       return signature;
     } catch (error) {
+      // Create failed transaction record
+      const failedTransaction = await this.create({
+        signature: 'failed-' + Date.now(),
+        type: TransactionType.TRANSFER,
+        status: TransactionStatus.FAILED,
+        fromAddress: fromKeypair ? fromKeypair.publicKey.toString() : 'unknown',
+        toAddress,
+        amount,
+        metadata: { error: error.message },
+      });
+
+      // Publish failure event
+      await this.messagePublisher.publishTransactionFailed(failedTransaction, error.message);
+
       throw new Error(`Failed to send transfer: ${error.message}`);
     }
   }

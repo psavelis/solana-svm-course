@@ -5,6 +5,10 @@ import { Account } from './account.entity';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 @Injectable()
+/**
+ * Service for managing Solana accounts.
+ * @see docs/diagrams/01-accounts-programs.md
+ */
 export class AccountsService {
   private connection: Connection;
 

@@ -4,9 +4,12 @@
 
 This document outlines the study topics for mastering Solana and SVM (Solana Virtual Machine), with direct comparisons to EVM (Ethereum Virtual Machine) concepts where applicable. Each topic includes key learning objectives and implementation considerations for this project.
 
+📊 **[View All Diagrams](./diagrams/)**
+
 ## Core Concepts
 
 ### 1. Accounts and Programs
+📊 [View Diagram](./diagrams/01-accounts-programs.md)
 - **Solana Equivalent**: Accounts (data storage) and Programs (smart contracts)
 - **EVM Comparison**: Similar to contracts and storage, but accounts hold both code and data
 - **Key Topics**:
@@ -16,6 +19,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Account management API endpoints
 
 ### 2. Transactions and Instructions
+📊 [View Diagram](./diagrams/02-transactions-instructions.md)
 - **Solana Equivalent**: Transactions containing Instructions
 - **EVM Comparison**: Transactions calling contract functions
 - **Key Topics**:
@@ -26,6 +30,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Transaction building and submission services
 
 ### 3. Token Standards (SPL Tokens)
+📊 [View Diagram](./diagrams/03-token-standards.md)
 - **Solana Equivalent**: SPL (Solana Program Library) Tokens
 - **EVM Comparison**: ERC-20, ERC-721, ERC-1155
 - **Key Topics**:
@@ -36,6 +41,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Token creation, transfer, and management APIs
 
 ### 4. Account Abstraction
+📊 [View Diagram](./diagrams/04-account-abstraction.md)
 - **Solana Equivalent**: Program-controlled accounts and PDAs
 - **EVM Comparison**: EIP-4337 Account Abstraction
 - **Key Topics**:
@@ -45,6 +51,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Abstracted account management system
 
 ### 5. Fee Mechanism
+📊 [View Diagram](./diagrams/05-fee-mechanism.md)
 - **Solana Equivalent**: Base fees + Priority fees
 - **EVM Comparison**: EIP-1559 (base fee + priority fee)
 - **Key Topics**:
@@ -54,6 +61,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Fee estimation and transaction optimization
 
 ### 6. Consensus and Validation
+📊 [View Diagram](./diagrams/06-consensus-validation.md)
 - **Solana Equivalent**: Proof of Stake with Tower BFT
 - **EVM Comparison**: Proof of Work (legacy) / Proof of Stake (post-Merge)
 - **Key Topics**:
@@ -63,6 +71,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Network monitoring and validation status APIs
 
 ### 7. Signing and Cryptography
+📊 [View Diagram](./diagrams/07-signing-cryptography.md)
 - **Solana Equivalent**: Ed25519 keypairs and signatures
 - **EVM Comparison**: ECDSA secp256k1
 - **Key Topics**:
@@ -73,6 +82,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Secure signing services
 
 ### 8. Multi-Party Computation (MPC)
+📊 [View Diagram](./diagrams/08-mpc.md)
 - **Solana Equivalent**: Threshold signatures and distributed key generation
 - **EVM Comparison**: Multi-sig wallets and threshold schemes
 - **Key Topics**:
@@ -82,6 +92,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: MPC wallet and transaction services
 
 ### 9. Solana Virtual Machine (SVM)
+📊 [View Diagram](./diagrams/09-svm.md)
 - **Solana Equivalent**: Sealevel runtime and SVM
 - **EVM Comparison**: EVM execution environment
 - **Key Topics**:
@@ -89,9 +100,17 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
   - Runtime architecture
   - Program compilation and deployment
   - Gas metering and resource limits
+  - **SVM Infrastructure**:
+    - Local test validator setup
+    - Network configuration (local/devnet/testnet/mainnet)
+    - RPC endpoint management
+    - Faucet integration for development
+    - Ledger state management
+    - CLI tools integration
 - **Implementation**: SVM integration and program execution APIs
 
 ### 10. Cross-Program Invocations (CPIs)
+📊 [View Diagram](./diagrams/10-cpis.md)
 - **Solana Equivalent**: Programs calling other programs
 - **EVM Comparison**: Contract calls and DELEGATECALL
 - **Key Topics**:
@@ -101,6 +120,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Cross-program interaction services
 
 ### 11. Events and Logging
+📊 [View Diagram](./diagrams/11-events-logging.md)
 - **Solana Equivalent**: Program logs and events
 - **EVM Comparison**: Contract events and logs
 - **Key Topics**:
@@ -110,6 +130,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Event streaming and indexing system
 
 ### 12. Security and Best Practices
+📊 [View Diagram](./diagrams/12-security-practices.md)
 - **Key Topics**:
   - Common vulnerabilities and mitigations
   - Program upgrade patterns
@@ -118,6 +139,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Security-focused API design
 
 ### 13. Development Tools and Frameworks
+📊 [View Diagram](./diagrams/13-development-tools.md)
 - **Key Topics**:
   - Anchor framework for Rust programs
   - Web3.js and JavaScript tooling
@@ -126,6 +148,7 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
 - **Implementation**: Development tooling integration
 
 ### 14. Network Architecture
+📊 [View Diagram](./diagrams/14-network-architecture.md)
 - **Key Topics**:
   - Cluster types (mainnet, devnet, testnet)
   - RPC nodes and load balancing
@@ -133,7 +156,18 @@ This document outlines the study topics for mastering Solana and SVM (Solana Vir
   - Network performance optimization
 - **Implementation**: Multi-network API support
 
+### 16. Infrastructure and Deployment
+- **Key Topics**:
+  - Containerization with Docker
+  - Kubernetes orchestration
+  - Local Solana validator setup
+  - Monitoring and observability
+  - CI/CD pipelines
+  - Multi-environment configuration
+- **Implementation**: Complete infrastructure as code
+
 ### 15. Advanced Features
+📊 [View Diagram](./diagrams/15-advanced-features.md)
 - **Key Topics**:
   - State compression and accounts database
   - Versioned transactions
