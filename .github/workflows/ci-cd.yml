@@ -33,4 +33,6 @@ jobs:
       run: npm run docs:mermaid:validate
 
     - name: Run tests
-      run: echo "Tests temporarily skipped in CI - passing locally"
+      run: npm run test
+      env:
+        CI: true
