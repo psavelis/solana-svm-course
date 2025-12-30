@@ -33,6 +33,6 @@ jobs:
       run: npm run docs:mermaid:validate
 
     - name: Run tests
-      run: npm test -- --testTimeout=10000
+      run: npm run test
       env:
         CI: true
