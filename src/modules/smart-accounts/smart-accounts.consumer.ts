@@ -60,7 +60,9 @@ export class SmartAccountsConsumer {
         reason: result.reason,
         timestamp: new Date().toISOString(),
       });
-      this.logger.log(`transaction ${transactionId} rejected: ${result.reason}`);
+      this.logger.log(
+        `transaction ${transactionId} rejected: ${result.reason}`,
+      );
     }
   }
 }

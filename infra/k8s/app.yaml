@@ -54,4 +54,4 @@ spec:
   ports:
   - port: 3000
     targetPort: 3000
-  type: LoadBalancer  # Or ClusterIP with Ingress
+  type: ClusterIP  # Using Ingress for external access

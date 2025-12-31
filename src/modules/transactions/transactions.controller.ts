@@ -118,6 +118,78 @@ export class TransactionsController {
     );
   }
 
+  @Post("token-transfer")
+  @ApiOperation({ summary: "Send token transfer transaction" })
+  @ApiResponse({
+    status: 201,
+    description: "Token transfer transaction sent successfully",
+  })
+  sendTokenTransfer(
+    @Body()
+    transferDto: {
+      fromPrivateKey: string;
+      toAddress: string;
+      mintAddress: string;
+      amount: number;
+    },
+  ) {
+    return this.transactionsService.sendTokenTransfer(
+      transferDto.fromPrivateKey,
+      transferDto.toAddress,
+      transferDto.mintAddress,
+      transferDto.amount,
+    );
+  }
+
+  @Post("multi-instruction")
+  @ApiOperation({ summary: "Create multi-instruction transaction" })
+  @ApiResponse({
+    status: 201,
+    description: "Multi-instruction transaction created successfully",
+  })
+  createMultiInstructionTransaction(
+    @Body()
+    transactionDto: {
+      privateKey: string;
+      instructions: Array<{
+        programId: string;
+        accounts: Array<{
+          pubkey: string;
+          isSigner: boolean;
+          isWritable: boolean;
+        }>;
+        data: string;
+      }>;
+    },
+  ) {
+    return this.transactionsService.createMultiInstructionTransaction(
+      transactionDto.privateKey,
+      transactionDto.instructions,
+    );
+  }
+
+  @Post("batch")
+  @ApiOperation({ summary: "Create batched transaction with multiple operations" })
+  @ApiResponse({
+    status: 201,
+    description: "Batched transaction created successfully",
+  })
+  createBatchedTransaction(
+    @Body()
+    transactionDto: {
+      privateKey: string;
+      operations: Array<{
+        type: 'transfer' | 'token_transfer' | 'token_mint';
+        params: any;
+      }>;
+    },
+  ) {
+    return this.transactionsService.createBatchedTransaction(
+      transactionDto.privateKey,
+      transactionDto.operations,
+    );
+  }
+
   @Get("recent/list")
   @ApiOperation({ summary: "Get recent transactions" })
   @ApiResponse({ status: 200, description: "List of recent transactions" })
@@ -188,5 +260,22 @@ export class TransactionsController {
   async forceFlushEvents() {
     await this.messagePublisher.forceFlush();
     return { message: "Events flushed successfully" };
+  }
+
+  @Post("status/:signature/update")
+  @ApiOperation({ summary: "Update transaction status based on blockchain confirmation" })
+  @ApiResponse({ status: 200, description: "Transaction status updated" })
+  updateTransactionStatusBySignature(@Param("signature") signature: string) {
+    return this.transactionsService.updateTransactionStatus(signature);
+  }
+
+  @Get("history/:address")
+  @ApiOperation({ summary: "Get transaction history for an address" })
+  @ApiResponse({ status: 200, description: "Transaction history", type: [Transaction] })
+  getTransactionHistory(
+    @Param("address") address: string,
+    @Query("limit") limit?: number,
+  ) {
+    return this.transactionsService.getTransactionHistory(address, limit);
   }
 }

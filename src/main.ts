@@ -54,8 +54,8 @@ async function bootstrap() {
   SwaggerModule.setup("api", app, document);
 
   await app.listen(3000);
-  const logger = new Logger('bootstrap');
-  logger.log('application is running on: http://localhost:3000');
-  logger.log('api documentation: http://localhost:3000/api');
+  const logger = new Logger("bootstrap");
+  logger.log("application is running on: http://localhost:3000");
+  logger.log("api documentation: http://localhost:3000/api");
 }
 bootstrap();
