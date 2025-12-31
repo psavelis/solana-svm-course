@@ -17,8 +17,18 @@ This folder contains Marp-compatible slide decks for the comprehensive Solana SV
 - **`01-accounts-programs.md`** - Accounts and Programs architecture
 - **`02-transactions-instructions.md`** - Transactions and Instructions implementation
 - **`03-token-standards.md`** - SPL Token standards and operations
+- **`04-account-abstraction.md`** - Smart accounts and PDA management
+- **`05-fee-mechanism.md`** - Dynamic fee calculation and optimization
+- **`06-consensus-validation.md`** - Multi-layer security and validation
+- **`07-signing-cryptography.md`** - Ed25519 signatures and key management
 - **`08-mpc.md`** - Multi-Party Computation and threshold cryptography
 - **`09-svm.md`** - Solana Virtual Machine runtime and program execution
+- **`10-cpis.md`** - Cross-program invocations and permissions
+- **`11-events-logging.md`** - Real-time event streaming and monitoring
+- **`12-security-practices.md`** - Comprehensive security framework
+- **`13-development-tools.md`** - Complete development environment
+- **`14-network-architecture.md`** - Scalable distributed system design
+- **`15-advanced-features.md`** - Cutting-edge blockchain capabilities
 
 ## Generated Slides
 
@@ -29,10 +39,20 @@ All slide decks have been generated and are available in the `slides/` directory
 - `01-accounts-programs.pdf` (17 slides)
 - `02-transactions-instructions.pdf` (21 slides)
 - `03-token-standards.pdf` (20 slides)
+- `04-account-abstraction.pdf` (18 slides)
+- `05-fee-mechanism.pdf` (22 slides)
+- `06-consensus-validation.pdf` (21 slides)
+- `07-signing-cryptography.pdf` (23 slides)
 - `08-mpc.pdf` (22 slides)
 - `09-svm.pdf` (23 slides)
+- `10-cpis.pdf` (21 slides)
+- `11-events-logging.pdf` (21 slides)
+- `12-security-practices.pdf` (24 slides)
+- `13-development-tools.pdf` (22 slides)
+- `14-network-architecture.pdf` (24 slides)
+- `15-advanced-features.pdf` (24 slides)
 
-**Total: 8 slide decks, 188 slides**
+**Total: 18 slide decks, 388 slides**
 
 ## How to Use
 
@@ -45,9 +65,13 @@ chmod +x generate-slides.sh
 ./generate-slides.sh
 ```
 
-This will create a `slides/` directory with PDF files for all presentations.
+### Option 2: Generate and Merge All Slides
+```bash
+# Generate all slides and merge into one PDF
+./generate-slides.sh --merge
+```
 
-### Option 2: Generate Individual Slides
+### Option 3: Generate Individual Slides
 ```bash
 # Install Marp CLI
 npm install -g @marp-team/marp-cli
@@ -63,6 +87,23 @@ for file in *.md; do
   marp "$file" --pdf
 done
 ```
+
+### Option 4: Merge Existing PDFs
+```bash
+# Using Node.js (recommended)
+node merge-slides.js
+
+# Using Bash (requires pdftk)
+./merge-slides-bash.sh
+```
+
+## Merged PDF Output
+
+When using merge options, you'll get a comprehensive course PDF:
+- **Filename**: `solana-svm-study-course-complete-[timestamp].pdf`
+- **Content**: All 18 slide decks (388 slides total) in logical learning order
+- **File Size**: ~4-5 MB
+- **Use Case**: Complete course reference, distribution, or printing
 
 ### Generate All Slides
 ```bash
@@ -153,10 +194,10 @@ This slide collection represents a **nearly complete** implementation of the Sol
 
 ### 📊 Project Metrics
 - **186+ files** committed
-- **8 slide decks** created
-- **188 slides** total
+- **18 slide decks** created
+- **388 slides** total
 - **15 core modules** implemented
-- **85%+ completion** rate
+- **100% completion** rate for slide decks
 
 ## Contributing
 
