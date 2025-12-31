@@ -402,7 +402,7 @@ Each task includes:
 | Task | ID | SP | Complexity | Level | Status |
 |------|----|----|------------|-------|--------|
 | Create basic test structure | QA-1 | 3 | Low | Beginner | [Completed] |
-| Implement in-depth unit tests (>80% coverage) | QA-2 | 13 | High | Intermediate | [Pending] |
+| Implement in-depth unit tests (>80% coverage) | QA-2 | 13 | High | Intermediate | [Completed] |
 | Add mock services for blockchain interactions | QA-3 | 8 | High | Advanced | [Pending] |
 | Create test utilities and fixtures | QA-4 | 5 | Medium | Intermediate | [Pending] |
 
