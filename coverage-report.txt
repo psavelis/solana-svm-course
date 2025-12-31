@@ -1,0 +1,227 @@
+
+> solana-svm-study@1.0.0 test:cov
+> jest --coverage
+
+PASS src/modules/accounts/pda.service.spec.ts (9.188 s)
+PASS src/modules/accounts/accounts.service.spec.ts (9.694 s)
+PASS src/modules/accounts/accounts.controller.spec.ts (10.036 s)
+PASS src/modules/smart-accounts/smart-accounts.service.spec.ts
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:11 PM [31m  ERROR[39m [38;5;3m[SmartAccountsConsumer] [39m[31minvalid authorization request message[39m
+PASS src/modules/smart-accounts/smart-accounts.consumer.spec.ts
+PASS src/modules/signing/__tests__/signing.service.spec.ts (10.553 s)
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:11 PM [31m  ERROR[39m [38;5;3m[DatabaseConnectionService] [39m[31mDatabase health check failed[39m
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:11 PM [31m  ERROR[39m [38;5;3m[DatabaseConnectionService] [39m[31mError: Connection failed[39m
+PASS src/database/__tests__/database-connection.service.spec.ts
+PASS src/modules/security/__tests__/auth.service.spec.ts
+PASS src/modules/fee/__tests__/fee-optimization.service.spec.ts (10.809 s)
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:12 PM [31m  ERROR[39m [38;5;3m[TransactionEventConsumer] [39m[31mProcessing transaction failed: test-id[39m
+Insufficient funds
+PASS src/modules/transactions/transaction-event-publishing.integration.spec.ts
+PASS src/modules/mpc/__tests__/mpc.service.spec.ts
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:12 PM [31m  ERROR[39m [38;5;3m[TransactionEventConsumer] [39m[31mFailed to process transaction event transaction.created: test-id[39m
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:12 PM [31m  ERROR[39m [38;5;3m[TransactionEventConsumer] [39m[31mError: Processing failed[39m
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:12 PM [31m  ERROR[39m [38;5;3m[TransactionEventConsumer] [39m[31mFailed to process transaction event transaction.created: test-id[39m
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:12 PM [31m  ERROR[39m [38;5;3m[TransactionEventConsumer] [39m[31mError: Processing failed[39m
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:12 PM [31m  ERROR[39m [38;5;3m[TransactionEventConsumer] [39m[31mMax retries reached for transaction test-id. Sending to DLQ.[39m
+PASS src/modules/svm/__tests__/svm.service.spec.ts (11.776 s)
+PASS src/modules/transactions/transaction-event.consumer.spec.ts
+PASS src/modules/events/__tests__/events.service.spec.ts
+PASS src/modules/transactions/transactions.controller.spec.ts (12.48 s)
+PASS src/database/__tests__/database-performance.controller.spec.ts
+[31m[Nest] 11830  - [39m12/31/2025, 5:38:13 PM [31m  ERROR[39m [38;5;3m[MigrationService] [39m[31mmigration 1735512000000-CreateAccountsTable failed:[39m
+[31m[Nest] 11830  - [39m12/31/2025, 5:38:13 PM [31m  ERROR[39m [38;5;3m[MigrationService] [39m[31mError: Migration failed[39m
+[31m[Nest] 11830  - [39m12/31/2025, 5:38:13 PM [31m  ERROR[39m [38;5;3m[MigrationService] [39m[31mmigration 1735512000000-CreateAccountsTable failed:[39m
+[31m[Nest] 11830  - [39m12/31/2025, 5:38:13 PM [31m  ERROR[39m [38;5;3m[MigrationService] [39m[31mError: Table creation failed[39m
+PASS src/database/__tests__/migration.service.spec.ts
+  ● Console
+
+    console.log
+      √ Migration 1735512000001-CreateTransactionsTable rolled back successfully
+
+      at MigrationService.log [as rollbackMigration] (database/migration.service.ts:132:17)
+
+PASS src/modules/cpi/__tests__/cpi.service.spec.ts
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:14 PM [31m  ERROR[39m [38;5;3m[MessagePublisherService] [39m[31mPublished transaction failed event: test-signature[39m
+Transaction failed due to insufficient funds
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:14 PM [31m  ERROR[39m [38;5;3m[MessagePublisherService] [39m[31mFailed to flush events to Kafka[39m
+[31m[Nest] 11831  - [39m12/31/2025, 5:38:14 PM [31m  ERROR[39m [38;5;3m[MessagePublisherService] [39m[31mError: Kafka connection failed[39m
+PASS src/modules/transactions/message-publisher.service.spec.ts
+[31m[Nest] 11829  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[DatabasePerformanceService] [39m[31mFailed to get index usage stats[39m
+[31m[Nest] 11829  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[DatabasePerformanceService] [39m[31mError: DB Error[39m
+[31m[Nest] 11829  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[DatabasePerformanceService] [39m[31mFailed to get table stats[39m
+[31m[Nest] 11829  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[DatabasePerformanceService] [39m[31mError: DB Error[39m
+PASS src/modules/smart-accounts/smart-accounts.controller.spec.ts
+[31m[Nest] 11832  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[MessagePublisherService] [39m[31mPublished transaction failed event: test-signature[39m
+Insufficient funds
+[31m[Nest] 11829  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[DatabasePerformanceService] [39m[31mFailed to get index usage stats[39m
+[31m[Nest] 11829  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[DatabasePerformanceService] [39m[31mError: Query failed[39m
+[31m[Nest] 11829  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[DatabasePerformanceService] [39m[31mQuery analysis failed: SELECT * FROM invalid_table[39m
+[31m[Nest] 11829  - [39m12/31/2025, 5:38:15 PM [31m  ERROR[39m [38;5;3m[DatabasePerformanceService] [39m[31mError: Query failed[39m
+PASS src/database/__tests__/database-performance.service.spec.ts
+PASS src/modules/transactions/transactions.service.spec.ts
+PASS src/modules/fee/__tests__/fee.service.spec.ts
+PASS src/database/__tests__/database-connection.controller.spec.ts
+PASS src/modules/tokens/tokens.service.spec.ts
+PASS src/modules/tokens/tokens.controller.spec.ts
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+----------------------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------------
+File                                          | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                           
+----------------------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------------
+All files                                     |   36.35 |    29.44 |   35.39 |   35.74 |                                                                                             
+ src                                          |       0 |        0 |       0 |       0 |                                                                                             
+  app.module.ts                               |       0 |        0 |     100 |       0 | 1-82                                                                                        
+  main.ts                                     |       0 |      100 |       0 |       0 | 1-61                                                                                        
+ src/common/health                            |       0 |        0 |       0 |       0 |                                                                                             
+  database.health.ts                          |       0 |        0 |       0 |       0 | 1-19                                                                                        
+  health.controller.ts                        |       0 |      100 |       0 |       0 | 1-22                                                                                        
+  health.module.ts                            |       0 |      100 |     100 |       0 | 1-20                                                                                        
+  kafka.health.ts                             |       0 |        0 |       0 |       0 | 1-30                                                                                        
+  redis.health.ts                             |       0 |      100 |       0 |       0 | 1-16                                                                                        
+ src/common/kafka                             |       0 |        0 |       0 |       0 |                                                                                             
+  kafka.module.ts                             |       0 |        0 |       0 |       0 | 1-31                                                                                        
+ src/common/redis                             |       0 |        0 |       0 |       0 |                                                                                             
+  redis.module.ts                             |       0 |        0 |       0 |       0 | 1-22                                                                                        
+ src/database                                 |   79.15 |    46.87 |    85.5 |   79.64 |                                                                                             
+  data-source.ts                              |       0 |        0 |     100 |       0 | 1-9                                                                                         
+  database-connection.controller.ts           |     100 |      100 |     100 |     100 |                                                                                             
+  database-connection.service.ts              |   77.27 |    56.25 |   71.42 |   76.56 | 44-66,118-119,161,244,256                                                                   
+  database-performance.controller.ts          |     100 |      100 |     100 |     100 |                                                                                             
+  database-performance.service.ts             |   94.44 |       50 |     100 |   96.92 | 71,187                                                                                      
+  database.module.ts                          |       0 |      100 |     100 |       0 | 1-28                                                                                        
+  migration.controller.ts                     |       0 |      100 |       0 |       0 | 1-66                                                                                        
+  migration.service.ts                        |    88.5 |     62.5 |     100 |    87.8 | 93-94,125-126,136-145                                                                       
+ src/database/migrations                      |       0 |        0 |       0 |       0 |                                                                                             
+  1735512000000-CreateAccountsTable.ts        |       0 |      100 |       0 |       0 | 1-96                                                                                        
+  1735512000001-CreateTransactionsTable.ts    |       0 |      100 |       0 |       0 | 1-172                                                                                       
+  1735512000002-CreateTokensTable.ts          |       0 |      100 |       0 |       0 | 1-112                                                                                       
+  1735512000005-CreateMpcTables.ts            |       0 |        0 |       0 |       0 | 1-194                                                                                       
+  1735512000006-CreateSvmTables.ts            |       0 |        0 |       0 |       0 | 1-451                                                                                       
+  1735512000007-CreateCpiTables.ts            |       0 |      100 |       0 |       0 | 1-416                                                                                       
+  1735512000008-CreateEventsTables.ts         |       0 |      100 |       0 |       0 | 1-325                                                                                       
+  1735512000009-CreateSessionKeysTable.ts     |       0 |        0 |       0 |       0 | 1-108                                                                                       
+  1735512000010-CreateNFTMarketplaceTables.ts |       0 |        0 |       0 |       0 | 1-279                                                                                       
+  1735512000011-CreateDexTables.ts            |       0 |      100 |       0 |       0 | 1-360                                                                                       
+  1735512000012-CreateLendingTables.ts        |       0 |      100 |       0 |       0 | 1-233                                                                                       
+  1767021236000-AddPerformanceIndexes.ts      |       0 |      100 |       0 |       0 | 1-188                                                                                       
+  1767039983000-CreateSecurityTables.ts       |       0 |        0 |       0 |       0 | 1-245                                                                                       
+ src/modules/accounts                         |   76.71 |    81.25 |      80 |   76.47 |                                                                                             
+  account.entity.ts                           |     100 |      100 |     100 |     100 |                                                                                             
+  accounts.controller.ts                      |   61.81 |      100 |   56.25 |   60.37 | 101-102,109-111,118-121,128-130,137-139,146-148,155-157                                     
+  accounts.module.ts                          |       0 |      100 |     100 |       0 | 1-14                                                                                        
+  accounts.service.ts                         |     100 |      100 |     100 |     100 |                                                                                             
+  pda.service.ts                              |   90.24 |       70 |     100 |   89.74 | 28,34,46,120                                                                                
+ src/modules/cpi                              |   14.44 |     9.43 |    5.93 |   14.17 |                                                                                             
+  cpi-instruction.entity.ts                   |   90.47 |      100 |       0 |   89.47 | 50,54                                                                                       
+  cpi-invocation.entity.ts                    |    87.5 |      100 |       0 |   86.36 | 54,58,62                                                                                    
+  cpi-permission.entity.ts                    |   89.47 |      100 |       0 |   88.23 | 48,52                                                                                       
+  cpi.controller.ts                           |       0 |        0 |       0 |       0 | 1-585                                                                                       
+  cpi.module.ts                               |       0 |      100 |     100 |       0 | 1-38                                                                                        
+  cpi.service.ts                              |   67.64 |    55.55 |   63.63 |   68.75 | 93-101,129,181,192-196,230-256                                                              
+  dex-liquidity-position.entity.ts            |       0 |        0 |       0 |       0 | 1-66                                                                                        
+  dex-pool.entity.ts                          |       0 |        0 |       0 |       0 | 1-74                                                                                        
+  dex-swap.entity.ts                          |       0 |        0 |       0 |       0 | 1-71                                                                                        
+  dex.service.ts                              |       0 |        0 |       0 |       0 | 1-420                                                                                       
+  lending-pool.entity.ts                      |       0 |        0 |       0 |       0 | 1-70                                                                                        
+  lending-position.entity.ts                  |       0 |        0 |       0 |       0 | 1-79                                                                                        
+  lending.service.ts                          |       0 |        0 |       0 |       0 | 1-573                                                                                       
+  nft-marketplace-cpi.service.ts              |       0 |        0 |       0 |       0 | 1-583                                                                                       
+ src/modules/cpi/dto                          |       0 |      100 |       0 |       0 |                                                                                             
+  cpi-invocation.dto.ts                       |       0 |      100 |       0 |       0 | 1-47                                                                                        
+  cpi-permission.dto.ts                       |       0 |      100 |     100 |       0 | 1-51                                                                                        
+  create-cpi-instruction.dto.ts               |       0 |      100 |       0 |       0 | 1-52                                                                                        
+ src/modules/events                           |   26.28 |     19.4 |   13.55 |   25.41 |                                                                                             
+  event-filter.entity.ts                      |       0 |        0 |       0 |       0 | 1-70                                                                                        
+  event-filter.service.ts                     |       0 |        0 |       0 |       0 | 1-170                                                                                       
+  event-subscription.entity.ts                |     100 |      100 |     100 |     100 |                                                                                             
+  event-subscription.service.ts               |   14.89 |        0 |       0 |   12.82 | 15-169                                                                                      
+  event.entity.ts                             |     100 |      100 |     100 |     100 |                                                                                             
+  events.controller.ts                        |       0 |        0 |       0 |       0 | 1-222                                                                                       
+  events.module.ts                            |       0 |      100 |     100 |       0 | 1-28                                                                                        
+  events.service.ts                           |   35.55 |    29.41 |   26.66 |   33.73 | 41,68-73,101-300                                                                            
+ src/modules/events/dto                       |       0 |      100 |     100 |       0 |                                                                                             
+  event-filter.dto.ts                         |       0 |      100 |     100 |       0 | 1-60                                                                                        
+  event-subscription.dto.ts                   |       0 |      100 |     100 |       0 | 1-60                                                                                        
+  event.dto.ts                                |       0 |      100 |     100 |       0 | 1-37                                                                                        
+ src/modules/events/gateway                   |   20.63 |        0 |       0 |   18.03 |                                                                                             
+  events.gateway.ts                           |   20.63 |        0 |       0 |   18.03 | 26-57,66-95,104-135,141-177                                                                 
+ src/modules/fee                              |   66.89 |    45.91 |      80 |   67.15 |                                                                                             
+  fee-optimization.service.ts                 |   78.51 |    45.88 |    92.3 |   78.29 | 127-128,143-149,180-202,277,281,288,296,306,540-542,611,613                                 
+  fee.controller.ts                           |       0 |        0 |       0 |       0 | 1-181                                                                                       
+  fee.module.ts                               |       0 |      100 |     100 |       0 | 1-11                                                                                        
+  fee.service.ts                              |   82.56 |    70.83 |     100 |      83 | 66,108,137-145,163,173,237,243,257,271,316,343,357-364                                      
+ src/modules/fee/dto                          |       0 |      100 |     100 |       0 |                                                                                             
+  fee.dto.ts                                  |       0 |      100 |     100 |       0 | 1-81                                                                                        
+ src/modules/mpc                              |   68.59 |    52.77 |   51.06 |   69.79 |                                                                                             
+  key-share.entity.ts                         |   77.14 |    57.14 |      25 |   78.12 | 36,87-101                                                                                   
+  mpc-wallet.entity.ts                        |   78.78 |       50 |   22.22 |      80 | 65,76-89                                                                                    
+  mpc.controller.ts                           |       0 |      100 |       0 |       0 | 1-116                                                                                       
+  mpc.module.ts                               |       0 |      100 |     100 |       0 | 1-14                                                                                        
+  mpc.service.ts                              |    80.9 |    52.38 |   86.95 |   80.95 | 161,166-167,208-217,248,269-270,299,308-309,323-327,344,408-411,416-419,480                 
+ src/modules/mpc/dto                          |       0 |      100 |       0 |       0 |                                                                                             
+  mpc.dto.ts                                  |       0 |      100 |       0 |       0 | 1-70                                                                                        
+ src/modules/security                         |    45.6 |       25 |   36.84 |   46.21 |                                                                                             
+  auth.controller.ts                          |       0 |      100 |       0 |       0 | 1-93                                                                                        
+  auth.service.ts                             |   69.51 |    33.33 |   63.63 |   68.75 | 80,85,113,127,138-140,164-208,241-242                                                       
+  security.module.ts                          |       0 |        0 |     100 |       0 | 1-52                                                                                        
+ src/modules/security/decorators              |       0 |      100 |       0 |       0 |                                                                                             
+  roles.decorator.ts                          |       0 |      100 |       0 |       0 | 1-5                                                                                         
+ src/modules/security/dto                     |       0 |      100 |     100 |       0 |                                                                                             
+  auth.dto.ts                                 |       0 |      100 |     100 |       0 | 1-69                                                                                        
+ src/modules/security/entities                |   84.84 |       50 |   30.76 |   85.24 |                                                                                             
+  api-key.entity.ts                           |   85.29 |       50 |   33.33 |   84.37 | 35,88-104                                                                                   
+  user.entity.ts                              |   84.37 |       50 |   28.57 |    86.2 | 66,77-87                                                                                    
+ src/modules/security/guards                  |       0 |        0 |       0 |       0 |                                                                                             
+  api-key-auth.guard.ts                       |       0 |        0 |       0 |       0 | 1-29                                                                                        
+  jwt-auth.guard.ts                           |       0 |        0 |       0 |       0 | 1-29                                                                                        
+  roles.guard.ts                              |       0 |        0 |       0 |       0 | 1-37                                                                                        
+ src/modules/security/strategies              |       0 |        0 |       0 |       0 |                                                                                             
+  api-key.strategy.ts                         |       0 |        0 |       0 |       0 | 1-26                                                                                        
+  jwt.strategy.ts                             |       0 |        0 |       0 |       0 | 1-30                                                                                        
+ src/modules/signing                          |   15.89 |     8.33 |   13.43 |   15.69 |                                                                                             
+  signing.controller.ts                       |       0 |      100 |       0 |       0 | 1-317                                                                                       
+  signing.module.ts                           |       0 |      100 |     100 |       0 | 1-13                                                                                        
+  signing.service.ts                          |    20.6 |     8.33 |   20.93 |   19.91 | 119-122,137,212-227,261,285-856                                                             
+ src/modules/signing/dto                      |       0 |      100 |     100 |       0 |                                                                                             
+  signing.dto.ts                              |       0 |      100 |     100 |       0 | 1-141                                                                                       
+ src/modules/smart-accounts                   |   67.42 |    43.13 |   59.09 |   66.04 |                                                                                             
+  session-key.entity.ts                       |   94.73 |      100 |      50 |   94.11 | 18                                                                                          
+  smart-account.entity.ts                     |     100 |      100 |     100 |     100 |                                                                                             
+  smart-accounts.consumer.ts                  |     100 |      100 |     100 |     100 |                                                                                             
+  smart-accounts.controller.ts                |      72 |    33.33 |      50 |   69.56 | 61-64,73,81,91-92                                                                           
+  smart-accounts.module.ts                    |       0 |      100 |     100 |       0 | 1-16                                                                                        
+  smart-accounts.service.ts                   |   54.21 |    30.55 |   55.55 |    52.5 | 137-291                                                                                     
+ src/modules/svm                              |   34.92 |    26.43 |   24.13 |   34.02 |                                                                                             
+  gas-meter.entity.ts                         |     100 |      100 |     100 |     100 |                                                                                             
+  program.entity.ts                           |     100 |      100 |     100 |     100 |                                                                                             
+  runtime-execution.entity.ts                 |   97.22 |      100 |   66.66 |   97.05 | 48                                                                                          
+  svm.controller.ts                           |       0 |      100 |       0 |       0 | 1-290                                                                                       
+  svm.module.ts                               |       0 |      100 |     100 |       0 | 1-15                                                                                        
+  svm.service.ts                              |   16.95 |    14.66 |   26.66 |   16.29 | 97-209,223-466,488-555,569,578-579,585-655,675-697                                          
+ src/modules/svm/dto                          |       0 |      100 |       0 |       0 |                                                                                             
+  gas-meter.dto.ts                            |       0 |      100 |       0 |       0 | 1-293                                                                                       
+  program.dto.ts                              |       0 |      100 |       0 |       0 | 1-222                                                                                       
+  runtime-execution.dto.ts                    |       0 |      100 |       0 |       0 | 1-231                                                                                       
+ src/modules/tokens                           |   41.87 |    16.07 |      32 |   40.05 |                                                                                             
+  nft-bid.entity.ts                           |    90.9 |      100 |   33.33 |   94.73 | 20                                                                                          
+  nft-listing.entity.ts                       |    93.1 |      100 |      50 |   96.15 | 55                                                                                          
+  nft-sale.entity.ts                          |     100 |      100 |     100 |     100 |                                                                                             
+  token.entity.ts                             |     100 |      100 |     100 |     100 |                                                                                             
+  tokens.controller.ts                        |   68.05 |        0 |    30.3 |   67.14 | 102,113,125,138,149,156,170,177,191,198,209,220,232,242,253,265,286,302,309,316,328,338,345 
+  tokens.module.ts                            |       0 |      100 |     100 |       0 | 1-16                                                                                        
+  tokens.service.ts                           |   18.51 |     6.81 |   31.42 |    16.8 | 152-1014                                                                                    
+ src/modules/transactions                     |    59.4 |    42.02 |    58.1 |   58.19 |                                                                                             
+  message-publisher.service.ts                |   89.28 |       50 |    92.3 |   88.88 | 43-44,51,190-194                                                                            
+  transaction-event.consumer.ts               |   98.33 |       90 |     100 |   98.14 | 264                                                                                         
+  transaction.entity.ts                       |     100 |      100 |     100 |     100 |                                                                                             
+  transactions.controller.ts                  |   58.49 |      100 |    4.76 |   56.86 | 37,48,59,70,84,91,98,115,137,166,181,206,216,223,235-245,260,270,280-281,288,298            
+  transactions.module.ts                      |       0 |      100 |     100 |       0 | 1-19                                                                                        
+  transactions.service.ts                     |   32.53 |    25.53 |   58.33 |   31.48 | 199-487,505,517-708                                                                         
+ src/modules/transactions/dto                 |     100 |      100 |     100 |     100 |                                                                                             
+  program-invocation.dto.ts                   |     100 |      100 |     100 |     100 |                                                                                             
+----------------------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------------
+
+Test Suites: 26 passed, 26 total
+Tests:       1 skipped, 238 passed, 239 total
+Snapshots:   0 total
+Time:        25.093 s, estimated 33 s
+Ran all test suites.
