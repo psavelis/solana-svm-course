@@ -1,8 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Token } from "./token.entity";
-import {
+import { Token } from "./token.entity";import { NFTListing, ListingStatus, ListingType } from "./nft-listing.entity";
+import { NFTBid, BidStatus } from "./nft-bid.entity";
+import { NFTSale } from "./nft-sale.entity";import {
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   getAccount,
@@ -38,6 +39,12 @@ export class TokensService {
   constructor(
     @InjectRepository(Token)
     private tokensRepository: Repository<Token>,
+    @InjectRepository(NFTListing)
+    private nftListingRepository: Repository<NFTListing>,
+    @InjectRepository(NFTBid)
+    private nftBidRepository: Repository<NFTBid>,
+    @InjectRepository(NFTSale)
+    private nftSaleRepository: Repository<NFTSale>,
   ) {
     this.connection = new Connection(
       process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
@@ -793,5 +800,220 @@ export class TokensService {
     } catch (error) {
       throw new Error(`Failed to verify NFT ownership: ${error.message}`);
     }
+  }
+
+  // NFT Marketplace Methods
+
+  async createNFTListing(listingData: {
+    nftMintAddress: string;
+    sellerAddress: string;
+    listingType: ListingType;
+    price: number;
+    currencyMint?: string;
+    royaltyPercentage?: number;
+    royaltyRecipient?: string;
+    auctionEndTime?: Date;
+  }): Promise<NFTListing> {
+    // Verify NFT ownership
+    const ownership = await this.verifyNFTOwnership(listingData.nftMintAddress, listingData.sellerAddress);
+    if (!ownership.isOwner) {
+      throw new Error("Seller does not own this NFT");
+    }
+
+    const listing = this.nftListingRepository.create({
+      ...listingData,
+      status: ListingStatus.ACTIVE,
+      royaltyPercentage: listingData.royaltyPercentage || 0,
+    });
+
+    return this.nftListingRepository.save(listing);
+  }
+
+  async placeBid(bidData: {
+    listingId: string;
+    bidderAddress: string;
+    amount: number;
+    currencyMint?: string;
+  }): Promise<NFTBid> {
+    const listing = await this.nftListingRepository.findOne({
+      where: { id: bidData.listingId },
+    });
+
+    if (!listing) {
+      throw new Error("Listing not found");
+    }
+
+    if (listing.status !== ListingStatus.ACTIVE) {
+      throw new Error("Listing is not active");
+    }
+
+    if (listing.listingType === ListingType.FIXED_PRICE) {
+      if (bidData.amount < listing.price) {
+        throw new Error(`Bid amount must be at least ${listing.price}`);
+      }
+    } else if (listing.listingType === ListingType.AUCTION) {
+      // Check if auction has ended
+      if (listing.auctionEndTime && new Date() > listing.auctionEndTime) {
+        throw new Error("Auction has ended");
+      }
+
+      // Get highest bid
+      const highestBid = await this.nftBidRepository.findOne({
+        where: { listingId: bidData.listingId, status: BidStatus.ACTIVE },
+        order: { amount: "DESC" },
+      });
+
+      if (highestBid && bidData.amount <= highestBid.amount) {
+        throw new Error(`Bid must be higher than current highest bid of ${highestBid.amount}`);
+      }
+    }
+
+    // Mark previous bids as outbid
+    if (listing.listingType === ListingType.AUCTION) {
+      await this.nftBidRepository.update(
+        { listingId: bidData.listingId, status: BidStatus.ACTIVE },
+        { status: BidStatus.OUTBID },
+      );
+    }
+
+    const bid = this.nftBidRepository.create({
+      ...bidData,
+      status: BidStatus.ACTIVE,
+    });
+
+    return this.nftBidRepository.save(bid);
+  }
+
+  async acceptBid(listingId: string, bidId: string): Promise<NFTSale> {
+    const listing = await this.nftListingRepository.findOne({
+      where: { id: listingId },
+    });
+
+    if (!listing) {
+      throw new Error("Listing not found");
+    }
+
+    const bid = await this.nftBidRepository.findOne({
+      where: { id: bidId, listingId },
+    });
+
+    if (!bid) {
+      throw new Error("Bid not found");
+    }
+
+    if (bid.status !== BidStatus.ACTIVE) {
+      throw new Error("Bid is not active");
+    }
+
+    // Calculate fees
+    const royaltyAmount = (bid.amount * listing.royaltyPercentage) / 100;
+    const marketplaceFee = (bid.amount * listing.marketplaceFee) / 100;
+
+    // Create sale record
+    const sale = this.nftSaleRepository.create({
+      nftMintAddress: listing.nftMintAddress,
+      sellerAddress: listing.sellerAddress,
+      buyerAddress: bid.bidderAddress,
+      price: bid.amount,
+      currencyMint: bid.currencyMint,
+      royaltyAmount,
+      marketplaceFee,
+      transactionSignature: `simulated-${Date.now()}`, // In real implementation, this would be from actual transaction
+    });
+
+    await this.nftSaleRepository.save(sale);
+
+    // Update listing status
+    await this.nftListingRepository.update(listingId, {
+      status: ListingStatus.SOLD,
+    });
+
+    // Update bid status
+    await this.nftBidRepository.update(bidId, {
+      status: BidStatus.ACCEPTED,
+    });
+
+    // Mark other bids as rejected
+    await this.nftBidRepository.update(
+      { listingId, status: BidStatus.ACTIVE },
+      { status: BidStatus.REJECTED },
+    );
+
+    return sale;
+  }
+
+  async cancelListing(listingId: string, sellerAddress: string): Promise<void> {
+    const listing = await this.nftListingRepository.findOne({
+      where: { id: listingId, sellerAddress },
+    });
+
+    if (!listing) {
+      throw new Error("Listing not found or not owned by seller");
+    }
+
+    if (listing.status !== ListingStatus.ACTIVE) {
+      throw new Error("Listing is not active");
+    }
+
+    await this.nftListingRepository.update(listingId, {
+      status: ListingStatus.CANCELLED,
+    });
+
+    // Mark all active bids as cancelled
+    await this.nftBidRepository.update(
+      { listingId, status: BidStatus.ACTIVE },
+      { status: BidStatus.CANCELLED },
+    );
+  }
+
+  async getActiveListings(filters?: {
+    sellerAddress?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    listingType?: ListingType;
+  }): Promise<NFTListing[]> {
+    const query = this.nftListingRepository
+      .createQueryBuilder("listing")
+      .where("listing.status = :status", { status: ListingStatus.ACTIVE });
+
+    if (filters?.sellerAddress) {
+      query.andWhere("listing.seller_address = :sellerAddress", {
+        sellerAddress: filters.sellerAddress,
+      });
+    }
+
+    if (filters?.minPrice !== undefined) {
+      query.andWhere("listing.price >= :minPrice", {
+        minPrice: filters.minPrice,
+      });
+    }
+
+    if (filters?.maxPrice !== undefined) {
+      query.andWhere("listing.price <= :maxPrice", {
+        maxPrice: filters.maxPrice,
+      });
+    }
+
+    if (filters?.listingType) {
+      query.andWhere("listing.listing_type = :listingType", {
+        listingType: filters.listingType,
+      });
+    }
+
+    return query.orderBy("listing.created_at", "DESC").getMany();
+  }
+
+  async getListingBids(listingId: string): Promise<NFTBid[]> {
+    return this.nftBidRepository.find({
+      where: { listingId },
+      order: { createdAt: "DESC" },
+    });
+  }
+
+  async getNFTSalesHistory(nftMintAddress: string): Promise<NFTSale[]> {
+    return this.nftSaleRepository.find({
+      where: { nftMintAddress },
+      order: { createdAt: "DESC" },
+    });
   }
 }

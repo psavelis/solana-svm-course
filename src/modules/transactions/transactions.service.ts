@@ -13,6 +13,8 @@ import {
   Transaction as SolanaTransaction,
   sendAndConfirmTransaction,
   Keypair,
+  ComputeBudgetProgram,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
@@ -565,6 +567,96 @@ export class TransactionsService {
       return transaction;
     } catch (error) {
       throw new Error(`Failed to update transaction status: ${error.message}`);
+    }
+  }
+
+  /**
+   * Send program invocation transaction
+   */
+  async sendProgramInvocation(
+    privateKey: string,
+    programId: string,
+    data: string,
+    accounts: Array<{
+      pubkey: string;
+      isSigner: boolean;
+      isWritable: boolean;
+    }>,
+    maxComputeUnits: number = 200000,
+  ): Promise<string> {
+    let keypair: Keypair;
+    try {
+      keypair = Keypair.fromSecretKey(
+        new Uint8Array(JSON.parse(privateKey)),
+      );
+
+      const transaction = new SolanaTransaction();
+
+      // Add compute budget
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({
+          units: maxComputeUnits,
+        }),
+      );
+
+      // Create instruction
+      const instruction = new TransactionInstruction({
+        programId: new PublicKey(programId),
+        keys: accounts.map((acc) => ({
+          pubkey: new PublicKey(acc.pubkey),
+          isSigner: acc.isSigner,
+          isWritable: acc.isWritable,
+        })),
+        data: Buffer.from(data, "base64"),
+      });
+
+      transaction.add(instruction);
+
+      const signature = await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [keypair],
+      );
+
+      // Save to database
+      const savedTransaction = await this.create({
+        signature,
+        type: TransactionType.PROGRAM_INTERACTION,
+        status: TransactionStatus.CONFIRMED,
+        metadata: {
+          programId,
+          instructionData: data,
+          accountCount: accounts.length,
+          maxComputeUnits,
+        },
+      });
+
+      // Publish confirmation event
+      await this.messagePublisher.publishTransactionConfirmed(savedTransaction);
+
+      return signature;
+    } catch (error) {
+      // Create failed transaction record
+      const failedTransaction = await this.create({
+        signature: "failed-" + Date.now(),
+        type: TransactionType.PROGRAM_INTERACTION,
+        status: TransactionStatus.FAILED,
+        metadata: {
+          programId,
+          instructionData: data,
+          accountCount: accounts.length,
+          maxComputeUnits,
+          error: error.message,
+        },
+      });
+
+      // Publish failure event
+      await this.messagePublisher.publishTransactionFailed(
+        failedTransaction,
+        error.message,
+      );
+
+      throw new Error(`Failed to send program invocation: ${error.message}`);
     }
   }
 

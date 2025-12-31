@@ -12,6 +12,7 @@ import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { TransactionsService } from "./transactions.service";
 import { MessagePublisherService } from "./message-publisher.service";
 import { Transaction } from "./transaction.entity";
+import { ProgramInvocationDto } from "./dto/program-invocation.dto";
 
 @ApiTags("transactions")
 @Controller("transactions")
@@ -165,6 +166,24 @@ export class TransactionsController {
     return this.transactionsService.createMultiInstructionTransaction(
       transactionDto.privateKey,
       transactionDto.instructions,
+    );
+  }
+
+  @Post("program-invocation")
+  @ApiOperation({ summary: "Create program invocation transaction" })
+  @ApiResponse({
+    status: 201,
+    description: "Program invocation transaction created successfully",
+  })
+  createProgramInvocationTransaction(
+    @Body() invocationDto: ProgramInvocationDto,
+  ) {
+    return this.transactionsService.sendProgramInvocation(
+      invocationDto.privateKey,
+      invocationDto.programId,
+      invocationDto.data,
+      invocationDto.accounts,
+      invocationDto.maxComputeUnits,
     );
   }
 

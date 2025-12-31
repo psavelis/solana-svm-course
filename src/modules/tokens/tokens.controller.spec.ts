@@ -4,6 +4,9 @@ import { Repository } from "typeorm";
 import { TokensController } from "./tokens.controller";
 import { TokensService } from "./tokens.service";
 import { Token } from "./token.entity";
+import { NFTListing } from "./nft-listing.entity";
+import { NFTBid } from "./nft-bid.entity";
+import { NFTSale } from "./nft-sale.entity";
 
 describe("TokensController", () => {
   let controller: TokensController;
@@ -41,6 +44,40 @@ describe("TokensController", () => {
         {
           provide: getRepositoryToken(Token),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(NFTListing),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            findOne: jest.fn(),
+            update: jest.fn(),
+            find: jest.fn(),
+            createQueryBuilder: jest.fn(() => ({
+              where: jest.fn().mockReturnThis(),
+              andWhere: jest.fn().mockReturnThis(),
+              orderBy: jest.fn().mockReturnThis(),
+              getMany: jest.fn().mockResolvedValue([]),
+            })),
+          },
+        },
+        {
+          provide: getRepositoryToken(NFTBid),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            findOne: jest.fn(),
+            update: jest.fn(),
+            find: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(NFTSale),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            find: jest.fn(),
+          },
         },
       ],
     }).compile();

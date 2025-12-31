@@ -10,6 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { TokensService } from "./tokens.service";
 import { Token } from "./token.entity";
+import { ListingType } from "./nft-listing.entity";
 
 @ApiTags("tokens")
 @Controller("tokens")
@@ -265,5 +266,82 @@ export class TokensController {
       body.ownerPrivateKey,
       body.mintAddress,
     );
+  }
+
+  // NFT Marketplace Endpoints
+
+  @Post("marketplace/list")
+  @ApiOperation({ summary: "Create NFT listing" })
+  @ApiResponse({ status: 201, description: "NFT listing created successfully" })
+  createNFTListing(@Body() body: {
+    nftMintAddress: string;
+    sellerAddress: string;
+    listingType: 'fixed_price' | 'auction';
+    price: number;
+    currencyMint?: string;
+    royaltyPercentage?: number;
+    royaltyRecipient?: string;
+    auctionEndTime?: string;
+  }) {
+    return this.tokensService.createNFTListing({
+      ...body,
+      listingType: body.listingType as any,
+      auctionEndTime: body.auctionEndTime ? new Date(body.auctionEndTime) : undefined,
+    });
+  }
+
+  @Post("marketplace/bid")
+  @ApiOperation({ summary: "Place bid on NFT listing" })
+  @ApiResponse({ status: 201, description: "Bid placed successfully" })
+  placeBid(@Body() body: {
+    listingId: string;
+    bidderAddress: string;
+    amount: number;
+    currencyMint?: string;
+  }) {
+    return this.tokensService.placeBid(body);
+  }
+
+  @Post("marketplace/accept-bid")
+  @ApiOperation({ summary: "Accept bid and complete sale" })
+  @ApiResponse({ status: 201, description: "Sale completed successfully" })
+  acceptBid(@Body() body: { listingId: string; bidId: string }) {
+    return this.tokensService.acceptBid(body.listingId, body.bidId);
+  }
+
+  @Post("marketplace/cancel-listing")
+  @ApiOperation({ summary: "Cancel NFT listing" })
+  @ApiResponse({ status: 200, description: "Listing cancelled successfully" })
+  cancelListing(@Body() body: { listingId: string; sellerAddress: string }) {
+    return this.tokensService.cancelListing(body.listingId, body.sellerAddress);
+  }
+
+  @Get("marketplace/listings")
+  @ApiOperation({ summary: "Get active NFT listings" })
+  @ApiResponse({ status: 200, description: "List of active NFT listings" })
+  getActiveListings(@Body() filters?: {
+    sellerAddress?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    listingType?: 'fixed_price' | 'auction';
+  }) {
+    return this.tokensService.getActiveListings({
+      ...filters,
+      listingType: filters?.listingType as ListingType,
+    });
+  }
+
+  @Get("marketplace/listings/:listingId/bids")
+  @ApiOperation({ summary: "Get bids for a listing" })
+  @ApiResponse({ status: 200, description: "List of bids for the listing" })
+  getListingBids(@Param("listingId") listingId: string) {
+    return this.tokensService.getListingBids(listingId);
+  }
+
+  @Get("marketplace/nft/:mintAddress/sales")
+  @ApiOperation({ summary: "Get sales history for an NFT" })
+  @ApiResponse({ status: 200, description: "Sales history for the NFT" })
+  getNFTSalesHistory(@Param("mintAddress") mintAddress: string) {
+    return this.tokensService.getNFTSalesHistory(mintAddress);
   }
 }

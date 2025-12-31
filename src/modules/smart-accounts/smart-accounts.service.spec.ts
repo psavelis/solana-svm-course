@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { SmartAccountsService } from "./smart-accounts.service";
 import { SmartAccount, SmartAccountStatus } from "./smart-account.entity";
+import { SessionKey, SessionKeyStatus } from "./session-key.entity";
 
 describe("SmartAccountsService", () => {
   let service: SmartAccountsService;
@@ -37,12 +38,24 @@ describe("SmartAccountsService", () => {
       emit: jest.fn(),
     };
 
+    const sessionKeyRepositoryMock = {
+      create: jest.fn(),
+      save: jest.fn(),
+      findOne: jest.fn(),
+      update: jest.fn(),
+      find: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SmartAccountsService,
         {
           provide: getRepositoryToken(SmartAccount),
           useValue: repositoryMock,
+        },
+        {
+          provide: getRepositoryToken(SessionKey),
+          useValue: sessionKeyRepositoryMock,
         },
         {
           provide: "REDIS_CLIENT",
