@@ -13,6 +13,23 @@ export interface IndexUsageStats {
   isUsed: boolean;
 }
 
+export interface QueryAnalysisResult {
+  query: string;
+  executionPlan: any;
+  executionTime: number;
+  recommendations: string[];
+  optimizedQuery?: string;
+  indexSuggestions: IndexSuggestion[];
+}
+
+export interface IndexSuggestion {
+  table: string;
+  columns: string[];
+  type: 'btree' | 'hash' | 'gin' | 'gist';
+  reason: string;
+  impact: 'high' | 'medium' | 'low';
+}
+
 export interface QueryPerformanceStats {
   query: string;
   executionTime: number;
@@ -240,17 +257,160 @@ export class DatabasePerformanceService {
   }
 
   /**
-   * Get database configuration recommendations
+   * Perform detailed query analysis with EXPLAIN plan
    */
-  getConfigurationRecommendations(): string[] {
-    return [
-      "Set work_mem appropriately for your query complexity (16-64MB)",
-      "Configure maintenance_work_mem for index creation (256MB+)",
-      "Set shared_buffers to 25% of available RAM",
-      "Enable autovacuum and monitor its performance",
-      "Consider enabling pg_stat_statements for query analysis",
-      "Set appropriate checkpoint_segments or use PostgreSQL 9.5+ with automatic tuning",
-    ];
+  async analyzeQueryDetailed(
+    query: string,
+    params?: any[],
+  ): Promise<QueryAnalysisResult> {
+    const startTime = Date.now();
+    const recommendations: string[] = [];
+    const indexSuggestions: IndexSuggestion[] = [];
+
+    try {
+      // Get execution plan
+      const explainQuery = `EXPLAIN (ANALYZE, VERBOSE, COSTS, BUFFERS, TIMING) ${query}`;
+      const planResult = await this.dbConnection.executeQuery(explainQuery, params);
+      const executionTime = Date.now() - startTime;
+
+      // Execute actual query to get row count
+      const result = await this.dbConnection.executeQuery(query, params);
+
+      // Analyze the execution plan
+      const executionPlan = planResult;
+      const analysis = this.analyzeExecutionPlan(executionPlan, query);
+
+      recommendations.push(...analysis.recommendations);
+      indexSuggestions.push(...analysis.indexSuggestions);
+
+      // Generate additional recommendations
+      if (executionTime > 1000) {
+        recommendations.push("Query execution time exceeds 1 second - consider optimization");
+      }
+
+      if (Array.isArray(result) && result.length > 1000) {
+        recommendations.push("Large result set detected - consider pagination");
+      }
+
+      return {
+        query,
+        executionPlan,
+        executionTime,
+        recommendations,
+        indexSuggestions,
+        optimizedQuery: this.generateOptimizedQuery(query, analysis),
+      };
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      this.logger.error(`Detailed query analysis failed: ${query}`, error);
+
+      return {
+        query,
+        executionPlan: null,
+        executionTime,
+        recommendations: ["Failed to analyze query - check syntax and permissions"],
+        indexSuggestions: [],
+      };
+    }
+  }
+
+  /**
+   * Analyze execution plan and generate recommendations
+   */
+  private analyzeExecutionPlan(plan: any[], query: string): {
+    recommendations: string[];
+    indexSuggestions: IndexSuggestion[];
+  } {
+    const recommendations: string[] = [];
+    const indexSuggestions: IndexSuggestion[] = [];
+
+    // Convert plan to string for analysis
+    const planText = JSON.stringify(plan).toLowerCase();
+
+    // Check for sequential scans
+    if (planText.includes('seq scan')) {
+      recommendations.push("Sequential scan detected - consider adding indexes");
+
+      // Try to identify table and potential index columns
+      const tableMatch = query.match(/from\s+(\w+)/i);
+      if (tableMatch) {
+        const table = tableMatch[1];
+        const whereMatch = query.match(/where\s+(.+?)(?:\s+(?:group|order|limit)|$)/i);
+
+        if (whereMatch) {
+          const whereClause = whereMatch[1];
+          const columns = this.extractColumnsFromWhere(whereClause);
+
+          if (columns.length > 0) {
+            indexSuggestions.push({
+              table,
+              columns,
+              type: 'btree',
+              reason: 'WHERE clause analysis suggests composite index',
+              impact: 'high',
+            });
+          }
+        }
+      }
+    }
+
+    // Check for nested loops
+    if (planText.includes('nested loop')) {
+      recommendations.push("Nested loop join detected - consider hash joins for large datasets");
+    }
+
+    // Check for sorts without indexes
+    if (planText.includes('sort') && !planText.includes('index')) {
+      recommendations.push("External sort detected - consider indexed ORDER BY");
+    }
+
+    // Check for high cost operations
+    const costMatch = planText.match(/cost=(\d+)/);
+    if (costMatch && parseInt(costMatch[1]) > 1000) {
+      recommendations.push("High query cost detected - optimization recommended");
+    }
+
+    return { recommendations, indexSuggestions };
+  }
+
+  /**
+   * Extract column names from WHERE clause
+   */
+  private extractColumnsFromWhere(whereClause: string): string[] {
+    const columns: string[] = [];
+    const columnRegex = /(\w+)\s*[=<>!]+\s*[^=<>!]+/g;
+    let match;
+
+    while ((match = columnRegex.exec(whereClause)) !== null) {
+      columns.push(match[1]);
+    }
+
+    return [...new Set(columns)]; // Remove duplicates
+  }
+
+  /**
+   * Generate optimized version of query
+   */
+  private generateOptimizedQuery(originalQuery: string, analysis: any): string | undefined {
+    let optimized = originalQuery;
+
+    // Add LIMIT if not present and result set might be large
+    if (!originalQuery.toLowerCase().includes('limit') && analysis.recommendations.some((r: string) => r.includes('pagination'))) {
+      optimized += ' LIMIT 100';
+    }
+
+    // Only return optimized query if it's different
+    return optimized !== originalQuery ? optimized : undefined;
+  }
+
+  /**
+   * Get index creation SQL for suggestions
+   */
+  generateIndexSQL(suggestion: IndexSuggestion): string {
+    const columnsStr = suggestion.columns.join(', ');
+    const indexName = `idx_${suggestion.table}_${suggestion.columns.join('_')}`;
+
+    return `CREATE INDEX ${indexName} ON ${suggestion.table} USING ${suggestion.type} (${columnsStr});`;
   }
 
   /**
@@ -287,6 +447,21 @@ export class DatabasePerformanceService {
       "Use covering indexes for SELECT queries with specific columns",
       "Consider BRIN indexes for time-series data",
       "Monitor index bloat and reindex when necessary",
+    ];
+  }
+
+  /**
+   * Get database configuration recommendations
+   */
+  getConfigurationRecommendations(): string[] {
+    return [
+      "Set work_mem appropriately for your query complexity (16-64MB)",
+      "Configure maintenance_work_mem for index creation (256MB+)",
+      "Set shared_buffers to 25% of available RAM",
+      "Enable autovacuum and monitor its performance",
+      "Set effective_cache_size to 75% of available RAM",
+      "Configure wal_buffers and checkpoint_segments appropriately",
+      "Enable pg_stat_statements for query monitoring",
     ];
   }
 }

@@ -7,15 +7,19 @@ import {
   Put,
   Delete,
   Query,
+  UseInterceptors,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { AccountsService } from "./accounts.service";
 import { PdaService } from "./pda.service";
 import { Account } from "./account.entity";
 import { PublicKey } from "@solana/web3.js";
+import { Cache } from "../../common/decorators/cache.decorator";
+import { CacheInterceptor } from "../../common/interceptors/cache.interceptor";
 
 @ApiTags("accounts")
 @Controller("accounts")
+@UseInterceptors(CacheInterceptor)
 /**
  * Controller for managing Solana accounts.
  * @see docs/diagrams/01-accounts-programs.md
@@ -49,6 +53,7 @@ export class AccountsController {
   }
 
   @Get(":id")
+  @Cache({ ttl: 300, prefix: 'accounts' }) // Cache for 5 minutes
   @ApiOperation({ summary: "Get account by ID" })
   @ApiResponse({ status: 200, description: "Account details", type: Account })
   findOne(@Param("id") id: string) {
@@ -56,6 +61,7 @@ export class AccountsController {
   }
 
   @Get("address/:address")
+  @Cache({ ttl: 300, prefix: 'accounts' }) // Cache for 5 minutes
   @ApiOperation({ summary: "Get account by address" })
   @ApiResponse({ status: 200, description: "Account details", type: Account })
   findByAddress(@Param("address") address: string) {
@@ -81,6 +87,7 @@ export class AccountsController {
   }
 
   @Get("info/:address")
+  @Cache({ ttl: 60, prefix: 'blockchain' }) // Cache for 1 minute
   @ApiOperation({ summary: "Get Solana account info from blockchain" })
   @ApiResponse({ status: 200, description: "Account info from Solana" })
   getAccountInfo(@Param("address") address: string) {
@@ -88,6 +95,7 @@ export class AccountsController {
   }
 
   @Get("balance/:address")
+  @Cache({ ttl: 30, prefix: 'blockchain' }) // Cache for 30 seconds
   @ApiOperation({ summary: "Get account balance from Solana" })
   @ApiResponse({ status: 200, description: "Account balance" })
   getBalance(@Param("address") address: string) {

@@ -61,4 +61,41 @@ export class DatabasePerformanceController {
       timestamp: new Date().toISOString(),
     };
   }
+
+  /**
+   * Perform detailed query analysis with optimization recommendations
+   */
+  @Post("query/analyze/detailed")
+  async analyzeQueryDetailed(@Body() body: { query: string; params?: any[] }) {
+    this.logger.debug("Detailed query analysis requested");
+    const result = await this.performanceService.analyzeQueryDetailed(
+      body.query,
+      body.params,
+    );
+    return {
+      analysis: result,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Generate index creation SQL from suggestions
+   */
+  @Post("index/generate-sql")
+  generateIndexSQL(@Body() body: { table: string; columns: string[]; type?: 'btree' | 'hash' | 'gin' | 'gist' }) {
+    this.logger.debug("Index SQL generation requested");
+    const suggestion = {
+      table: body.table,
+      columns: body.columns,
+      type: body.type || 'btree',
+      reason: 'User requested',
+      impact: 'medium' as const,
+    };
+
+    return {
+      sql: this.performanceService.generateIndexSQL(suggestion),
+      suggestion,
+      timestamp: new Date().toISOString(),
+    };
+  }
 }

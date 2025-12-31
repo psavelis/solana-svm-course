@@ -3,6 +3,7 @@ import { getRepositoryToken } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AccountsService } from "./accounts.service";
 import { Account } from "./account.entity";
+import { QueryCacheService } from "../../common/cache/query-cache.service";
 
 // Mock Solana web3.js
 jest.mock("@solana/web3.js", () => ({
@@ -42,6 +43,14 @@ describe("AccountsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AccountsService,
+        {
+          provide: QueryCacheService,
+          useValue: {
+            executeWithCache: jest.fn((key, queryFn) => queryFn()),
+            invalidatePattern: jest.fn(),
+            clearQueryCache: jest.fn(),
+          },
+        },
         {
           provide: getRepositoryToken(Account),
           useValue: mockRepository,

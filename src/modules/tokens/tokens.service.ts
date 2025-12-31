@@ -27,6 +27,8 @@ import {
   Keypair,
   Connection,
 } from "@solana/web3.js";
+import { QueryCacheService } from "../../common/cache/query-cache.service";
+import { QueryCache } from "../../common/cache/query-cache.decorator";
 
 @Injectable()
 /**
@@ -45,6 +47,7 @@ export class TokensService {
     private nftBidRepository: Repository<NFTBid>,
     @InjectRepository(NFTSale)
     private nftSaleRepository: Repository<NFTSale>,
+    private readonly queryCacheService: QueryCacheService,
   ) {
     this.connection = new Connection(
       process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
@@ -56,14 +59,17 @@ export class TokensService {
     return this.tokensRepository.save(token);
   }
 
+  @QueryCache({ ttl: 300 }) // 5 minutes for token lists
   async findAll(): Promise<Token[]> {
     return this.tokensRepository.find();
   }
 
+  @QueryCache({ ttl: 600 }) // 10 minutes for individual tokens
   async findOne(id: string): Promise<Token> {
     return this.tokensRepository.findOne({ where: { id } });
   }
 
+  @QueryCache({ ttl: 600 }) // 10 minutes for mint lookups
   async findByMint(mintAddress: string): Promise<Token> {
     return this.tokensRepository.findOne({ where: { mintAddress } });
   }

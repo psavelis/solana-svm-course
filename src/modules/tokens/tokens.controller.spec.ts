@@ -7,6 +7,7 @@ import { Token } from "./token.entity";
 import { NFTListing } from "./nft-listing.entity";
 import { NFTBid } from "./nft-bid.entity";
 import { NFTSale } from "./nft-sale.entity";
+import { RedisModule } from "../../common/redis/redis.module";
 
 describe("TokensController", () => {
   let controller: TokensController;
@@ -38,6 +39,7 @@ describe("TokensController", () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
+      imports: [RedisModule],
       controllers: [TokensController],
       providers: [
         TokensService,

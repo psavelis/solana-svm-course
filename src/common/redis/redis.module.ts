@@ -1,6 +1,7 @@
 import { Module, Global, Provider } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import Redis from "ioredis";
+import { CacheService } from "./cache.service";
 
 const redisProvider: Provider = {
   provide: "REDIS_CLIENT",
@@ -16,7 +17,7 @@ const redisProvider: Provider = {
 @Global()
 @Module({
   imports: [ConfigModule],
-  providers: [redisProvider],
-  exports: [redisProvider],
+  providers: [redisProvider, CacheService],
+  exports: [redisProvider, CacheService],
 })
 export class RedisModule {}

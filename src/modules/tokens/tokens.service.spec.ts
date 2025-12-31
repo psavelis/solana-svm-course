@@ -7,6 +7,7 @@ import { NFTListing, ListingStatus, ListingType } from "./nft-listing.entity";
 import { NFTBid, BidStatus } from "./nft-bid.entity";
 import { NFTSale } from "./nft-sale.entity";
 import { PublicKey } from "@solana/web3.js";
+import { QueryCacheService } from "../../common/cache/query-cache.service";
 
 // Mock Solana web3.js and spl-token
 jest.mock("@solana/web3.js", () => ({
@@ -168,6 +169,14 @@ describe("TokensService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokensService,
+        {
+          provide: QueryCacheService,
+          useValue: {
+            executeWithCache: jest.fn((key, queryFn) => queryFn()),
+            invalidatePattern: jest.fn(),
+            clearQueryCache: jest.fn(),
+          },
+        },
         {
           provide: getRepositoryToken(Token),
           useValue: mockTokenRepository,

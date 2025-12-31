@@ -6,14 +6,18 @@ import {
   Param,
   Put,
   Delete,
+  UseInterceptors,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { TokensService } from "./tokens.service";
 import { Token } from "./token.entity";
 import { ListingType } from "./nft-listing.entity";
+import { Cache } from "../../common/decorators/cache.decorator";
+import { CacheInterceptor } from "../../common/interceptors/cache.interceptor";
 
 @ApiTags("tokens")
 @Controller("tokens")
+@UseInterceptors(CacheInterceptor)
 /**
  * Controller for managing SPL tokens.
  * @see docs/diagrams/03-token-standards.md
@@ -40,6 +44,7 @@ export class TokensController {
   }
 
   @Get(":id")
+  @Cache({ ttl: 300, prefix: 'tokens' }) // Cache for 5 minutes
   @ApiOperation({ summary: "Get token by ID" })
   @ApiResponse({ status: 200, description: "Token details", type: Token })
   findOne(@Param("id") id: string) {
@@ -47,6 +52,7 @@ export class TokensController {
   }
 
   @Get("mint/:mintAddress")
+  @Cache({ ttl: 300, prefix: 'tokens' }) // Cache for 5 minutes
   @ApiOperation({ summary: "Get token by mint address" })
   @ApiResponse({ status: 200, description: "Token details", type: Token })
   findByMint(@Param("mintAddress") mintAddress: string) {
@@ -72,6 +78,7 @@ export class TokensController {
   }
 
   @Get("info/:mintAddress")
+  @Cache({ ttl: 60, prefix: 'blockchain' }) // Cache for 1 minute
   @ApiOperation({ summary: "Get token info from Solana" })
   @ApiResponse({ status: 200, description: "Token info from Solana" })
   getTokenInfo(@Param("mintAddress") mintAddress: string) {
@@ -79,6 +86,7 @@ export class TokensController {
   }
 
   @Get("balance/:ownerAddress/:mintAddress")
+  @Cache({ ttl: 30, prefix: 'blockchain' }) // Cache for 30 seconds
   @ApiOperation({ summary: "Get token balance for owner" })
   @ApiResponse({ status: 200, description: "Token balance" })
   getTokenBalance(
@@ -89,6 +97,7 @@ export class TokensController {
   }
 
   @Get("accounts/:ownerAddress")
+  @Cache({ ttl: 60, prefix: 'blockchain' }) // Cache for 1 minute
   @ApiOperation({ summary: "Get all token accounts for owner" })
   @ApiResponse({ status: 200, description: "List of token accounts" })
   getTokenAccounts(@Param("ownerAddress") ownerAddress: string) {

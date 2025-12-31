@@ -3,6 +3,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Account } from "./account.entity";
 import { Connection, PublicKey } from "@solana/web3.js";
+import { QueryCacheService } from "../../common/cache/query-cache.service";
+import { QueryCache } from "../../common/cache/query-cache.decorator";
 
 @Injectable()
 /**
@@ -15,6 +17,7 @@ export class AccountsService {
   constructor(
     @InjectRepository(Account)
     private accountsRepository: Repository<Account>,
+    private readonly queryCacheService: QueryCacheService,
   ) {
     this.connection = new Connection(
       process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
@@ -26,14 +29,17 @@ export class AccountsService {
     return this.accountsRepository.save(account);
   }
 
+  @QueryCache({ ttl: 300 }) // 5 minutes for account lists
   async findAll(): Promise<Account[]> {
     return this.accountsRepository.find();
   }
 
+  @QueryCache({ ttl: 600 }) // 10 minutes for individual accounts
   async findOne(id: string): Promise<Account> {
     return this.accountsRepository.findOne({ where: { id } });
   }
 
+  @QueryCache({ ttl: 600 }) // 10 minutes for address lookups
   async findByAddress(address: string): Promise<Account> {
     return this.accountsRepository.findOne({ where: { address } });
   }

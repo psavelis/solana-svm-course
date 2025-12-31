@@ -15,6 +15,7 @@ import { SvmModule } from "./modules/svm/svm.module";
 import { CpiModule } from "./modules/cpi/cpi.module";
 import { EventsModule } from "./modules/events/events.module";
 import { SecurityModule } from "./modules/security/security.module";
+import { NetworkModule } from "./modules/network/network.module";
 import { DatabaseModule } from "./database/database.module";
 
 @Module({
@@ -74,6 +75,7 @@ import { DatabaseModule } from "./database/database.module";
     CpiModule,
     EventsModule,
     SecurityModule,
+    NetworkModule,
     DatabaseModule,
   ],
   controllers: [],
