@@ -17,23 +17,72 @@ export const mockTransaction = new Transaction();
 // Mock web3.js functions
 export const mockWeb3 = {
   // PublicKey constructor mock
-  PublicKey: jest.fn().mockImplementation((value: string | Buffer | Uint8Array | number[]) => {
-    if (typeof value === 'string') {
-      // Return mock public keys for known strings
-      if (value in mockPublicKeys) {
-        return mockPublicKeys[value as keyof typeof mockPublicKeys];
+  PublicKey: class MockPublicKey {
+    private _value: string;
+
+    constructor(value: string | Buffer | Uint8Array | number[]) {
+      if (typeof value === 'string') {
+        // Basic validation - throw error for obviously invalid strings
+        if (value === 'invalid' || value.length === 0) {
+          throw new Error('Invalid public key input');
+        }
+        // Return mock public keys for known strings
+        if (value in mockPublicKeys) {
+          this._value = value;
+          this.toString = () => value;
+          return;
+        }
+        // For other strings, create a mock
+        this._value = value;
+        this.toString = () => value;
+      } else {
+        this._value = 'mock-public-key';
+        this.toString = () => 'mock-public-key';
       }
-      // For other strings, create a real PublicKey but mock the methods
-      const realKey = new PublicKey(value);
-      jest.spyOn(realKey, 'toString').mockReturnValue(value);
-      return realKey;
     }
-    return new PublicKey(value);
-  }),
+
+    toString() {
+      return this._value;
+    }
+
+    toBase58() {
+      return this._value;
+    }
+
+    toBytes() {
+      // For real public key strings, return real bytes
+      const realPubKey = new (jest.requireActual('@solana/web3.js').PublicKey)(this._value);
+      return realPubKey.toBytes();
+    }
+
+    toBuffer() {
+      return Buffer.from(this.toBytes());
+    }
+
+    equals(other: MockPublicKey) {
+      return this._value === other._value;
+    }
+
+    static async findProgramAddress(seeds: any[], programId: any) {
+      // Create a deterministic mock address based on seeds and programId
+      const input = seeds.map(seed => 
+        Buffer.isBuffer(seed) ? seed.toString('hex') : String(seed)
+      ).join('') + programId.toString();
+      const hash = require('crypto').createHash('sha256').update(input).digest();
+      const mockAddress = new MockPublicKey(hash.slice(0, 32).toString('hex'));
+      return [mockAddress, 0];
+    }
+  },
 
   // Keypair
-  Keypair: {
-    generate: jest.fn().mockReturnValue(mockKeypair),
+  Keypair: class MockKeypair extends Keypair {
+    static fromSecretKey = jest.fn().mockImplementation((secretKey: Uint8Array) => {
+      return Keypair.fromSecretKey(secretKey); // Use real fromSecretKey
+    });
+
+    static generate = jest.fn().mockImplementation(() => {
+      return Keypair.generate(); // Use real generate for different keys
+    });
   },
 
   // SystemProgram
@@ -46,7 +95,20 @@ export const mockWeb3 = {
   },
 
   // Transaction
-  Transaction: jest.fn().mockImplementation(() => mockTransaction),
+  Transaction: class MockTransaction extends Transaction {
+    static from = jest.fn().mockImplementation((buffer: Buffer) => {
+      return new MockTransaction();
+    });
+
+    sign = jest.fn().mockImplementation((...signers: Keypair[]) => {
+      // Mock signing - don't validate signers for tests
+      // Just set a mock signature using Object.defineProperty to bypass readonly
+      Object.defineProperty(this, 'signature', {
+        value: Buffer.from('mock-signature-' + Math.random().toString(36)),
+        writable: true,
+      });
+    });
+  },
 
   // sendAndConfirmTransaction
   sendAndConfirmTransaction: jest.fn().mockResolvedValue('mock-web3-transaction-signature'),
@@ -78,9 +140,17 @@ export const mockWeb3 = {
 
 // Setup function for Jest
 export function setupWeb3Mocks() {
-  jest.mock('@solana/web3.js', () => ({
-    ...jest.requireActual('@solana/web3.js'),
-    ...mockWeb3,
-  }));
+  jest.mock('@solana/web3.js', () => {
+    const actual = jest.requireActual('@solana/web3.js');
+    return {
+      ...actual,
+      PublicKey: mockWeb3.PublicKey,
+      Keypair: mockWeb3.Keypair,
+      SystemProgram: mockWeb3.SystemProgram,
+      Transaction: mockWeb3.Transaction,
+      sendAndConfirmTransaction: mockWeb3.sendAndConfirmTransaction,
+      ComputeBudgetProgram: mockWeb3.ComputeBudgetProgram,
+    };
+  });
   return mockWeb3;
 }

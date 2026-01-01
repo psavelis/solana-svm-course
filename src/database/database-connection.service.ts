@@ -162,6 +162,13 @@ export class DatabaseConnectionService
   }
 
   /**
+   * Check database connection (alias for checkHealth)
+   */
+  async checkConnection(): Promise<boolean> {
+    return this.checkHealth();
+  }
+
+  /**
    * Get connection pool statistics
    */
   async getPoolStats() {
@@ -177,6 +184,13 @@ export class DatabaseConnectionService
           : 0,
       poolConfig: status.poolConfig,
     };
+  }
+
+  /**
+   * Get connection pool statistics (alias for getPoolStats)
+   */
+  async getConnectionPoolStats() {
+    return this.getPoolStats();
   }
 
   /**

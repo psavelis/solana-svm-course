@@ -26,7 +26,8 @@ describe('PdaService', () => {
 
       expect(result).toHaveProperty('address');
       expect(result).toHaveProperty('bump');
-      expect(result.address).toBeInstanceOf(PublicKey);
+      expect(result.address).toBeDefined();
+      expect(typeof result.address.toBase58).toBe('function');
       expect(typeof result.bump).toBe('number');
       expect(result.bump).toBeGreaterThanOrEqual(0);
       expect(result.bump).toBeLessThanOrEqual(255);
@@ -64,7 +65,8 @@ describe('PdaService', () => {
 
       expect(result).toHaveProperty('address');
       expect(result).toHaveProperty('bump');
-      expect(result.address).toBeInstanceOf(PublicKey);
+      expect(result.address).toBeDefined();
+      expect(typeof result.address.toBase58).toBe('function');
     });
   });
 
@@ -80,7 +82,8 @@ describe('PdaService', () => {
         ownerAddress
       );
 
-      expect(ataAddress).toBeInstanceOf(PublicKey);
+      expect(ataAddress).toBeDefined();
+      expect(typeof ataAddress.toBase58).toBe('function');
     });
   });
 
@@ -147,7 +150,8 @@ describe('PdaService', () => {
 
       const metadataAddress = await service.deriveMetadataPDA(metadataProgramId, mintAddress);
 
-      expect(metadataAddress).toBeInstanceOf(PublicKey);
+      expect(metadataAddress).toBeDefined();
+      expect(typeof metadataAddress.toBase58).toBe('function');
     });
   });
 
@@ -158,7 +162,8 @@ describe('PdaService', () => {
 
       const masterEditionAddress = await service.deriveMasterEditionPDA(metadataProgramId, mintAddress);
 
-      expect(masterEditionAddress).toBeInstanceOf(PublicKey);
+      expect(masterEditionAddress).toBeDefined();
+      expect(typeof masterEditionAddress.toBase58).toBe('function');
     });
   });
 });

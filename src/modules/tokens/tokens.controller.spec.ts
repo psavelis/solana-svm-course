@@ -8,11 +8,13 @@ import { NFTListing } from "./nft-listing.entity";
 import { NFTBid } from "./nft-bid.entity";
 import { NFTSale } from "./nft-sale.entity";
 import { RedisModule } from "../../common/redis/redis.module";
+import { QueryCacheService } from "../../common/cache/query-cache.service";
 
 describe("TokensController", () => {
   let controller: TokensController;
   let service: TokensService;
   let mockRepository: Partial<Repository<Token>>;
+  let mockQueryCacheService: Partial<QueryCacheService>;
 
   const mockToken: Token = {
     id: "test-id",
@@ -36,6 +38,10 @@ describe("TokensController", () => {
       findOne: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+    };
+
+    mockQueryCacheService = {
+      executeWithCache: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -80,6 +86,10 @@ describe("TokensController", () => {
             save: jest.fn(),
             find: jest.fn(),
           },
+        },
+        {
+          provide: QueryCacheService,
+          useValue: mockQueryCacheService,
         },
       ],
     }).compile();
