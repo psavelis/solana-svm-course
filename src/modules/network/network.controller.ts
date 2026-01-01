@@ -50,4 +50,20 @@ export class NetworkController {
   getNetworkConfig(@Param('network') network: SolanaNetwork) {
     return this.networkService.getNetworkConfig(network);
   }
+
+  @Get('endpoints')
+  getRpcEndpoints() {
+    return {
+      network: this.networkService.getCurrentNetwork(),
+      endpoints: this.networkService.getRpcEndpoints(),
+    };
+  }
+
+  @Get('endpoints/:network')
+  getNetworkRpcEndpoints(@Param('network') network: SolanaNetwork) {
+    return {
+      network,
+      endpoints: this.networkService.getRpcEndpoints(network),
+    };
+  }
 }

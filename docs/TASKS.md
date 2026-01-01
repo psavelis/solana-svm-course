@@ -79,8 +79,8 @@ Each task includes:
 | Deploy Prometheus for metrics collection | MONITOR-1 | 5 | Medium | Intermediate | [Completed] |
 | Deploy Grafana for visualization | MONITOR-2 | 5 | Medium | Intermediate | [Completed] |
 | Configure application health endpoints | MONITOR-3 | 3 | Low | Intermediate | [Completed] |
-| Set up alerting rules | MONITOR-4 | 8 | High | Advanced | [Pending] |
-| Implement distributed tracing | MONITOR-5 | 13 | High | Advanced | [Pending] |
+| Set up alerting rules | MONITOR-4 | 8 | High | Advanced | [Completed] |
+| Implement distributed tracing | MONITOR-5 | 13 | High | Advanced | [Completed] |
 
 **Risks**: Monitoring overhead, alert fatigue, data storage costs
 **Opportunities**: Learn observability patterns, system monitoring
@@ -310,7 +310,7 @@ Each task includes:
 | Configure multi-network support (local/devnet/testnet/mainnet) | SVM-INFRA-2 | 5 | Medium | Intermediate | [Completed] |
 | Integrate Solana CLI tools in containers | SVM-INFRA-3 | 3 | Low | Intermediate | [Completed] |
 | Set up faucet integration for development | SVM-INFRA-4 | 2 | Low | Beginner | [Completed] |
-| Implement RPC endpoint rotation and failover | SVM-INFRA-5 | 8 | High | Advanced | [Pending] |
+| Implement RPC endpoint rotation and failover | SVM-INFRA-5 | 8 | High | Advanced | [Completed] |
 | Add ledger state persistence and management | SVM-INFRA-6 | 5 | Medium | Intermediate | [Completed] |
 | Configure WebSocket connections for real-time updates | SVM-INFRA-7 | 3 | Low | Intermediate | [Completed] |
 
@@ -403,7 +403,7 @@ Each task includes:
 |------|----|----|------------|-------|--------|
 | Create basic test structure | QA-1 | 3 | Low | Beginner | [Completed] |
 | Implement in-depth unit tests (>80% coverage) | QA-2 | 13 | High | Intermediate | [Completed] |
-| Add mock services for blockchain interactions | QA-3 | 8 | High | Advanced | [Pending] |
+| Add mock services for blockchain interactions | QA-3 | 8 | High | Advanced | [Completed] |
 | Create test utilities and fixtures | QA-4 | 5 | Medium | Intermediate | [Pending] |
 
 **Risks**: Test coverage gaps, flaky tests, mock inaccuracies

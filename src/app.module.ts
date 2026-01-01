@@ -16,7 +16,8 @@ import { CpiModule } from "./modules/cpi/cpi.module";
 import { EventsModule } from "./modules/events/events.module";
 import { SecurityModule } from "./modules/security/security.module";
 import { NetworkModule } from "./modules/network/network.module";
-import { DatabaseModule } from "./database/database.module";
+import { TracingModule } from "./common/tracing/tracing.module";
+import { TracingInterceptor } from "./common/interceptors/tracing.interceptor";
 
 @Module({
   imports: [
@@ -76,9 +77,8 @@ import { DatabaseModule } from "./database/database.module";
     EventsModule,
     SecurityModule,
     NetworkModule,
-    DatabaseModule,
+    TracingModule,
   ],
-  controllers: [],
   providers: [],
 })
 export class AppModule {}
