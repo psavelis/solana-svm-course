@@ -1,6 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { ValidationPipe, Logger } from "@nestjs/common";
+import { TracingInterceptor } from "./common/interceptors/tracing.interceptor";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 async function bootstrap() {
@@ -14,6 +15,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // enable global tracing interceptor
+  app.useGlobalInterceptors(new TracingInterceptor());
 
   // enable cors
   app.enableCors();

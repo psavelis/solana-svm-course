@@ -41,6 +41,10 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.11",
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.52.1",
+    "@opentelemetry/exporter-jaeger": "^1.28.0",
+    "@opentelemetry/sdk-node": "^0.52.1",
     "@solana/spl-token": "^0.3.11",
     "@solana/web3.js": "^1.98.4",
     "@types/bcrypt": "^6.0.0",
@@ -107,6 +111,7 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/test-setup.ts"]
   }
 }

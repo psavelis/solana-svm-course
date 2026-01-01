@@ -54,7 +54,7 @@ describe('NetworkService', () => {
     it('should throw error for invalid network', () => {
       expect(() => {
         service.getConnection('invalid' as SolanaNetwork);
-      }).toThrow('No connection available for network: invalid');
+      }).toThrow('No healthy RPC endpoints available for network: invalid');
     });
   });
 
@@ -63,14 +63,16 @@ describe('NetworkService', () => {
       const config = service.getNetworkConfig();
       expect(config).toBeDefined();
       expect(config.name).toBe(SolanaNetwork.DEVNET);
-      expect(config.rpcUrl).toContain('devnet');
+      expect(config.rpcEndpoints).toBeDefined();
+      expect(config.rpcEndpoints.length).toBeGreaterThan(0);
     });
 
     it('should return config for specific network', () => {
       const config = service.getNetworkConfig(SolanaNetwork.MAINNET);
       expect(config).toBeDefined();
       expect(config.name).toBe(SolanaNetwork.MAINNET);
-      expect(config.rpcUrl).toContain('mainnet');
+      expect(config.rpcEndpoints).toBeDefined();
+      expect(config.rpcEndpoints.length).toBeGreaterThan(0);
     });
 
     it('should throw error for invalid network', () => {

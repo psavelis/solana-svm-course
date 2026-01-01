@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: solana-study
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'alerts@solana-study.com'
+      smtp_auth_username: 'your-email@gmail.com'
+      smtp_auth_password: 'your-app-password'
+
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'email-notifications'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'critical-email'
+      - match:
+          severity: warning
+        receiver: 'warning-email'
+
+    receivers:
+    - name: 'email-notifications'
+      email_configs:
+      - to: 'admin@solana-study.com'
+        send_resolved: true
+
+    - name: 'critical-email'
+      email_configs:
+      - to: 'admin@solana-study.com'
+        subject: 'CRITICAL: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+
+    - name: 'warning-email'
+      email_configs:
+      - to: 'dev-team@solana-study.com'
+        subject: 'WARNING: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: solana-study
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:latest
+        ports:
+        - containerPort: 9093
+        volumeMounts:
+        - name: config
+          mountPath: /etc/alertmanager
+      volumes:
+      - name: config
+        configMap:
+          name: alertmanager-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-service
+  namespace: solana-study
+spec:
+  selector:
+    app: alertmanager
+  ports:
+  - port: 9093
+    targetPort: 9093
+  type: ClusterIP

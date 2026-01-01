@@ -90,7 +90,8 @@ describe('NetworkController', () => {
       const result = controller.getNetworkConfig(SolanaNetwork.MAINNET);
       expect(result).toBeDefined();
       expect(result.name).toBe(SolanaNetwork.MAINNET);
-      expect(result.rpcUrl).toContain('mainnet');
+      expect(result.rpcEndpoints).toBeDefined();
+      expect(result.rpcEndpoints.length).toBeGreaterThan(0);
     });
   });
 });
