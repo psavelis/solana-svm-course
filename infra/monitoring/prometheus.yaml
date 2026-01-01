@@ -1,3 +1,8 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.28.0-standalone-strict/all.json
+# Prometheus Monitoring Stack for Solana SVM Study
+# This file contains Kubernetes manifests for deploying Prometheus monitoring.
+# @see https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
