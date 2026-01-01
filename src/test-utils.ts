@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { KafkaModule } from './common/kafka/kafka.module';
-import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './common/redis/redis.module';
 
 /**
@@ -42,7 +41,6 @@ export class TestUtils {
       }),
       RedisModule,
       KafkaModule,
-      DatabaseModule,
       ...(metadata?.imports || []),
     ];
 
