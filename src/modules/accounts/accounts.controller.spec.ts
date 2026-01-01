@@ -6,11 +6,13 @@ import { AccountsService } from "./accounts.service";
 import { PdaService } from "./pda.service";
 import { Account } from "./account.entity";
 import { RedisModule } from "../../common/redis/redis.module";
+import { QueryCacheService } from "../../common/cache/query-cache.service";
 
 describe("AccountsController", () => {
   let controller: AccountsController;
   let service: AccountsService;
   let mockRepository: Partial<Repository<Account>>;
+  let mockQueryCacheService: Partial<QueryCacheService>;
 
   const mockAccount: Account = {
     id: "test-id",
@@ -34,6 +36,10 @@ describe("AccountsController", () => {
       delete: jest.fn(),
     };
 
+    mockQueryCacheService = {
+      executeWithCache: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [RedisModule],
       controllers: [AccountsController],
@@ -43,6 +49,10 @@ describe("AccountsController", () => {
         {
           provide: getRepositoryToken(Account),
           useValue: mockRepository,
+        },
+        {
+          provide: QueryCacheService,
+          useValue: mockQueryCacheService,
         },
       ],
     }).compile();

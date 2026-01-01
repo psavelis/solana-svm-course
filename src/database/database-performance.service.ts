@@ -92,6 +92,13 @@ export class DatabasePerformanceService {
   }
 
   /**
+   * Get performance metrics (alias for getPerformanceReport)
+   */
+  async getPerformanceMetrics(): Promise<DatabasePerformanceReport> {
+    return this.getPerformanceReport();
+  }
+
+  /**
    * Get index usage statistics
    */
   async getIndexUsageStats(): Promise<IndexUsageStats[]> {
@@ -222,6 +229,14 @@ export class DatabasePerformanceService {
     );
 
     return recommendations;
+  }
+
+  /**
+   * Get optimization recommendations
+   */
+  async getOptimizationRecommendations(): Promise<string[]> {
+    const report = await this.getPerformanceReport();
+    return this.generateRecommendations(report);
   }
 
   /**

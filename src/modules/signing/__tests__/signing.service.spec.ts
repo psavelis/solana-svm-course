@@ -368,8 +368,10 @@ describe("SigningService", () => {
           name: "A",
         };
 
-        // This will fail due to no Solana connection, but tests the validation logic
-        await expect(service.createMultiSigAccount(config)).rejects.toThrow();
+        // This should succeed with mocked Solana connection
+        const result = await service.createMultiSigAccount(config);
+        expect(result).toBeDefined();
+        expect(typeof result).toBe('string');
       });
 
       it("should throw error for invalid threshold", async () => {
@@ -418,12 +420,6 @@ describe("SigningService", () => {
 
     describe("signMultiSigTransaction", () => {
       it("should sign a multi-sig transaction", async () => {
-        // Mock the PublicKey.findProgramAddress to avoid seed length issues
-        const mockFindProgramAddress = jest.spyOn(PublicKey, 'findProgramAddress').mockResolvedValue([
-          Keypair.generate().publicKey,
-          0
-        ]);
-        
         // Create signers
         const signer1 = Keypair.generate();
         const signer2 = Keypair.generate();
@@ -447,10 +443,10 @@ describe("SigningService", () => {
         // Use one of the authorized signers - test that it doesn't throw for validation
         const privateKeyString = JSON.stringify(Array.from(signer1.secretKey));
 
-        // The method will fail due to transaction signing complexity, but tests the authorization logic
-        await expect(service.signMultiSigTransaction(txId, privateKeyString)).rejects.toThrow();
-        
-        mockFindProgramAddress.mockRestore();
+        // The method should succeed with mocked signing
+        const result = await service.signMultiSigTransaction(txId, privateKeyString);
+        expect(result).toBeDefined();
+        expect(result.status).toBe('pending'); // Since only 1 signature, threshold is 2
       });
     });
 

@@ -92,14 +92,13 @@ describe("FeeOptimizationService", () => {
           provide: FeeService,
           useValue: mockFeeService,
         },
-        {
-          provide: Connection,
-          useValue: mockConnection,
-        },
       ],
     }).compile();
 
     service = module.get<FeeOptimizationService>(FeeOptimizationService);
+    // Mock the connection property
+    (service as any).connection = mockConnection;
+
     feeService = module.get<FeeService>(FeeService);
   });
 

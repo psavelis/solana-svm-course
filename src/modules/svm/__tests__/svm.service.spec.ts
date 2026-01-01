@@ -9,12 +9,14 @@ import {
   ExecutionType,
 } from "../runtime-execution.entity";
 import { GasMeter, GasMeterType, GasMeterStatus } from "../gas-meter.entity";
+import { Connection } from "@solana/web3.js";
 
 describe("SvmService", () => {
   let service: SvmService;
   let programRepository: Repository<Program>;
   let executionRepository: Repository<RuntimeExecution>;
   let gasMeterRepository: Repository<GasMeter>;
+  let mockConnection: jest.Mocked<Connection>;
 
   const mockProgramRepository = {
     create: jest.fn(),
@@ -67,6 +69,15 @@ describe("SvmService", () => {
   };
 
   beforeEach(async () => {
+    mockConnection = {
+      getVersion: jest.fn().mockResolvedValue({ "solana-core": "1.14.0" }),
+      getSlot: jest.fn().mockResolvedValue(123456789),
+      getBlockHeight: jest.fn().mockResolvedValue(987654321),
+      rpcEndpoint: "https://api.devnet.solana.com",
+      getMinimumBalanceForRentExemption: jest.fn().mockResolvedValue(1000000),
+      sendAndConfirmTransaction: jest.fn().mockResolvedValue("mock-signature"),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SvmService,
@@ -86,6 +97,9 @@ describe("SvmService", () => {
     }).compile();
 
     service = module.get<SvmService>(SvmService);
+    // Mock the connection property
+    (service as any).connection = mockConnection;
+
     programRepository = module.get<Repository<Program>>(
       getRepositoryToken(Program),
     );
