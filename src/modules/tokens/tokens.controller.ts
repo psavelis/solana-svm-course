@@ -8,20 +8,72 @@ import {
   Delete,
   UseInterceptors,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from "@nestjs/swagger";
 import { TokensService } from "./tokens.service";
 import { Token } from "./token.entity";
 import { ListingType } from "./nft-listing.entity";
 import { Cache } from "../../common/decorators/cache.decorator";
 import { CacheInterceptor } from "../../common/interceptors/cache.interceptor";
 
+/**
+ * # Tokens Controller
+ *
+ * REST API for managing SPL tokens, NFTs, and the NFT marketplace.
+ *
+ * ## SPL Token Program
+ *
+ * The Solana Program Library (SPL) Token Program is the standard for fungible
+ * and non-fungible tokens on Solana. Key concepts:
+ *
+ * - **Mint Account**: Defines a token type (decimals, supply, authorities)
+ * - **Token Account**: Holds tokens for a specific owner (ATA is standard)
+ * - **Mint Authority**: Can create new tokens
+ * - **Freeze Authority**: Can freeze/thaw token accounts
+ *
+ * ## Token-2022 (Token Extensions)
+ *
+ * Enhanced token program with additional features:
+ * - Transfer fees
+ * - Interest-bearing tokens
+ * - Non-transferable tokens (soul-bound)
+ * - Confidential transfers
+ *
+ * ## NFT Standards
+ *
+ * Solana NFTs use SPL tokens with:
+ * - Supply = 1, Decimals = 0
+ * - Metaplex Token Metadata Program for metadata
+ * - Master Edition for supply control
+ *
+ * @example
+ * ```typescript
+ * // Create a new token mint
+ * POST /tokens/mint
+ * {
+ *   "payerPrivateKey": "base58-private-key",
+ *   "decimals": 6,
+ *   "freezeAuthority": "optional-address"
+ * }
+ *
+ * // Mint NFT with metadata
+ * POST /tokens/create-nft
+ * {
+ *   "payerPrivateKey": "base58-private-key",
+ *   "name": "My NFT",
+ *   "symbol": "MNFT",
+ *   "uri": "https://arweave.net/metadata.json",
+ *   "sellerFeeBasisPoints": 500
+ * }
+ * ```
+ *
+ * @see https://spl.solana.com/token - SPL Token Program
+ * @see https://spl.solana.com/token-2022 - Token-2022 Extensions
+ * @see https://docs.metaplex.com/ - Metaplex NFT Standards
+ * @see [docs/diagrams/03-token-standards.md](docs/diagrams/03-token-standards.md) - Architecture
+ */
 @ApiTags("tokens")
 @Controller("tokens")
 @UseInterceptors(CacheInterceptor)
-/**
- * Controller for managing SPL tokens.
- * @see docs/diagrams/03-token-standards.md
- */
 export class TokensController {
   constructor(private readonly tokensService: TokensService) {}
 

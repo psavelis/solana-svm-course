@@ -14,6 +14,8 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
+  ApiBody,
 } from "@nestjs/swagger";
 import { SvmService } from "./svm.service";
 import { Program } from "./program.entity";
@@ -39,13 +41,92 @@ import {
   ResetGasMeterDto,
 } from "./dto/gas-meter.dto";
 
+/**
+ * # SVM Controller (Solana Virtual Machine)
+ *
+ * REST API for program management, execution, and gas metering.
+ *
+ * ## Solana Virtual Machine Architecture
+ *
+ * The SVM executes programs (smart contracts) using:
+ *
+ * - **BPF Bytecode**: Programs compiled to Berkeley Packet Filter
+ * - **Accounts Model**: All data stored in accounts
+ * - **Parallel Execution**: Transactions on different accounts run in parallel
+ * - **Sealevel Runtime**: Parallel smart contract runtime
+ *
+ * ## Program Lifecycle
+ *
+ * ```
+ * [Rust/C Source] → Compile → [BPF ELF]
+ *                                 ↓
+ *                        [Deploy to Solana]
+ *                                 ↓
+ *                        [Program Account Created]
+ *                                 ↓
+ *                        [Executable = true]
+ * ```
+ *
+ * ## Compute Units (Gas)
+ *
+ * Solana uses Compute Units (CUs) instead of gas:
+ *
+ * | Operation | CU Cost |
+ * |-----------|---------|
+ * | Base tx fee | 5,000 |
+ * | SHA256 (32B) | 85 |
+ * | Ed25519 verify | 2,000 |
+ * | CPI | ~1,000+ |
+ * | Account access | ~100 |
+ *
+ * Default limit: 200,000 CUs per instruction, 1.4M per transaction.
+ *
+ * ## Parallel Execution
+ *
+ * Transactions are executed in parallel when they don't overlap:
+ *
+ * ```
+ * Transaction A: [Account 1, Account 2] ─┐
+ *                                         ├── Parallel
+ * Transaction B: [Account 3, Account 4] ─┘
+ *
+ * Transaction C: [Account 1, Account 5] ─── Sequential with A
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Deploy a program
+ * POST /svm/programs/:id/deploy
+ * {
+ *   "network": "devnet",
+ *   "upgradeAuthority": "authority-address"
+ * }
+ *
+ * // Execute program instruction
+ * POST /svm/execute
+ * {
+ *   "programId": "program-uuid",
+ *   "instruction": "base64-instruction",
+ *   "accounts": [...]
+ * }
+ *
+ * // Execute in parallel
+ * POST /svm/execute/parallel
+ * {
+ *   "executions": [
+ *     { "programId": "...", "instruction": "..." },
+ *     { "programId": "...", "instruction": "..." }
+ *   ]
+ * }
+ * ```
+ *
+ * @see https://docs.solana.com/developing/programming-model/runtime - Runtime
+ * @see https://docs.solana.com/developing/programming-model/accounts - Account Model
+ * @see [docs/diagrams/09-svm.md](docs/diagrams/09-svm.md) - Architecture
+ */
 @ApiTags("SVM")
 @ApiBearerAuth()
 @Controller("svm")
-/**
- * Controller for Solana Virtual Machine (SVM) operations.
- * @see docs/diagrams/09-svm.md
- */
 export class SvmController {
   constructor(private readonly svmService: SvmService) {}
 

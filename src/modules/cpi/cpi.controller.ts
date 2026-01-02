@@ -9,7 +9,7 @@ import {
   HttpCode,
   HttpStatus,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from "@nestjs/swagger";
 import { CpiService } from "./cpi.service";
 import { CreateCpiInstructionDto } from "./dto/create-cpi-instruction.dto";
 import {
@@ -21,12 +21,82 @@ import { DexService } from "./dex.service";
 import { LendingService } from "./lending.service";
 import { NFTMarketplaceCpiService } from "./nft-marketplace-cpi.service";
 
+/**
+ * # CPI Controller (Cross-Program Invocations)
+ *
+ * REST API for cross-program invocations, DEX operations, and lending protocols.
+ *
+ * ## What is CPI?
+ *
+ * Cross-Program Invocation (CPI) allows Solana programs to call other programs.
+ * This is the foundation of composability in Solana DeFi.
+ *
+ * ```
+ * [User Wallet]
+ *       ↓
+ * [Your Program] ──CPI──> [Token Program] (transfer)
+ *       ↓
+ *       └─────CPI──────> [DEX Program] (swap)
+ *                              ↓
+ *                        [AMM Pool Account]
+ * ```
+ *
+ * ## CPI Security Model
+ *
+ * - **Signer Seeds**: PDAs can sign for themselves via CPI
+ * - **Privilege Escalation**: Caller's privileges extend to callee
+ * - **Compute Limits**: CPI depth limited to 4, shares compute budget
+ * - **Reentrancy**: No native protection (programs must implement guards)
+ *
+ * ## DEX Integration
+ *
+ * This API supports common DEX operations via CPI:
+ *
+ * | Operation | Description | CPI Target |
+ * |-----------|-------------|------------|
+ * | Swap | Exchange tokens | Raydium, Orca, Jupiter |
+ * | Add Liquidity | Provide LP tokens | Pool Program |
+ * | Remove Liquidity | Withdraw LP | Pool Program |
+ *
+ * ## Lending Protocol Integration
+ *
+ * Supports lending protocols like Solend, Marinade:
+ *
+ * | Operation | Description |
+ * |-----------|-------------|
+ * | Supply | Deposit collateral |
+ * | Borrow | Take out loan |
+ * | Repay | Return borrowed assets |
+ * | Withdraw | Remove collateral |
+ * | Liquidate | Close underwater positions |
+ *
+ * @example
+ * ```typescript
+ * // Execute a DEX swap via CPI
+ * POST /cpi/dex/swap
+ * {
+ *   "privateKey": "base58-private-key",
+ *   "poolAddress": "pool-address",
+ *   "amountIn": 1000000000,
+ *   "direction": "A_TO_B",
+ *   "slippageTolerance": 0.01
+ * }
+ *
+ * // Check CPI permission
+ * POST /cpi/check-permission
+ * {
+ *   "callerProgramId": "caller-program",
+ *   "targetProgramId": "target-program",
+ *   "permissionType": "invoke"
+ * }
+ * ```
+ *
+ * @see https://docs.solana.com/developing/programming-model/calling-between-programs - CPI
+ * @see https://www.anchor-lang.com/docs/cross-program-invocations - Anchor CPI
+ * @see [docs/diagrams/10-cpis.md](docs/diagrams/10-cpis.md) - Architecture
+ */
 @ApiTags("CPI (Cross-Program Invocations)")
 @Controller("cpi")
-/**
- * Controller for Cross-Program Invocations (CPI).
- * @see docs/diagrams/10-cpis.md
- */
 export class CpiController {
   constructor(
     private readonly cpiService: CpiService,

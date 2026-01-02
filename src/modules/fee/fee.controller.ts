@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery } from "@nestjs/swagger";
 import { FeeService, FeeEstimate, FeeRecommendation } from "./fee.service";
 import {
   FeeOptimizationService,
@@ -15,12 +15,76 @@ import {
 } from "./dto/fee.dto";
 import { Transaction } from "@solana/web3.js";
 
+/**
+ * # Fee Controller
+ *
+ * REST API for fee estimation, optimization, and market analysis.
+ *
+ * ## Solana Fee Model
+ *
+ * Solana fees consist of two components:
+ *
+ * ### Base Fee (Signature Fee)
+ * - Fixed: 5,000 lamports per signature (~$0.00025)
+ * - Paid regardless of transaction complexity
+ * - Burned (not paid to validators)
+ *
+ * ### Priority Fee (Compute Unit Price)
+ * - Variable: micro-lamports per compute unit
+ * - Paid to validator for faster inclusion
+ * - Higher during network congestion
+ *
+ * ```
+ * Total Fee = (Base Fee × Signatures) + (CU Price × CUs Used)
+ * ```
+ *
+ * ## Priority Fee Levels
+ *
+ * | Level | Use Case | Typical CU Price |
+ * |-------|----------|------------------|
+ * | Low | Non-urgent txs | 0-1,000 |
+ * | Medium | Normal txs | 1,000-10,000 |
+ * | High | Time-sensitive | 10,000-100,000 |
+ * | Turbo | NFT mints, arb | 100,000+ |
+ *
+ * ## Fee Optimization Strategies
+ *
+ * This API provides:
+ * - Real-time fee market analysis
+ * - Historical fee patterns
+ * - Transaction-specific recommendations
+ * - Success rate predictions
+ *
+ * @example
+ * ```typescript
+ * // Get fee estimate
+ * GET /fee/estimate?transactionData=base64-tx
+ *
+ * // Get recommendations with priority
+ * POST /fee/recommendations
+ * {
+ *   "transactionData": "base64-serialized-tx",
+ *   "priorityLevel": "high"
+ * }
+ *
+ * // Optimize fee for specific preferences
+ * POST /fee/optimize
+ * {
+ *   "transactionData": "base64-tx",
+ *   "userPreferences": {
+ *     "maxFeeLamports": 100000,
+ *     "targetSuccessRate": 0.95,
+ *     "speed": "fast"
+ *   }
+ * }
+ * ```
+ *
+ * @see https://docs.solana.com/transaction_fees - Transaction Fees
+ * @see https://docs.solana.com/developing/programming-model/runtime#prioritization-fees - Priority Fees
+ * @see [docs/diagrams/05-fee-mechanism.md](docs/diagrams/05-fee-mechanism.md) - Architecture
+ */
 @ApiTags("fee")
 @Controller("fee")
-/**
- * Controller for managing fee mechanisms and optimization.
- * @see docs/diagrams/05-fee-mechanism.md
- */
 export class FeeController {
   constructor(
     private readonly feeService: FeeService,

@@ -2,13 +2,25 @@ import { Injectable, Inject, Logger, OnModuleDestroy } from "@nestjs/common";
 import { ClientKafka } from "@nestjs/microservices";
 import { Transaction } from "../transactions/transaction.entity";
 
+/**
+ * Transaction event types for Kafka messaging.
+ *
+ * @see TransactionEventConsumer for event handling
+ */
 export enum TransactionEventType {
+  /** New transaction submitted to the network */
   CREATED = "transaction.created",
+  /** Transaction status changed (e.g., pending → confirmed) */
   STATUS_UPDATED = "transaction.status_updated",
+  /** Transaction finalized on-chain */
   CONFIRMED = "transaction.confirmed",
+  /** Transaction failed or rejected */
   FAILED = "transaction.failed",
 }
 
+/**
+ * Payload for transaction events published to Kafka.
+ */
 export interface TransactionEvent {
   eventType: TransactionEventType;
   transactionId: string;
@@ -22,12 +34,88 @@ export interface TransactionEvent {
   metadata?: any;
 }
 
+/**
+ * Kafka message wrapper with key and headers.
+ */
 export interface TransactionEventMessage {
-  key: string; // transaction signature
+  /** Message key (transaction signature for partitioning) */
+  key: string;
+  /** Event payload */
   value: TransactionEvent;
+  /** Optional headers for routing/filtering */
   headers?: Record<string, string>;
 }
 
+/**
+ * # Message Publisher Service
+ *
+ * Publishes transaction events to Kafka for async processing.
+ *
+ * ## Event Publishing Architecture
+ *
+ * ```
+ * [TransactionsService] ──creates──> [Transaction Entity]
+ *           ↓
+ * [TypeORM @AfterInsert/@AfterUpdate hooks]
+ *           ↓
+ * [MessagePublisherService.publishTransactionCreated()]
+ *           ↓
+ * [Buffer event (max 100 events)]
+ *           ↓
+ *     ┌─────┴─────┐
+ *     ↓           ↓
+ * [Buffer Full] [5s Timer]
+ *     ↓           ↓
+ *     └─────┬─────┘
+ *           ↓
+ * [Flush to Kafka 'transactions' topic]
+ * ```
+ *
+ * ## Buffering Strategy
+ *
+ * Events are buffered for efficiency:
+ * - Max buffer size: 100 events
+ * - Flush interval: 5 seconds
+ * - Immediate flush when buffer full
+ * - Graceful flush on module destroy
+ *
+ * ## Message Format
+ *
+ * ```json
+ * {
+ *   "key": "transaction-signature",
+ *   "value": {
+ *     "eventType": "transaction.created",
+ *     "transactionId": "uuid",
+ *     "signature": "base58-sig",
+ *     "amount": 1000000000,
+ *     "status": "pending",
+ *     "timestamp": "2024-01-01T00:00:00Z"
+ *   },
+ *   "headers": {
+ *     "event-type": "transaction.created",
+ *     "transaction-id": "uuid"
+ *   }
+ * }
+ * ```
+ *
+ * ## Error Handling
+ *
+ * Failed flushes:
+ * 1. Log error
+ * 2. Re-queue events to buffer
+ * 3. Retry on next flush interval
+ *
+ * ## Topics
+ *
+ * | Topic | Purpose |
+ * |-------|---------|
+ * | `transactions` | Main event stream |
+ * | `blockchain-events` | Generic blockchain events |
+ *
+ * @see TransactionEventConsumer - Event consumer
+ * @see KafkaModule - Kafka configuration
+ */
 @Injectable()
 export class MessagePublisherService implements OnModuleDestroy {
   private readonly logger = new Logger(MessagePublisherService.name);
@@ -46,6 +134,9 @@ export class MessagePublisherService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Cleanup on module destroy - flush remaining events.
+   */
   async onModuleDestroy() {
     if (this.flushInterval) {
       clearInterval(this.flushInterval);
@@ -55,7 +146,11 @@ export class MessagePublisherService implements OnModuleDestroy {
   }
 
   /**
-   * Publish a transaction creation event
+   * Publish a transaction creation event.
+   *
+   * Called when a new transaction is created in the database.
+   *
+   * @param transaction - The newly created transaction entity
    */
   async publishTransactionCreated(transaction: Transaction): Promise<void> {
     const event: TransactionEvent = {

@@ -1,5 +1,5 @@
 import { Controller, Post, Body, Get, Query } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from "@nestjs/swagger";
 import {
   SigningService,
   KeyPairResponse,
@@ -29,12 +29,92 @@ import {
   CancelOfflineSigningRequestDto,
 } from "./dto/signing.dto";
 
+/**
+ * # Signing Controller
+ *
+ * REST API for cryptographic signing, multi-sig, hardware wallets, and offline signing.
+ *
+ * ## Solana Cryptography
+ *
+ * Solana uses **Ed25519** for all signing operations:
+ *
+ * - **Key Pairs**: 32-byte private key → 32-byte public key
+ * - **Signatures**: 64-byte Ed25519 signatures
+ * - **Addresses**: Base58-encoded public keys
+ *
+ * ## Signing Methods
+ *
+ * | Method | Use Case | Security |
+ * |--------|----------|----------|
+ * | Direct | Development/testing | Low (key in memory) |
+ * | Hardware Wallet | User funds | High (key on device) |
+ * | Multi-Sig | Treasury/DAO | Very High (M of N) |
+ * | Offline | Air-gapped signing | Very High (cold storage) |
+ *
+ * ## Multi-Signature Transactions
+ *
+ * Multi-sig requires M of N signers to approve:
+ *
+ * ```
+ * [Create MultiSig Account] (2 of 3 required)
+ *          ↓
+ * [Create Transaction] → Pending
+ *          ↓
+ * [Signer 1 Signs] → 1/2 signatures
+ *          ↓
+ * [Signer 2 Signs] → 2/2 signatures ✓
+ *          ↓
+ * [Execute Transaction]
+ * ```
+ *
+ * ## Offline Signing Flow
+ *
+ * For air-gapped/cold storage signing:
+ *
+ * ```
+ * [Online Machine] → Create signing request
+ *          ↓
+ * [Export QR/file] → Transfer to offline
+ *          ↓
+ * [Offline Machine] → Sign with cold key
+ *          ↓
+ * [Export signature] → Transfer to online
+ *          ↓
+ * [Online Machine] → Submit transaction
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Generate new keypair
+ * POST /signing/generate-keypair
+ * {}
+ * // Response: { publicKey: "...", privateKey: "..." }
+ *
+ * // Sign message with hardware wallet
+ * POST /signing/hardware-wallet/sign-message
+ * {
+ *   "message": "base64-message",
+ *   "config": {
+ *     "walletType": "ledger",
+ *     "derivationPath": "44'/501'/0'/0'"
+ *   }
+ * }
+ *
+ * // Create multi-sig transaction
+ * POST /signing/multisig/create-transaction
+ * {
+ *   "multiSigAccountId": "account-uuid",
+ *   "transaction": { ... },
+ *   "creatorPrivateKey": "..."
+ * }
+ * ```
+ *
+ * @see https://docs.solana.com/wallet-guide/paper-wallet - Key Management
+ * @see https://docs.solana.com/cli/transfer-tokens#offline-signing - Offline Signing
+ * @see [docs/diagrams/07-signing-cryptography.md](docs/diagrams/07-signing-cryptography.md) - Architecture
+ */
 @ApiTags("signing")
 @Controller("signing")
-/**
- * Controller for managing signing and cryptography.
- * @see docs/diagrams/07-signing-cryptography.md
- */
 export class SigningController {
   constructor(private readonly signingService: SigningService) {}
 

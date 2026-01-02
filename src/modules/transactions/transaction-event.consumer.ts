@@ -11,6 +11,75 @@ import {
   TransactionEventType,
 } from "./message-publisher.service";
 
+/**
+ * # Transaction Event Consumer
+ *
+ * Kafka consumer for processing transaction events asynchronously.
+ *
+ * ## Async Event Flow
+ *
+ * ```
+ * [TransactionsController] → POST /transactions/transfer
+ *           ↓
+ * [TransactionsService.sendTransfer()]
+ *           ↓
+ * [MessagePublisherService.publishTransactionCreated()]
+ *           ↓
+ * [Kafka 'transactions' topic]
+ *           ↓
+ * [TransactionEventConsumer.handleTransactionEvent()]
+ *           ↓
+ *     ┌─────┴─────┐
+ *     ↓           ↓
+ * [CREATED]  [STATUS_UPDATED]  [CONFIRMED]  [FAILED]
+ *     ↓           ↓                ↓           ↓
+ * [Process]  [Update dashboards] [Notify]  [Alert]
+ * ```
+ *
+ * ## Event Types
+ *
+ * | Event | Trigger | Processing |
+ * |-------|---------|------------|
+ * | `transaction.created` | New tx submitted | Update metrics, validate |
+ * | `transaction.status_updated` | Status change | Refresh dashboards |
+ * | `transaction.confirmed` | On-chain finalized | Send confirmation |
+ * | `transaction.failed` | Tx rejected | Send failure alert |
+ *
+ * ## Retry Strategy
+ *
+ * Failed message processing follows this pattern:
+ *
+ * ```
+ * [Initial Attempt] → Failed
+ *         ↓
+ * [Retry 1 (immediate)] → Failed
+ *         ↓
+ * [Retry 2 (immediate)] → Failed
+ *         ↓
+ * [Retry 3 (immediate)] → Failed
+ *         ↓
+ * [Dead Letter Queue (DLQ)]
+ * ```
+ *
+ * After 3 retries, messages go to `transaction-events-dlq` topic
+ * for manual investigation.
+ *
+ * ## Offset Management
+ *
+ * Uses manual offset commits for exactly-once semantics:
+ * - Commit only after successful processing
+ * - Commit after DLQ on max retries
+ * - Never block partition with poison messages
+ *
+ * ## Configuration
+ *
+ * Environment variables:
+ * - `KAFKA_BROKERS`: Comma-separated broker list
+ * - `KAFKA_GROUP_ID`: Consumer group (default: solana-study-consumer)
+ *
+ * @see [src/common/kafka/kafka.module.ts](src/common/kafka/kafka.module.ts) - Kafka config
+ * @see [src/modules/transactions/message-publisher.service.ts](src/modules/transactions/message-publisher.service.ts) - Publisher
+ */
 @Injectable()
 export class TransactionEventConsumer implements OnModuleInit {
   private readonly logger = new Logger(TransactionEventConsumer.name);
@@ -19,6 +88,13 @@ export class TransactionEventConsumer implements OnModuleInit {
     @Inject("KAFKA_SERVICE") private readonly kafkaClient: ClientKafka,
   ) {}
 
+  /**
+   * Initialize Kafka subscriptions on module startup.
+   *
+   * Subscribes to:
+   * - `transactions`: Main event topic
+   * - `transaction-events-dlq`: Dead letter queue for failed events
+   */
   async onModuleInit() {
     // Subscribe to transaction events topic
     this.kafkaClient.subscribeToResponseOf("transactions");
@@ -31,7 +107,13 @@ export class TransactionEventConsumer implements OnModuleInit {
   }
 
   /**
-   * Handle transaction created events
+   * Main event handler for transaction events.
+   *
+   * Routes events to appropriate handlers based on event type.
+   * Implements retry logic with DLQ fallback.
+   *
+   * @param message - Kafka message containing TransactionEvent
+   * @param context - Kafka context for offset management
    */
   @EventPattern("transactions")
   async handleTransactionEvent(

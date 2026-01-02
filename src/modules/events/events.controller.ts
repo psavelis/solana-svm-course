@@ -10,7 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from "@nestjs/swagger";
 import { EventsService } from "./events.service";
 import { EventSubscriptionService } from "./event-subscription.service";
 import { EventFilterService } from "./event-filter.service";
@@ -24,12 +24,86 @@ import {
   UpdateEventFilterDto,
 } from "./dto/event-filter.dto";
 
+/**
+ * # Events Controller
+ *
+ * REST API for real-time event streaming, subscriptions, and filtering.
+ *
+ * ## Solana Event Model
+ *
+ * Solana programs emit events through the logging system:
+ *
+ * - **Program Logs**: Text messages from `msg!()` macro
+ * - **CPI Logs**: Nested logs from cross-program invocations
+ * - **Return Data**: Structured data returned by programs
+ *
+ * Unlike Ethereum events (indexed, queryable), Solana logs are:
+ * - Stored only for recent slots (not permanently indexed)
+ * - Must be parsed from transaction data
+ * - Require custom indexing solutions for historical queries
+ *
+ * ## Real-Time Subscriptions
+ *
+ * This API supports WebSocket subscriptions via Solana RPC:
+ *
+ * - **Account Subscriptions**: Watch for balance/data changes
+ * - **Program Subscriptions**: Monitor all accounts owned by a program
+ * - **Logs Subscriptions**: Stream program logs in real-time
+ *
+ * ## Event Processing Flow
+ *
+ * ```
+ * [Solana RPC WebSocket]
+ *          ↓
+ * [EventsService.subscribeToAccount()]
+ *          ↓
+ * [Parse and normalize event]
+ *          ↓
+ * [Apply filters from EventFilterService]
+ *          ↓
+ * [Check subscriptions from EventSubscriptionService]
+ *          ↓
+ * [Deliver via configured callback URL / webhook]
+ * ```
+ *
+ * ## Subscription Types
+ *
+ * | Type | Description | Use Case |
+ * |------|-------------|----------|
+ * | `account_change` | Account data/balance changes | Wallet monitoring |
+ * | `program_change` | Any account owned by program | DeFi protocols |
+ * | `logs` | Program log messages | Debug/analytics |
+ * | `slot` | New slot notifications | Block watchers |
+ *
+ * @example
+ * ```typescript
+ * // Create event subscription
+ * POST /events/subscriptions
+ * {
+ *   "clientId": "my-service-123",
+ *   "subscriptionType": "account_change",
+ *   "targetAddresses": ["9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"],
+ *   "callbackUrl": "https://myservice.com/webhooks/solana"
+ * }
+ *
+ * // Create filter for high-value transfers
+ * POST /events/filters
+ * {
+ *   "name": "whale-alerts",
+ *   "ownerId": "my-service-123",
+ *   "conditions": {
+ *     "eventType": "transfer",
+ *     "minAmount": 1000000000000
+ *   }
+ * }
+ * ```
+ *
+ * @see https://docs.solana.com/developing/clients/jsonrpc-api#subscription-websocket - WebSocket API
+ * @see https://docs.solana.com/developing/programming-model/transactions#log-messages - Program Logs
+ * @see [docs/diagrams/11-events-logging.md](docs/diagrams/11-events-logging.md) - Architecture
+ */
 @ApiTags("Events (Real-time Event Streaming)")
 @Controller("events")
-/**
- * Controller for Events and Logging.
- * @see docs/diagrams/11-events-logging.md
- */
 export class EventsController {
   constructor(
     private readonly eventsService: EventsService,

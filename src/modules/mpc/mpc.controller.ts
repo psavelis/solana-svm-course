@@ -7,7 +7,7 @@ import {
   Delete,
   Query,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
 import {
   MpcService,
   CreateMpcWalletRequest,
@@ -22,12 +22,82 @@ import {
   GetKeySharesDto,
 } from "./dto/mpc.dto";
 
+/**
+ * # MPC Controller (Multi-Party Computation)
+ *
+ * REST API for MPC wallet operations using threshold signatures.
+ *
+ * ## What is MPC?
+ *
+ * Multi-Party Computation enables distributed key generation and signing
+ * where no single party ever holds the complete private key:
+ *
+ * ```
+ * [Full Key] → Split into N shares
+ *                   ↓
+ *   [Share 1] [Share 2] [Share 3] ... [Share N]
+ *        ↓         ↓         ↓
+ *   [Party 1] [Party 2] [Party 3]
+ *        ↓         ↓         ↓
+ *   [Partial] [Partial] [Partial]
+ *        ↓         ↓         ↓
+ *        └─────────┴─────────┘
+ *                  ↓
+ *        [Combined Signature]
+ * ```
+ *
+ * ## Threshold Signatures (t-of-n)
+ *
+ * Only `t` of `n` total shares are needed to sign:
+ *
+ * | Config | Use Case |
+ * |--------|----------|
+ * | 2-of-3 | User + Recovery + Service |
+ * | 3-of-5 | Corporate Treasury |
+ * | 4-of-7 | DAO Multi-sig |
+ *
+ * ## MPC vs Multi-Sig
+ *
+ * | Feature | MPC | Multi-Sig |
+ * |---------|-----|-----------|
+ * | On-chain footprint | Single sig | Multiple sigs |
+ * | Key custody | Distributed | Individual |
+ * | Privacy | High | Lower |
+ * | Complexity | Higher | Lower |
+ *
+ * ## Security Features
+ *
+ * - **Distributed Key Generation (DKG)**: No trusted dealer
+ * - **Proactive Refresh**: Rotate shares without changing address
+ * - **Share Revocation**: Invalidate compromised shares
+ *
+ * @example
+ * ```typescript
+ * // Create MPC wallet with 2-of-3 threshold
+ * POST /mpc/wallets
+ * {
+ *   "name": "Treasury",
+ *   "threshold": 2,
+ *   "numShares": 3,
+ *   "participantIds": ["alice", "bob", "charlie"]
+ * }
+ *
+ * // Sign transaction with MPC
+ * POST /mpc/sign
+ * {
+ *   "walletId": "wallet-uuid",
+ *   "transactionData": "base64-serialized-tx",
+ *   "signingParticipants": ["alice", "bob"],
+ *   "partialSignatures": [...]
+ * }
+ * ```
+ *
+ * @see https://en.wikipedia.org/wiki/Secure_multi-party_computation - MPC Theory
+ * @see https://eprint.iacr.org/2020/540 - Threshold ECDSA
+ * @see [docs/diagrams/08-mpc.md](docs/diagrams/08-mpc.md) - Architecture
+ */
 @ApiTags("mpc")
 @Controller("mpc")
-/**
- * Controller for Multi-Party Computation (MPC) wallet operations.
- * @see docs/diagrams/08-mpc.md
- */
 export class MpcController {
   constructor(private readonly mpcService: MpcService) {}
 
