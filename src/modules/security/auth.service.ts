@@ -1,18 +1,13 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-  Logger,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import * as bcrypt from "bcrypt";
-import * as crypto from "crypto";
-import { JwtService } from "@nestjs/jwt";
-import { ConfigService } from "@nestjs/config";
-import { User, UserRole, UserStatus } from "./entities/user.entity";
-import { ApiKey, ApiKeyPermission } from "./entities/api-key.entity";
-import { RegisterUserDto, LoginUserDto, CreateApiKeyDto } from "./dto/auth.dto";
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { User, UserRole, UserStatus } from './entities/user.entity';
+import { ApiKey, ApiKeyPermission } from './entities/api-key.entity';
+import { RegisterUserDto, LoginUserDto, CreateApiKeyDto } from './dto/auth.dto';
 
 @Injectable()
 /**
@@ -42,7 +37,7 @@ export class AuthService {
       where: { email: dto.email },
     });
     if (existingUser) {
-      throw new BadRequestException("User with this email already exists");
+      throw new BadRequestException('User with this email already exists');
     }
 
     // Hash password
@@ -77,22 +72,19 @@ export class AuthService {
       where: { email: dto.email },
     });
     if (!user) {
-      throw new UnauthorizedException("Invalid credentials");
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     // Check if user can attempt login
     if (!user.canAttemptLogin()) {
-      throw new UnauthorizedException("Account is locked or inactive");
+      throw new UnauthorizedException('Account is locked or inactive');
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(
-      dto.password,
-      user.passwordHash,
-    );
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isPasswordValid) {
       await this.handleFailedLogin(user);
-      throw new UnauthorizedException("Invalid credentials");
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     // Reset login attempts and update last login
@@ -124,7 +116,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new BadRequestException("User not found");
+      throw new BadRequestException('User not found');
     }
 
     // Generate secure API key
@@ -137,14 +129,14 @@ export class AuthService {
     if (dto.expiresAt) {
       expiresAt = new Date(dto.expiresAt);
       if (isNaN(expiresAt.getTime())) {
-        throw new BadRequestException("Invalid expiration date");
+        throw new BadRequestException('Invalid expiration date');
       }
     }
 
     const apiKey = this.apiKeyRepository.create({
       userId,
       name: dto.name,
-      description: dto.description || "",
+      description: dto.description || '',
       keyHash,
       keyPrefix,
       permission: (dto.permission as ApiKeyPermission) || ApiKeyPermission.READ,
@@ -164,7 +156,7 @@ export class AuthService {
     const keyPrefix = apiKey.substring(0, 8);
     const apiKeys = await this.apiKeyRepository.find({
       where: { keyPrefix },
-      relations: ["user"],
+      relations: ['user'],
     });
 
     for (const key of apiKeys) {
@@ -188,7 +180,7 @@ export class AuthService {
   async getUserApiKeys(userId: string): Promise<ApiKey[]> {
     return await this.apiKeyRepository.find({
       where: { userId },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -201,10 +193,10 @@ export class AuthService {
     });
 
     if (!apiKey) {
-      throw new BadRequestException("API key not found");
+      throw new BadRequestException('API key not found');
     }
 
-    apiKey.status = "revoked" as any;
+    apiKey.status = 'revoked' as any;
     await this.apiKeyRepository.save(apiKey);
   }
 
@@ -218,7 +210,7 @@ export class AuthService {
       role: user.role,
     };
 
-    const expiresIn = this.configService.get("JWT_EXPIRES_IN", "24h");
+    const expiresIn = this.configService.get('JWT_EXPIRES_IN', '24h');
 
     return this.jwtService.sign(payload, { expiresIn });
   }
@@ -227,7 +219,7 @@ export class AuthService {
    * Generate secure API key
    */
   private generateSecureApiKey(): string {
-    return "sk_" + crypto.randomBytes(32).toString("hex");
+    return 'sk_' + crypto.randomBytes(32).toString('hex');
   }
 
   /**

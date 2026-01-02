@@ -1,24 +1,24 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { getRepositoryToken } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { AccountsController } from "./accounts.controller";
-import { AccountsService } from "./accounts.service";
-import { PdaService } from "./pda.service";
-import { Account } from "./account.entity";
-import { RedisModule } from "../../common/redis/redis.module";
-import { QueryCacheService } from "../../common/cache/query-cache.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AccountsController } from './accounts.controller';
+import { AccountsService } from './accounts.service';
+import { PdaService } from './pda.service';
+import { Account } from './account.entity';
+import { RedisModule } from '../../common/redis/redis.module';
+import { QueryCacheService } from '../../common/cache/query-cache.service';
 
-describe("AccountsController", () => {
+describe('AccountsController', () => {
   let controller: AccountsController;
   let service: AccountsService;
   let mockRepository: Partial<Repository<Account>>;
   let mockQueryCacheService: Partial<QueryCacheService>;
 
   const mockAccount: Account = {
-    id: "test-id",
-    address: "11111111111111111111111111111112",
+    id: 'test-id',
+    address: '11111111111111111111111111111112',
     balance: 1000000,
-    owner: "test-owner",
+    owner: 'test-owner',
     isPda: false,
     programId: null,
     metadata: { test: true },
@@ -61,17 +61,17 @@ describe("AccountsController", () => {
     service = module.get<AccountsService>(AccountsService);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  describe("create", () => {
-    it("should create a new account", async () => {
+  describe('create', () => {
+    it('should create a new account', async () => {
       const createData = {
-        address: "11111111111111111111111111111112",
+        address: '11111111111111111111111111111112',
         balance: 1000000,
       };
-      jest.spyOn(service, "create").mockResolvedValue(mockAccount);
+      jest.spyOn(service, 'create').mockResolvedValue(mockAccount);
 
       const result = await controller.create(createData);
 
@@ -80,10 +80,10 @@ describe("AccountsController", () => {
     });
   });
 
-  describe("findAll", () => {
-    it("should return all accounts", async () => {
+  describe('findAll', () => {
+    it('should return all accounts', async () => {
       const accounts = [mockAccount];
-      jest.spyOn(service, "findAll").mockResolvedValue(accounts);
+      jest.spyOn(service, 'findAll').mockResolvedValue(accounts);
 
       const result = await controller.findAll();
 
@@ -92,91 +92,79 @@ describe("AccountsController", () => {
     });
   });
 
-  describe("findOne", () => {
-    it("should return account by id", async () => {
-      jest.spyOn(service, "findOne").mockResolvedValue(mockAccount);
+  describe('findOne', () => {
+    it('should return account by id', async () => {
+      jest.spyOn(service, 'findOne').mockResolvedValue(mockAccount);
 
-      const result = await controller.findOne("test-id");
+      const result = await controller.findOne('test-id');
 
-      expect(service.findOne).toHaveBeenCalledWith("test-id");
+      expect(service.findOne).toHaveBeenCalledWith('test-id');
       expect(result).toEqual(mockAccount);
     });
   });
 
-  describe("findByAddress", () => {
-    it("should return account by address", async () => {
-      jest.spyOn(service, "findByAddress").mockResolvedValue(mockAccount);
+  describe('findByAddress', () => {
+    it('should return account by address', async () => {
+      jest.spyOn(service, 'findByAddress').mockResolvedValue(mockAccount);
 
-      const result = await controller.findByAddress(
-        "11111111111111111111111111111112",
-      );
+      const result = await controller.findByAddress('11111111111111111111111111111112');
 
-      expect(service.findByAddress).toHaveBeenCalledWith(
-        "11111111111111111111111111111112",
-      );
+      expect(service.findByAddress).toHaveBeenCalledWith('11111111111111111111111111111112');
       expect(result).toEqual(mockAccount);
     });
   });
 
-  describe("update", () => {
-    it("should update account", async () => {
+  describe('update', () => {
+    it('should update account', async () => {
       const updateData = { balance: 2000000 };
       const updatedAccount = { ...mockAccount, balance: 2000000 };
-      jest.spyOn(service, "update").mockResolvedValue(updatedAccount);
+      jest.spyOn(service, 'update').mockResolvedValue(updatedAccount);
 
-      const result = await controller.update("test-id", updateData);
+      const result = await controller.update('test-id', updateData);
 
-      expect(service.update).toHaveBeenCalledWith("test-id", updateData);
+      expect(service.update).toHaveBeenCalledWith('test-id', updateData);
       expect(result).toEqual(updatedAccount);
     });
   });
 
-  describe("remove", () => {
-    it("should delete account", async () => {
-      jest.spyOn(service, "remove").mockResolvedValue(undefined);
+  describe('remove', () => {
+    it('should delete account', async () => {
+      jest.spyOn(service, 'remove').mockResolvedValue(undefined);
 
-      const result = await controller.remove("test-id");
+      const result = await controller.remove('test-id');
 
-      expect(service.remove).toHaveBeenCalledWith("test-id");
+      expect(service.remove).toHaveBeenCalledWith('test-id');
       expect(result).toBeUndefined();
     });
   });
 
-  describe("getAccountInfo", () => {
-    it("should get account info from blockchain", async () => {
+  describe('getAccountInfo', () => {
+    it('should get account info from blockchain', async () => {
       const accountInfo = {
-        address: "11111111111111111111111111111112",
+        address: '11111111111111111111111111111112',
         exists: true,
         lamports: 1000000,
-        owner: "test-owner",
+        owner: 'test-owner',
         executable: false,
-        data: "dGVzdC1kYXRh", // base64 encoded 'test-data'
+        data: 'dGVzdC1kYXRh', // base64 encoded 'test-data'
       };
-      jest.spyOn(service, "getAccountInfo").mockResolvedValue(accountInfo);
+      jest.spyOn(service, 'getAccountInfo').mockResolvedValue(accountInfo);
 
-      const result = await controller.getAccountInfo(
-        "11111111111111111111111111111112",
-      );
+      const result = await controller.getAccountInfo('11111111111111111111111111111112');
 
-      expect(service.getAccountInfo).toHaveBeenCalledWith(
-        "11111111111111111111111111111112",
-      );
+      expect(service.getAccountInfo).toHaveBeenCalledWith('11111111111111111111111111111112');
       expect(result).toEqual(accountInfo);
     });
   });
 
-  describe("getBalance", () => {
-    it("should get account balance", async () => {
+  describe('getBalance', () => {
+    it('should get account balance', async () => {
       const balance = 1000000;
-      jest.spyOn(service, "getBalance").mockResolvedValue(balance);
+      jest.spyOn(service, 'getBalance').mockResolvedValue(balance);
 
-      const result = await controller.getBalance(
-        "11111111111111111111111111111112",
-      );
+      const result = await controller.getBalance('11111111111111111111111111111112');
 
-      expect(service.getBalance).toHaveBeenCalledWith(
-        "11111111111111111111111111111112",
-      );
+      expect(service.getBalance).toHaveBeenCalledWith('11111111111111111111111111111112');
       expect(result).toEqual(balance);
     });
   });

@@ -1,13 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  Query,
-} from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
+import { Controller, Get, Post, Body, Param, Delete, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import {
   MpcService,
   CreateMpcWalletRequest,
@@ -15,12 +7,8 @@ import {
   KeyShareResponse,
   SignTransactionRequest,
   SignatureReconstructionResult,
-} from "./mpc.service";
-import {
-  CreateMpcWalletDto,
-  SignTransactionDto,
-  GetKeySharesDto,
-} from "./dto/mpc.dto";
+} from './mpc.service';
+import { CreateMpcWalletDto, SignTransactionDto, GetKeySharesDto } from './dto/mpc.dto';
 
 /**
  * # MPC Controller (Multi-Party Computation)
@@ -96,74 +84,69 @@ import {
  * @see https://eprint.iacr.org/2020/540 - Threshold ECDSA
  * @see [docs/diagrams/08-mpc.md](docs/diagrams/08-mpc.md) - Architecture
  */
-@ApiTags("mpc")
-@Controller("mpc")
+@ApiTags('mpc')
+@Controller('mpc')
 export class MpcController {
   constructor(private readonly mpcService: MpcService) {}
 
-  @Post("wallets")
+  @Post('wallets')
   @ApiOperation({
-    summary: "Create a new MPC wallet with distributed key generation",
+    summary: 'Create a new MPC wallet with distributed key generation',
   })
   @ApiResponse({
     status: 201,
-    description: "MPC wallet created successfully",
+    description: 'MPC wallet created successfully',
     type: Object,
   })
-  async createMpcWallet(
-    @Body() request: CreateMpcWalletDto,
-  ): Promise<MpcWalletResponse> {
+  async createMpcWallet(@Body() request: CreateMpcWalletDto): Promise<MpcWalletResponse> {
     return this.mpcService.createMpcWallet(request);
   }
 
-  @Get("wallets")
-  @ApiOperation({ summary: "Get all MPC wallets" })
+  @Get('wallets')
+  @ApiOperation({ summary: 'Get all MPC wallets' })
   @ApiResponse({
     status: 200,
-    description: "MPC wallets retrieved successfully",
+    description: 'MPC wallets retrieved successfully',
     type: Array,
   })
   async getMpcWallets(): Promise<MpcWalletResponse[]> {
     return this.mpcService.getMpcWallets();
   }
 
-  @Get("wallets/:walletId")
-  @ApiOperation({ summary: "Get a specific MPC wallet by ID" })
+  @Get('wallets/:walletId')
+  @ApiOperation({ summary: 'Get a specific MPC wallet by ID' })
   @ApiResponse({
     status: 200,
-    description: "MPC wallet retrieved successfully",
+    description: 'MPC wallet retrieved successfully',
     type: Object,
   })
-  async getMpcWallet(
-    @Param("walletId") walletId: string,
-  ): Promise<MpcWalletResponse> {
+  async getMpcWallet(@Param('walletId') walletId: string): Promise<MpcWalletResponse> {
     return this.mpcService.getMpcWallet(walletId);
   }
 
-  @Get("wallets/:walletId/shares")
+  @Get('wallets/:walletId/shares')
   @ApiOperation({
-    summary:
-      "Get key shares for a wallet (requires participant authentication)",
+    summary: 'Get key shares for a wallet (requires participant authentication)',
   })
   @ApiResponse({
     status: 200,
-    description: "Key shares retrieved successfully",
+    description: 'Key shares retrieved successfully',
     type: Array,
   })
   async getWalletKeyShares(
-    @Param("walletId") walletId: string,
+    @Param('walletId') walletId: string,
     @Query() query: GetKeySharesDto,
   ): Promise<KeyShareResponse[]> {
     return this.mpcService.getWalletKeyShares(walletId, query.participantId);
   }
 
-  @Post("sign")
+  @Post('sign')
   @ApiOperation({
-    summary: "Sign a transaction using MPC threshold signatures",
+    summary: 'Sign a transaction using MPC threshold signatures',
   })
   @ApiResponse({
     status: 201,
-    description: "Transaction signed successfully using MPC",
+    description: 'Transaction signed successfully using MPC',
     type: Object,
   })
   async signTransaction(
@@ -172,16 +155,16 @@ export class MpcController {
     return this.mpcService.signTransaction(request);
   }
 
-  @Delete("wallets/:walletId/shares/:participantId/:shareIndex")
-  @ApiOperation({ summary: "Revoke a key share (for security or recovery)" })
+  @Delete('wallets/:walletId/shares/:participantId/:shareIndex')
+  @ApiOperation({ summary: 'Revoke a key share (for security or recovery)' })
   @ApiResponse({
     status: 200,
-    description: "Key share revoked successfully",
+    description: 'Key share revoked successfully',
   })
   async revokeKeyShare(
-    @Param("walletId") walletId: string,
-    @Param("participantId") participantId: string,
-    @Param("shareIndex") shareIndex: number,
+    @Param('walletId') walletId: string,
+    @Param('participantId') participantId: string,
+    @Param('shareIndex') shareIndex: number,
   ): Promise<void> {
     return this.mpcService.revokeKeyShare(walletId, participantId, shareIndex);
   }

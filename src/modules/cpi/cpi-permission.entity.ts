@@ -7,43 +7,43 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
-} from "typeorm";
-import { Program } from "../svm/program.entity";
+} from 'typeorm';
+import { Program } from '../svm/program.entity';
 
 /**
  * CPI Permission Entity
- * 
+ *
  * Represents permission grants for Cross-Program Invocation (CPI) between Solana
  * programs. While Solana's permissionless CPI model allows any program to call
  * any other program, this entity tracks application-level permission logic.
- * 
+ *
  * Key permission concepts:
  * - Privilege Extension: Signers from the calling program can be passed to the callee
  * - PDA Signing: Programs can sign via `invoke_signed` for PDAs they own
  * - Account Permissions: Read/write access determined by account_meta flags
- * 
+ *
  * Permission Types:
  * - invoke: Can call the program's instructions
  * - read: Can read account data owned by the program
  * - write: Can modify account data via CPI
  * - admin: Full control including upgrades
- * 
+ *
  * Security Considerations:
  * - CPIs inherit signer privileges - be careful what you sign
  * - Only PDAs derived from your program can sign on your behalf
  * - Validate all accounts in CPI to prevent unauthorized access
- * 
+ *
  * @example
  * const perm = new CpiPermission();
  * perm.programId = "targetProgramAddress...";
  * perm.granterProgramId = "myProgramAddress...";
  * perm.permissionType = "invoke";
  * perm.constraints = { maxAmount: 1000000 };
- * 
+ *
  * @see https://solana.com/docs/core/cpi#privilege-extension
  * @see https://solana.com/docs/core/pda#how-to-sign-with-a-pda
  */
-@Entity("cpi_permissions")
+@Entity('cpi_permissions')
 export class CpiPermission {
   /**
    * unique identifier for the permission record
@@ -51,7 +51,7 @@ export class CpiPermission {
    * example: "g7h8i9j0-k1l2-3m4n-5o6p-7q8r9s0t1u2v"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -60,7 +60,7 @@ export class CpiPermission {
    * example: "targetProgramAddress..."
    * reference: https://solana.com/docs/core/programs
    */
-  @Column({ type: "varchar", length: 88 })
+  @Column({ type: 'varchar', length: 88 })
   @Index()
   programId: string; // Program being granted permission
 
@@ -70,7 +70,7 @@ export class CpiPermission {
    * example: "granterProgramAddress..."
    * reference: https://solana.com/docs/core/cpi
    */
-  @Column({ type: "varchar", length: 88 })
+  @Column({ type: 'varchar', length: 88 })
   @Index()
   granterProgramId: string; // Program granting the permission
 
@@ -80,7 +80,7 @@ export class CpiPermission {
    * example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
    * reference: https://solana.com/docs/core/accounts
    */
-  @Column({ type: "varchar", length: 88, nullable: true })
+  @Column({ type: 'varchar', length: 88, nullable: true })
   @Index()
   accountId: string; // Specific account if permission is account-specific
 
@@ -90,7 +90,7 @@ export class CpiPermission {
    * example: "invoke"
    * reference: none
    */
-  @Column({ type: "varchar", length: 64 })
+  @Column({ type: 'varchar', length: 64 })
   permissionType: string; // e.g., 'invoke', 'read', 'write', 'admin'
 
   /**
@@ -99,7 +99,7 @@ export class CpiPermission {
    * example: { "maxAmount": 1000000, "allowedMethods": ["transfer"] }
    * reference: none
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   constraints: any; // Additional constraints on the permission
 
   /**
@@ -108,7 +108,7 @@ export class CpiPermission {
    * example: true
    * reference: none
    */
-  @Column({ type: "boolean", default: true })
+  @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
   /**
@@ -117,7 +117,7 @@ export class CpiPermission {
    * example: "2024-12-31T23:59:59Z"
    * reference: none
    */
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   expiresAt: Date; // Optional expiration
 
   /**
@@ -145,7 +145,7 @@ export class CpiPermission {
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
   @ManyToOne(() => Program)
-  @JoinColumn({ name: "programId" })
+  @JoinColumn({ name: 'programId' })
   program: Program;
 
   /**
@@ -155,6 +155,6 @@ export class CpiPermission {
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
   @ManyToOne(() => Program)
-  @JoinColumn({ name: "granterProgramId" })
+  @JoinColumn({ name: 'granterProgramId' })
   granterProgram: Program;
 }

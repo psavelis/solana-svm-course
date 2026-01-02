@@ -1,8 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { DataSource, MigrationInterface, QueryRunner } from "typeorm";
-import { InjectDataSource } from "@nestjs/typeorm";
-import * as fs from "fs";
-import * as path from "path";
+import { Injectable, Logger } from '@nestjs/common';
+import { DataSource, MigrationInterface, QueryRunner } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface MigrationInfo {
   name: string;
@@ -82,10 +82,7 @@ export class MigrationService {
             `migration ${this.getMigrationName(migration)} failed: ${error.message}`,
           );
 
-          this.logger.error(
-            `migration ${this.getMigrationName(migration)} failed:`,
-            error,
-          );
+          this.logger.error(`migration ${this.getMigrationName(migration)} failed:`, error);
           break; // Stop on first failure
         }
       }
@@ -112,13 +109,12 @@ export class MigrationService {
       const executedMigrations = await this.getExecutedMigrations();
 
       if (executedMigrations.length === 0) {
-        result.errors.push("No migrations to rollback");
+        result.errors.push('No migrations to rollback');
         return result;
       }
 
       // Get the last executed migration
-      const lastMigrationName =
-        executedMigrations[executedMigrations.length - 1];
+      const lastMigrationName = executedMigrations[executedMigrations.length - 1];
       const migration = this.findMigrationByName(lastMigrationName);
 
       if (!migration) {
@@ -129,15 +125,11 @@ export class MigrationService {
       try {
         await migration.down(this.dataSource.createQueryRunner());
         result.executedMigrations.push(lastMigrationName);
-        console.log(
-          `√ Migration ${lastMigrationName} rolled back successfully`,
-        );
+        console.log(`√ Migration ${lastMigrationName} rolled back successfully`);
       } catch (error) {
         result.success = false;
         result.failedMigrations.push(lastMigrationName);
-        result.errors.push(
-          `Rollback of ${lastMigrationName} failed: ${error.message}`,
-        );
+        result.errors.push(`Rollback of ${lastMigrationName} failed: ${error.message}`);
         console.error(`x Rollback of ${lastMigrationName} failed:`, error);
       }
     } catch (error) {
@@ -154,7 +146,7 @@ export class MigrationService {
   async createMigration(name: string): Promise<string> {
     const timestamp = Date.now();
     const fileName = `${timestamp}-${name}.ts`;
-    const filePath = path.join(__dirname, "migrations", fileName);
+    const filePath = path.join(__dirname, 'migrations', fileName);
 
     const migrationTemplate = `import { MigrationInterface, QueryRunner } from 'typeorm';
 
@@ -185,8 +177,7 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
     const executedMigrations = await this.getExecutedMigrations();
 
     return allMigrations.filter(
-      (migration) =>
-        !executedMigrations.includes(this.getMigrationName(migration)),
+      (migration) => !executedMigrations.includes(this.getMigrationName(migration)),
     );
   }
 
@@ -211,9 +202,7 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
    */
   private findMigrationByName(name: string): MigrationInterface | undefined {
     const migrations = this.dataSource.migrations as MigrationInterface[];
-    return migrations.find(
-      (migration) => this.getMigrationName(migration) === name,
-    );
+    return migrations.find((migration) => this.getMigrationName(migration) === name);
   }
 
   /**
@@ -238,7 +227,7 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
     return str
       .split(/[-_\s]+/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join("");
+      .join('');
   }
 
   /**
@@ -258,8 +247,7 @@ export class ${this.toPascalCase(name)}${timestamp} implements MigrationInterfac
       total: migrations.length,
       executed: executed.length,
       pending: pending.length,
-      lastExecuted:
-        executed.length > 0 ? executed[executed.length - 1].name : undefined,
+      lastExecuted: executed.length > 0 ? executed[executed.length - 1].name : undefined,
     };
   }
 }

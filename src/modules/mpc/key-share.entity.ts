@@ -7,24 +7,24 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
-} from "typeorm";
-import { MpcWallet } from "./mpc-wallet.entity";
+} from 'typeorm';
+import { MpcWallet } from './mpc-wallet.entity';
 
 export enum KeyShareStatus {
-  ACTIVE = "active",
-  REVOKED = "revoked",
-  LOST = "lost",
-  RECOVERING = "recovering",
+  ACTIVE = 'active',
+  REVOKED = 'revoked',
+  LOST = 'lost',
+  RECOVERING = 'recovering',
 }
 
 export enum KeyShareType {
-  ORIGINAL = "original", // Original share during creation
-  RECOVERY = "recovery", // New share during recovery
-  BACKUP = "backup", // Backup share
+  ORIGINAL = 'original', // Original share during creation
+  RECOVERY = 'recovery', // New share during recovery
+  BACKUP = 'backup', // Backup share
 }
 
-@Entity("key_shares")
-@Index(["walletId", "participantId"], { unique: true })
+@Entity('key_shares')
+@Index(['walletId', 'participantId'], { unique: true })
 export class KeyShare {
   /**
    * unique identifier for the key share
@@ -32,7 +32,7 @@ export class KeyShare {
    * example: "e5f6g7h8-i9j0-1k2l-3m4n-5o6p7q8r9s0t"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -52,9 +52,9 @@ export class KeyShare {
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
   @ManyToOne(() => MpcWallet, (wallet) => wallet.keyShares, {
-    onDelete: "CASCADE",
+    onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: "walletId" })
+  @JoinColumn({ name: 'walletId' })
   wallet: MpcWallet;
 
   /**
@@ -81,7 +81,7 @@ export class KeyShare {
    * example: "enc_data_..."
    * reference: https://en.wikipedia.org/wiki/Key_management
    */
-  @Column({ type: "text" })
+  @Column({ type: 'text' })
   encryptedShare: string; // Encrypted key share data
 
   /**
@@ -90,7 +90,7 @@ export class KeyShare {
    * example: "pub_key_..."
    * reference: https://en.wikipedia.org/wiki/Public-key_cryptography
    */
-  @Column({ type: "text" })
+  @Column({ type: 'text' })
   participantPublicKey: string; // Public key of the participant
 
   /**
@@ -100,7 +100,7 @@ export class KeyShare {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: KeyShareStatus,
     default: KeyShareStatus.ACTIVE,
   })
@@ -113,7 +113,7 @@ export class KeyShare {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: KeyShareType,
     default: KeyShareType.ORIGINAL,
   })
@@ -125,7 +125,7 @@ export class KeyShare {
    * example: { "deviceId": "iphone-12", "location": "us-east" }
    * reference: none
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   metadata: {
     deviceId?: string;
     location?: string;
@@ -139,7 +139,7 @@ export class KeyShare {
    * example: "2024-05-01T10:00:00Z"
    * reference: none
    */
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lastUsedAt: Date;
 
   /**

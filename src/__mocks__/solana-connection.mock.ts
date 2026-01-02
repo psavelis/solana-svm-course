@@ -63,7 +63,7 @@ export class MockConnection extends Connection {
   async sendAndConfirmTransaction(
     transaction: any,
     signers?: any[],
-    options?: any
+    options?: any,
   ): Promise<string> {
     return 'mock-transaction-signature-' + Date.now();
   }

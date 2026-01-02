@@ -62,7 +62,7 @@ import { SwitchNetworkDto } from './dto/switch-network.dto';
  * @see https://docs.solana.com/cluster/rpc-endpoints - RPC Endpoints
  * @see [docs/diagrams/14-network-architecture.md](docs/diagrams/14-network-architecture.md) - Architecture
  */
-@ApiTags("Network")
+@ApiTags('Network')
 @Controller('network')
 export class NetworkController {
   constructor(private readonly networkService: NetworkService) {}

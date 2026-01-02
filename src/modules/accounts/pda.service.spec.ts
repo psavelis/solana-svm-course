@@ -79,7 +79,7 @@ describe('PdaService', () => {
       const ataAddress = await service.deriveAssociatedTokenAccount(
         tokenProgramId,
         mintAddress,
-        ownerAddress
+        ownerAddress,
       );
 
       expect(ataAddress).toBeDefined();
@@ -113,16 +113,12 @@ describe('PdaService', () => {
   describe('deriveMultiplePDAs', () => {
     it('should derive multiple PDAs', async () => {
       const programId = new PublicKey('11111111111111111111111111111112');
-      const seedMatrix = [
-        ['seed1'],
-        ['seed2'],
-        ['seed3']
-      ];
+      const seedMatrix = [['seed1'], ['seed2'], ['seed3']];
 
       const results = await service.deriveMultiplePDAs(programId, seedMatrix);
 
       expect(results).toHaveLength(3);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toHaveProperty('address');
         expect(result).toHaveProperty('bump');
         expect(result).toHaveProperty('seeds');
@@ -160,7 +156,10 @@ describe('PdaService', () => {
       const metadataProgramId = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
       const mintAddress = new PublicKey('EPZP2wrcgtfUhjWPTZX2tJiY1Fg7fBn7ARq9W3J9s1L');
 
-      const masterEditionAddress = await service.deriveMasterEditionPDA(metadataProgramId, mintAddress);
+      const masterEditionAddress = await service.deriveMasterEditionPDA(
+        metadataProgramId,
+        mintAddress,
+      );
 
       expect(masterEditionAddress).toBeDefined();
       expect(typeof masterEditionAddress.toBase58).toBe('function');

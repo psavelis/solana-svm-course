@@ -5,17 +5,17 @@ import { TestUtils } from '../test-utils';
 
 /**
  * Database Integration Tests
- * 
+ *
  * These tests require a running PostgreSQL database to function properly.
  * They test actual database connection and performance monitoring capabilities.
- * 
+ *
  * To run these tests:
  * 1. Start PostgreSQL: docker-compose up -d postgres
  * 2. Run: npm run test:e2e
- * 
+ *
  * Environment requirements:
  * - PostgreSQL on localhost:5432
- * 
+ *
  * @see https://typeorm.io/
  */
 describe.skip('Database Integration Tests', () => {
@@ -87,12 +87,12 @@ describe.skip('Database Integration Tests', () => {
 
   describe('Database Operations', () => {
     it('should handle concurrent connections', async () => {
-      const promises = Array(10).fill(null).map(() =>
-        connectionService.checkConnection()
-      );
+      const promises = Array(10)
+        .fill(null)
+        .map(() => connectionService.checkConnection());
 
       const results = await Promise.all(promises);
-      expect(results.every(result => result === true)).toBe(true);
+      expect(results.every((result) => result === true)).toBe(true);
     });
 
     it('should maintain connection stability', async () => {

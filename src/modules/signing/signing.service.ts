@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException } from '@nestjs/common';
 import {
   Keypair,
   PublicKey,
@@ -7,15 +7,15 @@ import {
   sendAndConfirmTransaction,
   Connection,
   Signer,
-} from "@solana/web3.js";
-import { sign } from "tweetnacl";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+} from '@solana/web3.js';
+import { sign } from 'tweetnacl';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   Transaction,
   TransactionStatus,
   TransactionType,
-} from "../transactions/transaction.entity";
+} from '../transactions/transaction.entity';
 
 export interface KeyPairResponse {
   publicKey: string;
@@ -35,8 +35,8 @@ export interface VerificationResult {
 }
 
 export enum HardwareWalletType {
-  LEDGER = "ledger",
-  TREZOR = "trezor",
+  LEDGER = 'ledger',
+  TREZOR = 'trezor',
 }
 
 export interface HardwareWalletConfig {
@@ -105,9 +105,7 @@ export class SigningService {
     @InjectRepository(Transaction)
     private transactionsRepository: Repository<Transaction>,
   ) {
-    this.connection = new Connection(
-      process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com",
-    );
+    this.connection = new Connection(process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com');
   }
 
   /**
@@ -118,8 +116,8 @@ export class SigningService {
   private parseDerivationPath(path: string): number[] {
     return path
       .split('/')
-      .map(part => parseInt(part.replace("'", ""), 10))
-      .filter(num => !isNaN(num));
+      .map((part) => parseInt(part.replace("'", ''), 10))
+      .filter((num) => !isNaN(num));
   }
 
   /**
@@ -134,9 +132,7 @@ export class SigningService {
         publicKey: keypair.publicKey.toString(),
       };
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to generate keypair: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to generate keypair: ${error.message}`);
     }
   }
 
@@ -154,7 +150,7 @@ export class SigningService {
       const signature = sign.detached(message, keypair.secretKey);
 
       return {
-        signature: Buffer.from(signature).toString("base64"),
+        signature: Buffer.from(signature).toString('base64'),
         publicKey: keypair.publicKey.toString(),
         success: true,
       };
@@ -166,23 +162,17 @@ export class SigningService {
   /**
    * Verify a signature against a message and public key
    */
-  verifySignature(
-    signature: string,
-    message: Uint8Array,
-    publicKey: string,
-  ): VerificationResult {
+  verifySignature(signature: string, message: Uint8Array, publicKey: string): VerificationResult {
     try {
       const pubKey = new PublicKey(publicKey);
-      const sigBytes = Buffer.from(signature, "base64");
+      const sigBytes = Buffer.from(signature, 'base64');
 
       const isValid = sign.detached.verify(message, sigBytes, pubKey.toBytes());
 
       return {
         isValid,
         publicKey,
-        message: isValid
-          ? "Signature is valid"
-          : "Signature verification failed",
+        message: isValid ? 'Signature is valid' : 'Signature verification failed',
       };
     } catch (error) {
       return {
@@ -209,11 +199,7 @@ export class SigningService {
       transaction.sign(keypair);
 
       // Send and confirm the transaction
-      const signature = await sendAndConfirmTransaction(
-        this.connection,
-        transaction,
-        [keypair],
-      );
+      const signature = await sendAndConfirmTransaction(this.connection, transaction, [keypair]);
 
       // Record the transaction in our database
       await this.transactionsRepository.save({
@@ -230,9 +216,7 @@ export class SigningService {
         success: true,
       };
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to sign and send transaction: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to sign and send transaction: ${error.message}`);
     }
   }
 
@@ -258,9 +242,7 @@ export class SigningService {
 
       return this.signAndSendTransaction(privateKey, transaction);
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to create and sign transfer: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to create and sign transfer: ${error.message}`);
     }
   }
 
@@ -279,9 +261,7 @@ export class SigningService {
   /**
    * Get public key from hardware wallet
    */
-  async getHardwareWalletPublicKey(
-    config: HardwareWalletConfig,
-  ): Promise<string> {
+  async getHardwareWalletPublicKey(config: HardwareWalletConfig): Promise<string> {
     try {
       switch (config.type) {
         case HardwareWalletType.LEDGER:
@@ -292,9 +272,7 @@ export class SigningService {
           throw new BadRequestException(`Unsupported hardware wallet type: ${config.type}`);
       }
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to get hardware wallet public key: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to get hardware wallet public key: ${error.message}`);
     }
   }
 
@@ -405,7 +383,9 @@ export class SigningService {
       this.offlineRequests.set(requestId, request);
       return request;
     } catch (error) {
-      throw new BadRequestException(`Failed to create offline message signing request: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to create offline message signing request: ${error.message}`,
+      );
     }
   }
 
@@ -515,10 +495,10 @@ export class SigningService {
   private async getLedgerPublicKey(config: HardwareWalletConfig): Promise<string> {
     try {
       // Dynamic import to avoid issues if library is not installed
-      const { default: Solana } = await import("@ledgerhq/hw-app-solana");
-      const { default: TransportWebUSB } = await import("@ledgerhq/hw-transport-webusb");
+      const { default: Solana } = await import('@ledgerhq/hw-app-solana');
+      const { default: TransportWebUSB } = await import('@ledgerhq/hw-transport-webusb');
 
-      const transport = config.transport || await TransportWebUSB.create();
+      const transport = config.transport || (await TransportWebUSB.create());
       const solana = new Solana(transport);
 
       // Use derivation path as string
@@ -526,7 +506,7 @@ export class SigningService {
 
       const result = await solana.getAddress(derivationPath);
       // Convert Buffer to base58 string for Solana address
-      const bs58 = await import("bs58");
+      const bs58 = await import('bs58');
       return bs58.default.encode(result.address);
     } catch (error) {
       throw new Error(`Ledger public key retrieval failed: ${error.message}`);
@@ -541,10 +521,10 @@ export class SigningService {
     config: HardwareWalletConfig,
   ): Promise<HardwareWalletSignature> {
     try {
-      const { default: Solana } = await import("@ledgerhq/hw-app-solana");
-      const { default: TransportWebUSB } = await import("@ledgerhq/hw-transport-webusb");
+      const { default: Solana } = await import('@ledgerhq/hw-app-solana');
+      const { default: TransportWebUSB } = await import('@ledgerhq/hw-transport-webusb');
 
-      const transport = config.transport || await TransportWebUSB.create();
+      const transport = config.transport || (await TransportWebUSB.create());
       const solana = new Solana(transport);
 
       // Use derivation path as string
@@ -557,16 +537,16 @@ export class SigningService {
 
       // Get the public key as well
       const addressResult = await solana.getAddress(derivationPath);
-      const bs58 = await import("bs58");
+      const bs58 = await import('bs58');
       const publicKey = bs58.default.encode(addressResult.address);
 
       return {
-        signature: Buffer.from(result.signature).toString("base64"),
+        signature: Buffer.from(result.signature).toString('base64'),
         publicKey,
         success: true,
         deviceInfo: {
           type: HardwareWalletType.LEDGER,
-          version: "1.0.0", // Would get from device
+          version: '1.0.0', // Would get from device
         },
       };
     } catch (error) {
@@ -582,10 +562,10 @@ export class SigningService {
     config: HardwareWalletConfig,
   ): Promise<HardwareWalletSignature> {
     try {
-      const { default: Solana } = await import("@ledgerhq/hw-app-solana");
-      const { default: TransportWebUSB } = await import("@ledgerhq/hw-transport-webusb");
+      const { default: Solana } = await import('@ledgerhq/hw-app-solana');
+      const { default: TransportWebUSB } = await import('@ledgerhq/hw-transport-webusb');
 
-      const transport = config.transport || await TransportWebUSB.create();
+      const transport = config.transport || (await TransportWebUSB.create());
       const solana = new Solana(transport);
 
       // Use derivation path as string
@@ -595,16 +575,16 @@ export class SigningService {
 
       // Get the public key
       const addressResult = await solana.getAddress(derivationPath);
-      const bs58 = await import("bs58");
+      const bs58 = await import('bs58');
       const publicKey = bs58.default.encode(addressResult.address);
 
       return {
-        signature: Buffer.from(result.signature).toString("base64"),
+        signature: Buffer.from(result.signature).toString('base64'),
         publicKey,
         success: true,
         deviceInfo: {
           type: HardwareWalletType.LEDGER,
-          version: "1.0.0",
+          version: '1.0.0',
         },
       };
     } catch (error) {
@@ -618,7 +598,7 @@ export class SigningService {
   private async getTrezorPublicKey(config: HardwareWalletConfig): Promise<string> {
     try {
       // Temporarily disabled - need to install @trezor/connect
-      throw new Error("Trezor integration not yet configured - missing @trezor/connect dependency");
+      throw new Error('Trezor integration not yet configured - missing @trezor/connect dependency');
 
       // const TrezorConnect = await import("@trezor/connect");
       // const derivationPath = config.derivationPath || "m/44'/501'/0'/0'";
@@ -643,7 +623,7 @@ export class SigningService {
   ): Promise<HardwareWalletSignature> {
     try {
       // Temporarily disabled - need to install @trezor/connect
-      throw new Error("Trezor integration not yet configured - missing @trezor/connect dependency");
+      throw new Error('Trezor integration not yet configured - missing @trezor/connect dependency');
     } catch (error) {
       throw new Error(`Trezor transaction signing failed: ${error.message}`);
     }
@@ -658,7 +638,7 @@ export class SigningService {
   ): Promise<HardwareWalletSignature> {
     // Note: Trezor Connect v9 does not support solanaSignMessage
     // Off-chain message signing is not available for Trezor Solana
-    throw new Error("Trezor does not support off-chain message signing for Solana");
+    throw new Error('Trezor does not support off-chain message signing for Solana');
   }
 
   /**
@@ -682,7 +662,7 @@ export class SigningService {
       const seed = `multisig-${Date.now()}-${Math.random()}`;
       const [multiSigAddress] = await PublicKey.findProgramAddress(
         [Buffer.from(seed)],
-        new PublicKey('11111111111111111111111111111112') // System program for demo
+        new PublicKey('11111111111111111111111111111112'), // System program for demo
       );
 
       // In a real implementation, this would create an on-chain multi-sig account
@@ -768,7 +748,7 @@ export class SigningService {
 
       // Check if already signed
       const alreadySigned = multiSigTx.collectedSignatures.some(
-        sig => sig.signer === signerPublicKey
+        (sig) => sig.signer === signerPublicKey,
       );
       if (alreadySigned) {
         throw new BadRequestException('Signer has already signed this transaction');
@@ -857,7 +837,10 @@ export class SigningService {
   }
 
   // In-memory storage for demo purposes - in production, use database
-  private multiSigAccounts = new Map<string, { address: string; config: MultiSigConfig; createdAt: Date }>();
+  private multiSigAccounts = new Map<
+    string,
+    { address: string; config: MultiSigConfig; createdAt: Date }
+  >();
   private multiSigTransactions = new Map<string, MultiSigTransaction>();
   private offlineRequests = new Map<string, OfflineSigningRequest>();
 

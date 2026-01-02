@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsArray, Min, Max } from "class-validator";
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsArray, Min, Max } from 'class-validator';
 
 export class GenerateKeyPairDto {
   // No input required for key generation

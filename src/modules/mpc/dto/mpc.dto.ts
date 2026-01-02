@@ -9,9 +9,9 @@ import {
   Max,
   ArrayMinSize,
   ValidateNested,
-} from "class-validator";
-import { Type } from "class-transformer";
-import { ThresholdScheme } from "../mpc-wallet.entity";
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { ThresholdScheme } from '../mpc-wallet.entity';
 
 export class ParticipantDto {
   @IsString()

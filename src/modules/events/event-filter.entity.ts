@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-} from "typeorm";
+} from 'typeorm';
 
 /**
  * Filter Type Enum
@@ -13,11 +13,11 @@ import {
  * reference: https://solana.com/docs/rpc/websocket
  */
 export enum FilterType {
-  ACCOUNT = "account",
-  PROGRAM = "program",
-  TRANSACTION = "transaction",
-  SLOT = "slot",
-  BLOCK = "block",
+  ACCOUNT = 'account',
+  PROGRAM = 'program',
+  TRANSACTION = 'transaction',
+  SLOT = 'slot',
+  BLOCK = 'block',
 }
 
 /**
@@ -26,36 +26,36 @@ export enum FilterType {
  * reference: none
  */
 export enum FilterStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
 }
 
 /**
  * Event Filter Entity
- * 
+ *
  * Represents a configurable filter for Solana blockchain events. Filters allow users
  * to subscribe to specific types of on-chain activity based on criteria like account
  * addresses, program IDs, or custom data patterns.
- * 
+ *
  * Key filtering concepts:
  * - Account filters: Monitor changes to specific account data
  * - Program filters: Track all instructions sent to a program
  * - Transaction filters: Watch for transactions matching criteria
  * - Slot/Block filters: Monitor chain progression
- * 
+ *
  * @example
  * const filter = new EventFilter();
  * filter.filterType = FilterType.ACCOUNT;
  * filter.accountId = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
  * filter.criteria = { minBalance: 1000000000 };
- * 
+ *
  * @see https://solana.com/docs/rpc/websocket/accountSubscribe
  * @see https://solana.com/docs/rpc/websocket/programSubscribe
  */
-@Entity("event_filters")
-@Index(["filterType"])
-@Index(["ownerId"])
-@Index(["status"])
+@Entity('event_filters')
+@Index(['filterType'])
+@Index(['ownerId'])
+@Index(['status'])
 export class EventFilter {
   /**
    * unique identifier for the event filter
@@ -63,7 +63,7 @@ export class EventFilter {
    * example: "c3d4e5f6-g7h8-9012-3456-789012abcdef"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -72,7 +72,7 @@ export class EventFilter {
    * example: "user_12345"
    * reference: none
    */
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   @Index()
   ownerId: string; // User or client that owns this filter
 
@@ -83,7 +83,7 @@ export class EventFilter {
    * reference: https://solana.com/docs/rpc/websocket
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: FilterType,
   })
   filterType: FilterType;
@@ -94,7 +94,7 @@ export class EventFilter {
    * example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
    * reference: https://solana.com/docs/rpc/websocket/accountSubscribe
    */
-  @Column({ type: "varchar", length: 88, nullable: true })
+  @Column({ type: 'varchar', length: 88, nullable: true })
   accountId?: string; // For account-specific filters
 
   /**
@@ -103,7 +103,7 @@ export class EventFilter {
    * example: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
    * reference: https://solana.com/docs/rpc/websocket/programSubscribe
    */
-  @Column({ type: "varchar", length: 88, nullable: true })
+  @Column({ type: 'varchar', length: 88, nullable: true })
   programId?: string; // For program-specific filters
 
   /**
@@ -112,7 +112,7 @@ export class EventFilter {
    * example: { "minAmount": 1000, "tokenMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" }
    * reference: none
    */
-  @Column({ type: "jsonb" })
+  @Column({ type: 'jsonb' })
   criteria: any; // Filter criteria (e.g., { minAmount: 1000, tokenMint: '...' })
 
   /**
@@ -121,7 +121,7 @@ export class EventFilter {
    * example: "large usdc transfers"
    * reference: none
    */
-  @Column({ type: "varchar", length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   name?: string; // Human-readable name
 
   /**
@@ -130,7 +130,7 @@ export class EventFilter {
    * example: "alerts when usdc transfers exceed 10,000 usdc"
    * reference: none
    */
-  @Column({ type: "text", nullable: true })
+  @Column({ type: 'text', nullable: true })
   description?: string;
 
   /**
@@ -140,7 +140,7 @@ export class EventFilter {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: FilterStatus,
     default: FilterStatus.ACTIVE,
   })
@@ -152,7 +152,7 @@ export class EventFilter {
    * example: false
    * reference: none
    */
-  @Column({ type: "boolean", default: false })
+  @Column({ type: 'boolean', default: false })
   isPublic: boolean; // Whether other users can use this filter
 
   /**

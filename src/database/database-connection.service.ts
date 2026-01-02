@@ -1,14 +1,9 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-  OnModuleDestroy,
-} from "@nestjs/common";
-import { InjectConnection } from "@nestjs/typeorm";
-import { Connection, EntityManager } from "typeorm";
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/typeorm';
+import { Connection, EntityManager } from 'typeorm';
 
 export interface DatabaseHealthStatus {
-  status: "healthy" | "unhealthy";
+  status: 'healthy' | 'unhealthy';
   connectionCount: number;
   activeConnections: number;
   idleConnections: number;
@@ -27,9 +22,7 @@ export interface DatabaseHealthStatus {
 }
 
 @Injectable()
-export class DatabaseConnectionService
-  implements OnModuleInit, OnModuleDestroy
-{
+export class DatabaseConnectionService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DatabaseConnectionService.name);
   private startTime: Date = new Date();
   private healthCheckInterval?: NodeJS.Timeout;
@@ -41,14 +34,14 @@ export class DatabaseConnectionService
 
   async onModuleInit() {
     // Skip health checks in test environment
-    if (process.env.NODE_ENV === "test") {
+    if (process.env.NODE_ENV === 'test') {
       this.logger.log(
-        "Database connection service initialized (test mode - health checks disabled)",
+        'Database connection service initialized (test mode - health checks disabled)',
       );
       return;
     }
 
-    this.logger.log("Database connection service initialized");
+    this.logger.log('Database connection service initialized');
 
     // Start periodic health checks
     this.healthCheckInterval = setInterval(() => {
@@ -63,7 +56,7 @@ export class DatabaseConnectionService
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
     }
-    this.logger.log("Database connection service destroyed");
+    this.logger.log('Database connection service destroyed');
   }
 
   /**
@@ -75,7 +68,7 @@ export class DatabaseConnectionService
 
       if (!pool) {
         return {
-          status: "unhealthy",
+          status: 'unhealthy',
           connectionCount: 0,
           activeConnections: 0,
           idleConnections: 0,
@@ -95,7 +88,7 @@ export class DatabaseConnectionService
       }
 
       const status: DatabaseHealthStatus = {
-        status: "healthy",
+        status: 'healthy',
         connectionCount: pool.totalCount || 0,
         activeConnections: pool.borrowedCount || 0,
         idleConnections: pool.availableCount || 0,
@@ -115,9 +108,9 @@ export class DatabaseConnectionService
 
       return status;
     } catch (error) {
-      this.logger.error("Failed to get database health status", error);
+      this.logger.error('Failed to get database health status', error);
       return {
-        status: "unhealthy",
+        status: 'unhealthy',
         connectionCount: 0,
         activeConnections: 0,
         idleConnections: 0,
@@ -143,13 +136,13 @@ export class DatabaseConnectionService
   async performHealthCheck(): Promise<boolean> {
     try {
       const queryRunner = this.connection.createQueryRunner();
-      await queryRunner.query("SELECT 1");
+      await queryRunner.query('SELECT 1');
       await queryRunner.release();
 
-      this.logger.debug("Database health check passed");
+      this.logger.debug('Database health check passed');
       return true;
     } catch (error) {
-      this.logger.error("Database health check failed", error);
+      this.logger.error('Database health check failed', error);
       return false;
     }
   }
@@ -179,9 +172,7 @@ export class DatabaseConnectionService
       idleConnections: status.idleCount,
       waitingClients: status.waitingCount,
       utilizationRate:
-        status.totalCount > 0
-          ? (status.activeConnections / status.totalCount) * 100
-          : 0,
+        status.totalCount > 0 ? (status.activeConnections / status.totalCount) * 100 : 0,
       poolConfig: status.poolConfig,
     };
   }
@@ -209,9 +200,7 @@ export class DatabaseConnectionService
   /**
    * Execute a transaction with proper connection management
    */
-  async executeTransaction<T>(
-    operation: (entityManager: EntityManager) => Promise<T>,
-  ): Promise<T> {
+  async executeTransaction<T>(operation: (entityManager: EntityManager) => Promise<T>): Promise<T> {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -250,12 +239,12 @@ export class DatabaseConnectionService
   async closeIdleConnections(): Promise<void> {
     try {
       const pool = (this.connection.driver as any).pool;
-      if (pool && typeof pool.closeIdle === "function") {
+      if (pool && typeof pool.closeIdle === 'function') {
         await pool.closeIdle();
-        this.logger.log("Idle database connections closed");
+        this.logger.log('Idle database connections closed');
       }
     } catch (error) {
-      this.logger.error("Failed to close idle connections", error);
+      this.logger.error('Failed to close idle connections', error);
     }
   }
 

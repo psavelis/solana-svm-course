@@ -1,18 +1,9 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Put,
-  Delete,
-  Query,
-} from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from "@nestjs/swagger";
-import { TransactionsService } from "./transactions.service";
-import { MessagePublisherService } from "./message-publisher.service";
-import { Transaction } from "./transaction.entity";
-import { ProgramInvocationDto } from "./dto/program-invocation.dto";
+import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { TransactionsService } from './transactions.service';
+import { MessagePublisherService } from './message-publisher.service';
+import { Transaction } from './transaction.entity';
+import { ProgramInvocationDto } from './dto/program-invocation.dto';
 
 /**
  * # Transactions Controller
@@ -87,8 +78,8 @@ import { ProgramInvocationDto } from "./dto/program-invocation.dto";
  * @see https://docs.solana.com/cluster/commitments - Commitment Levels
  * @see [docs/diagrams/02-transactions-instructions.md](docs/diagrams/02-transactions-instructions.md) - Architecture
  */
-@ApiTags("transactions")
-@Controller("transactions")
+@ApiTags('transactions')
+@Controller('transactions')
 export class TransactionsController {
   constructor(
     private readonly transactionsService: TransactionsService,
@@ -105,12 +96,13 @@ export class TransactionsController {
    */
   @Post()
   @ApiOperation({
-    summary: "Create a new transaction record",
-    description: "Store transaction metadata in database. Publishes `transaction.created` event to Kafka.",
+    summary: 'Create a new transaction record',
+    description:
+      'Store transaction metadata in database. Publishes `transaction.created` event to Kafka.',
   })
   @ApiResponse({
     status: 201,
-    description: "Transaction created successfully",
+    description: 'Transaction created successfully',
     type: Transaction,
   })
   create(@Body() createTransactionDto: Partial<Transaction>) {
@@ -122,12 +114,12 @@ export class TransactionsController {
    */
   @Get()
   @ApiOperation({
-    summary: "Get all transactions",
-    description: "Retrieve all stored transaction records.",
+    summary: 'Get all transactions',
+    description: 'Retrieve all stored transaction records.',
   })
   @ApiResponse({
     status: 200,
-    description: "List of transactions",
+    description: 'List of transactions',
     type: [Transaction],
   })
   findAll() {
@@ -137,18 +129,18 @@ export class TransactionsController {
   /**
    * Get a specific transaction by its database ID.
    */
-  @Get(":id")
+  @Get(':id')
   @ApiOperation({
-    summary: "Get transaction by ID",
-    description: "Retrieve a transaction record by its database UUID.",
+    summary: 'Get transaction by ID',
+    description: 'Retrieve a transaction record by its database UUID.',
   })
-  @ApiParam({ name: "id", description: "Database UUID of the transaction" })
+  @ApiParam({ name: 'id', description: 'Database UUID of the transaction' })
   @ApiResponse({
     status: 200,
-    description: "Transaction details",
+    description: 'Transaction details',
     type: Transaction,
   })
-  findOne(@Param("id") id: string) {
+  findOne(@Param('id') id: string) {
     return this.transactionsService.findOne(id);
   }
 
@@ -163,18 +155,18 @@ export class TransactionsController {
    * curl http://localhost:3000/transactions/signature/5rVyH...xyz
    * ```
    */
-  @Get("signature/:signature")
+  @Get('signature/:signature')
   @ApiOperation({
-    summary: "Get transaction by signature",
-    description: "Find transaction by its 88-character base58 signature.",
+    summary: 'Get transaction by signature',
+    description: 'Find transaction by its 88-character base58 signature.',
   })
-  @ApiParam({ name: "signature", description: "Solana transaction signature (base58)" })
+  @ApiParam({ name: 'signature', description: 'Solana transaction signature (base58)' })
   @ApiResponse({
     status: 200,
-    description: "Transaction details",
+    description: 'Transaction details',
     type: Transaction,
   })
-  findBySignature(@Param("signature") signature: string) {
+  findBySignature(@Param('signature') signature: string) {
     return this.transactionsService.findBySignature(signature);
   }
 
@@ -183,33 +175,30 @@ export class TransactionsController {
    *
    * **Async Flow**: Status changes trigger `transaction.status_updated` event.
    */
-  @Put(":id")
+  @Put(':id')
   @ApiOperation({
-    summary: "Update transaction",
-    description: "Update transaction record. Status changes publish events to Kafka.",
+    summary: 'Update transaction',
+    description: 'Update transaction record. Status changes publish events to Kafka.',
   })
   @ApiResponse({
     status: 200,
-    description: "Transaction updated successfully",
+    description: 'Transaction updated successfully',
     type: Transaction,
   })
-  update(
-    @Param("id") id: string,
-    @Body() updateTransactionDto: Partial<Transaction>,
-  ) {
+  update(@Param('id') id: string, @Body() updateTransactionDto: Partial<Transaction>) {
     return this.transactionsService.update(id, updateTransactionDto);
   }
 
   /**
    * Delete a transaction record from the database.
    */
-  @Delete(":id")
+  @Delete(':id')
   @ApiOperation({
-    summary: "Delete transaction",
-    description: "Remove a transaction record from the local database.",
+    summary: 'Delete transaction',
+    description: 'Remove a transaction record from the local database.',
   })
-  @ApiResponse({ status: 200, description: "Transaction deleted successfully" })
-  remove(@Param("id") id: string) {
+  @ApiResponse({ status: 200, description: 'Transaction deleted successfully' })
+  remove(@Param('id') id: string) {
     return this.transactionsService.remove(id);
   }
 
@@ -228,13 +217,13 @@ export class TransactionsController {
    * curl http://localhost:3000/transactions/details/5rVyH...xyz
    * ```
    */
-  @Get("details/:signature")
+  @Get('details/:signature')
   @ApiOperation({
-    summary: "Get transaction details from Solana",
-    description: "Fetch full transaction data from blockchain by signature.",
+    summary: 'Get transaction details from Solana',
+    description: 'Fetch full transaction data from blockchain by signature.',
   })
-  @ApiResponse({ status: 200, description: "Transaction details from Solana" })
-  getTransaction(@Param("signature") signature: string) {
+  @ApiResponse({ status: 200, description: 'Transaction details from Solana' })
+  getTransaction(@Param('signature') signature: string) {
     return this.transactionsService.getTransaction(signature);
   }
 
@@ -267,25 +256,25 @@ export class TransactionsController {
    *
    * @see https://docs.solana.com/developing/clients/javascript-reference#sendtransaction
    */
-  @Post("transfer")
+  @Post('transfer')
   @ApiOperation({
-    summary: "Send SOL transfer transaction",
-    description: "Build, sign, and submit a SOL transfer. Publishes transaction events to Kafka.",
+    summary: 'Send SOL transfer transaction',
+    description: 'Build, sign, and submit a SOL transfer. Publishes transaction events to Kafka.',
   })
   @ApiBody({
     schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        fromPrivateKey: { type: "string", description: "Sender's base58-encoded private key" },
-        toAddress: { type: "string", description: "Recipient's public key" },
-        amount: { type: "number", description: "Amount in lamports (1 SOL = 1e9 lamports)" },
+        fromPrivateKey: { type: 'string', description: "Sender's base58-encoded private key" },
+        toAddress: { type: 'string', description: "Recipient's public key" },
+        amount: { type: 'number', description: 'Amount in lamports (1 SOL = 1e9 lamports)' },
       },
-      required: ["fromPrivateKey", "toAddress", "amount"],
+      required: ['fromPrivateKey', 'toAddress', 'amount'],
     },
   })
   @ApiResponse({
     status: 201,
-    description: "Transfer transaction sent successfully",
+    description: 'Transfer transaction sent successfully',
   })
   sendTransfer(
     @Body()
@@ -322,14 +311,14 @@ export class TransactionsController {
    *
    * @see https://spl.solana.com/token
    */
-  @Post("token-transfer")
+  @Post('token-transfer')
   @ApiOperation({
-    summary: "Send token transfer transaction",
-    description: "Transfer SPL tokens between wallets. Auto-creates recipient ATA if needed.",
+    summary: 'Send token transfer transaction',
+    description: 'Transfer SPL tokens between wallets. Auto-creates recipient ATA if needed.',
   })
   @ApiResponse({
     status: 201,
-    description: "Token transfer transaction sent successfully",
+    description: 'Token transfer transaction sent successfully',
   })
   sendTokenTransfer(
     @Body()
@@ -380,14 +369,14 @@ export class TransactionsController {
    *   }'
    * ```
    */
-  @Post("multi-instruction")
+  @Post('multi-instruction')
   @ApiOperation({
-    summary: "Create multi-instruction transaction",
-    description: "Build transaction with multiple instructions that execute atomically.",
+    summary: 'Create multi-instruction transaction',
+    description: 'Build transaction with multiple instructions that execute atomically.',
   })
   @ApiResponse({
     status: 201,
-    description: "Multi-instruction transaction created successfully",
+    description: 'Multi-instruction transaction created successfully',
   })
   createMultiInstructionTransaction(
     @Body()
@@ -418,18 +407,16 @@ export class TransactionsController {
    *
    * @see https://docs.solana.com/developing/programming-model/calling-between-programs
    */
-  @Post("program-invocation")
+  @Post('program-invocation')
   @ApiOperation({
-    summary: "Create program invocation transaction",
-    description: "Invoke any on-chain program with custom instruction data.",
+    summary: 'Create program invocation transaction',
+    description: 'Invoke any on-chain program with custom instruction data.',
   })
   @ApiResponse({
     status: 201,
-    description: "Program invocation transaction created successfully",
+    description: 'Program invocation transaction created successfully',
   })
-  createProgramInvocationTransaction(
-    @Body() invocationDto: ProgramInvocationDto,
-  ) {
+  createProgramInvocationTransaction(@Body() invocationDto: ProgramInvocationDto) {
     return this.transactionsService.sendProgramInvocation(
       invocationDto.privateKey,
       invocationDto.programId,
@@ -457,14 +444,14 @@ export class TransactionsController {
    *   }'
    * ```
    */
-  @Post("batch")
+  @Post('batch')
   @ApiOperation({
-    summary: "Create batched transaction with multiple operations",
-    description: "Combine multiple transfer/token operations into one atomic transaction.",
+    summary: 'Create batched transaction with multiple operations',
+    description: 'Combine multiple transfer/token operations into one atomic transaction.',
   })
   @ApiResponse({
     status: 201,
-    description: "Batched transaction created successfully",
+    description: 'Batched transaction created successfully',
   })
   createBatchedTransaction(
     @Body()
@@ -485,14 +472,18 @@ export class TransactionsController {
   /**
    * Get recent transactions from the network.
    */
-  @Get("recent/list")
+  @Get('recent/list')
   @ApiOperation({
-    summary: "Get recent transactions",
-    description: "Fetch recent transactions from the Solana network.",
+    summary: 'Get recent transactions',
+    description: 'Fetch recent transactions from the Solana network.',
   })
-  @ApiQuery({ name: "limit", required: false, description: "Max number of transactions (default: 10)" })
-  @ApiResponse({ status: 200, description: "List of recent transactions" })
-  getRecentTransactions(@Query("limit") limit?: number) {
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Max number of transactions (default: 10)',
+  })
+  @ApiResponse({ status: 200, description: 'List of recent transactions' })
+  getRecentTransactions(@Query('limit') limit?: number) {
     return this.transactionsService.getRecentTransactions(limit);
   }
 
@@ -503,12 +494,12 @@ export class TransactionsController {
    *
    * @see https://docs.solana.com/transaction_fees
    */
-  @Get("fee/estimate")
+  @Get('fee/estimate')
   @ApiOperation({
-    summary: "Get fee estimate",
-    description: "Get current network fee estimate including priority fees.",
+    summary: 'Get fee estimate',
+    description: 'Get current network fee estimate including priority fees.',
   })
-  @ApiResponse({ status: 200, description: "Fee estimate" })
+  @ApiResponse({ status: 200, description: 'Fee estimate' })
   getFeeEstimate() {
     return this.transactionsService.getFeeEstimate();
   }
@@ -534,22 +525,23 @@ export class TransactionsController {
    *
    * View consumer logs to see event processing.
    */
-  @Post("events/test")
+  @Post('events/test')
   @ApiOperation({
-    summary: "Create a test transaction to demonstrate event publishing",
-    description: "Creates a test transaction and publishes `transaction.created` event to Kafka for demonstration.",
+    summary: 'Create a test transaction to demonstrate event publishing',
+    description:
+      'Creates a test transaction and publishes `transaction.created` event to Kafka for demonstration.',
   })
   @ApiResponse({
     status: 201,
-    description: "Test transaction created and event published",
+    description: 'Test transaction created and event published',
   })
   async createTestTransaction() {
     const testTransaction = {
       signature: `test-${Date.now()}`,
-      type: "transfer" as any,
-      status: "pending" as any,
-      fromAddress: "11111111111111111111111111111112",
-      toAddress: "11111111111111111111111111111113",
+      type: 'transfer' as any,
+      status: 'pending' as any,
+      fromAddress: '11111111111111111111111111111112',
+      toAddress: '11111111111111111111111111111113',
       amount: 1000000, // 0.001 SOL
       metadata: { test: true, createdAt: new Date() },
     };
@@ -576,27 +568,27 @@ export class TransactionsController {
    *
    * Valid statuses: `pending`, `confirmed`, `finalized`, `failed`
    */
-  @Post(":id/events/status-update")
+  @Post(':id/events/status-update')
   @ApiOperation({
-    summary: "Update transaction status to demonstrate status update events",
-    description: "Update status and publish `transaction.status_updated` event to Kafka.",
+    summary: 'Update transaction status to demonstrate status update events',
+    description: 'Update status and publish `transaction.status_updated` event to Kafka.',
   })
   @ApiBody({
     schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        status: { type: "string", enum: ["pending", "confirmed", "finalized", "failed"] },
-        metadata: { type: "object", description: "Optional additional metadata" },
+        status: { type: 'string', enum: ['pending', 'confirmed', 'finalized', 'failed'] },
+        metadata: { type: 'object', description: 'Optional additional metadata' },
       },
-      required: ["status"],
+      required: ['status'],
     },
   })
   @ApiResponse({
     status: 200,
-    description: "Transaction status updated and event published",
+    description: 'Transaction status updated and event published',
   })
   async updateTransactionStatus(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @Body() statusUpdate: { status: string; metadata?: any },
   ) {
     return this.transactionsService.update(id, {
@@ -617,26 +609,26 @@ export class TransactionsController {
    *
    * @returns Current buffer status
    */
-  @Get("events/publisher/status")
+  @Get('events/publisher/status')
   @ApiOperation({
-    summary: "Get message publisher status",
-    description: "Check how many events are buffered and pending Kafka delivery.",
+    summary: 'Get message publisher status',
+    description: 'Check how many events are buffered and pending Kafka delivery.',
   })
   @ApiResponse({
     status: 200,
-    description: "Message publisher status",
+    description: 'Message publisher status',
     schema: {
-      type: "object",
+      type: 'object',
       properties: {
         bufferStatus: {
-          type: "object",
+          type: 'object',
           properties: {
-            bufferedEvents: { type: "number" },
-            maxBufferSize: { type: "number" },
-            isBufferFull: { type: "boolean" },
+            bufferedEvents: { type: 'number' },
+            maxBufferSize: { type: 'number' },
+            isBufferFull: { type: 'boolean' },
           },
         },
-        timestamp: { type: "string" },
+        timestamp: { type: 'string' },
       },
     },
   })
@@ -652,15 +644,16 @@ export class TransactionsController {
    *
    * Useful for testing or before graceful shutdown.
    */
-  @Post("events/publisher/flush")
+  @Post('events/publisher/flush')
   @ApiOperation({
-    summary: "Force flush buffered events",
-    description: "Immediately send all buffered events to Kafka without waiting for flush interval.",
+    summary: 'Force flush buffered events',
+    description:
+      'Immediately send all buffered events to Kafka without waiting for flush interval.',
   })
-  @ApiResponse({ status: 200, description: "Events flushed successfully" })
+  @ApiResponse({ status: 200, description: 'Events flushed successfully' })
   async forceFlushEvents() {
     await this.messagePublisher.forceFlush();
-    return { message: "Events flushed successfully" };
+    return { message: 'Events flushed successfully' };
   }
 
   /**
@@ -668,13 +661,13 @@ export class TransactionsController {
    *
    * Queries Solana RPC to check if transaction is confirmed/finalized.
    */
-  @Post("status/:signature/update")
+  @Post('status/:signature/update')
   @ApiOperation({
-    summary: "Update transaction status based on blockchain confirmation",
-    description: "Query Solana RPC and update local record with current confirmation status.",
+    summary: 'Update transaction status based on blockchain confirmation',
+    description: 'Query Solana RPC and update local record with current confirmation status.',
   })
-  @ApiResponse({ status: 200, description: "Transaction status updated" })
-  updateTransactionStatusBySignature(@Param("signature") signature: string) {
+  @ApiResponse({ status: 200, description: 'Transaction status updated' })
+  updateTransactionStatusBySignature(@Param('signature') signature: string) {
     return this.transactionsService.updateTransactionStatus(signature);
   }
 
@@ -686,18 +679,15 @@ export class TransactionsController {
    * curl "http://localhost:3000/transactions/history/9WzDXw...?limit=10"
    * ```
    */
-  @Get("history/:address")
+  @Get('history/:address')
   @ApiOperation({
-    summary: "Get transaction history for an address",
-    description: "Retrieve transaction history involving a specific Solana address.",
+    summary: 'Get transaction history for an address',
+    description: 'Retrieve transaction history involving a specific Solana address.',
   })
-  @ApiParam({ name: "address", description: "Solana public key (base58)" })
-  @ApiQuery({ name: "limit", required: false, description: "Max transactions to return" })
-  @ApiResponse({ status: 200, description: "Transaction history", type: [Transaction] })
-  getTransactionHistory(
-    @Param("address") address: string,
-    @Query("limit") limit?: number,
-  ) {
+  @ApiParam({ name: 'address', description: 'Solana public key (base58)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Max transactions to return' })
+  @ApiResponse({ status: 200, description: 'Transaction history', type: [Transaction] })
+  getTransactionHistory(@Param('address') address: string, @Query('limit') limit?: number) {
     return this.transactionsService.getTransactionHistory(address, limit);
   }
 }

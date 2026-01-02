@@ -1,14 +1,6 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Param,
-  BadRequestException,
-  Delete,
-} from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
-import { SmartAccountsService } from "./smart-accounts.service";
+import { Controller, Post, Body, Get, Param, BadRequestException, Delete } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { SmartAccountsService } from './smart-accounts.service';
 
 /**
  * # Smart Accounts Controller (Account Abstraction)
@@ -82,41 +74,33 @@ import { SmartAccountsService } from "./smart-accounts.service";
  *
  * @see [docs/diagrams/04-account-abstraction.md](docs/diagrams/04-account-abstraction.md) - Architecture
  */
-@ApiTags("Smart Accounts (Account Abstraction)")
-@Controller("smart-accounts")
+@ApiTags('Smart Accounts (Account Abstraction)')
+@Controller('smart-accounts')
 export class SmartAccountsController {
   constructor(private readonly smartAccountsService: SmartAccountsService) {}
 
   @Post()
   async create(@Body() body: { ownerAddress: string; rules: any }) {
-    if (!body.ownerAddress)
-      throw new BadRequestException("ownerAddress is required");
-    return this.smartAccountsService.createSmartAccount(
-      body.ownerAddress,
-      body.rules || {},
-    );
+    if (!body.ownerAddress) throw new BadRequestException('ownerAddress is required');
+    return this.smartAccountsService.createSmartAccount(body.ownerAddress, body.rules || {});
   }
 
-  @Get(":address")
-  async get(@Param("address") address: string) {
+  @Get(':address')
+  async get(@Param('address') address: string) {
     return this.smartAccountsService.findByAddress(address);
   }
 
-  @Post(":address/validate")
+  @Post(':address/validate')
   async validate(
-    @Param("address") address: string,
+    @Param('address') address: string,
     @Body() body: { amount: number; programId: string },
   ) {
-    return this.smartAccountsService.validateTransaction(
-      address,
-      body.amount,
-      body.programId,
-    );
+    return this.smartAccountsService.validateTransaction(address, body.amount, body.programId);
   }
 
-  @Post(":address/session-keys")
+  @Post(':address/session-keys')
   async createSessionKey(
-    @Param("address") address: string,
+    @Param('address') address: string,
     @Body()
     body: {
       sessionKeyAddress: string;
@@ -128,8 +112,7 @@ export class SmartAccountsController {
       };
     },
   ) {
-    if (!body.sessionKeyAddress)
-      throw new BadRequestException("sessionKeyAddress is required");
+    if (!body.sessionKeyAddress) throw new BadRequestException('sessionKeyAddress is required');
 
     return this.smartAccountsService.createSessionKey(
       address,
@@ -138,14 +121,14 @@ export class SmartAccountsController {
     );
   }
 
-  @Get(":address/session-keys")
-  async getSessionKeys(@Param("address") address: string) {
+  @Get(':address/session-keys')
+  async getSessionKeys(@Param('address') address: string) {
     return this.smartAccountsService.getActiveSessionKeys(address);
   }
 
-  @Post("session-keys/:sessionKeyAddress/validate")
+  @Post('session-keys/:sessionKeyAddress/validate')
   async validateSessionKey(
-    @Param("sessionKeyAddress") sessionKeyAddress: string,
+    @Param('sessionKeyAddress') sessionKeyAddress: string,
     @Body() body: { amount?: number; programId?: string; operation?: string },
   ) {
     return this.smartAccountsService.validateSessionKey(
@@ -156,9 +139,9 @@ export class SmartAccountsController {
     );
   }
 
-  @Delete("session-keys/:sessionKeyAddress")
-  async revokeSessionKey(@Param("sessionKeyAddress") sessionKeyAddress: string) {
+  @Delete('session-keys/:sessionKeyAddress')
+  async revokeSessionKey(@Param('sessionKeyAddress') sessionKeyAddress: string) {
     await this.smartAccountsService.revokeSessionKey(sessionKeyAddress);
-    return { message: "Session key revoked successfully" };
+    return { message: 'Session key revoked successfully' };
   }
 }

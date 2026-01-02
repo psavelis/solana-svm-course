@@ -1,25 +1,20 @@
-import { Injectable, Logger, BadRequestException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import {
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-  Keypair,
-} from "@solana/web3.js";
-import { DexPool, DexType } from "./dex-pool.entity";
-import { DexSwap, SwapDirection } from "./dex-swap.entity";
-import { DexLiquidityPosition, PositionType } from "./dex-liquidity-position.entity";
-import { CpiService } from "./cpi.service";
-import { TransactionsService } from "../transactions/transactions.service";
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Connection, PublicKey, TransactionInstruction, Keypair } from '@solana/web3.js';
+import { DexPool, DexType } from './dex-pool.entity';
+import { DexSwap, SwapDirection } from './dex-swap.entity';
+import { DexLiquidityPosition, PositionType } from './dex-liquidity-position.entity';
+import { CpiService } from './cpi.service';
+import { TransactionsService } from '../transactions/transactions.service';
 
 @Injectable()
 export class DexService {
   private readonly logger = new Logger(DexService.name);
 
   // Known DEX program IDs
-  private readonly RAYDIUM_AMM_PROGRAM_ID = "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8";
-  private readonly ORCA_WHIRLPOOL_PROGRAM_ID = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc";
+  private readonly RAYDIUM_AMM_PROGRAM_ID = '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8';
+  private readonly ORCA_WHIRLPOOL_PROGRAM_ID = 'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc';
 
   constructor(
     @InjectRepository(DexPool)
@@ -81,11 +76,11 @@ export class DexService {
   async getPool(poolAddress: string): Promise<DexPool> {
     const pool = await this.dexPoolRepository.findOne({
       where: { poolAddress },
-      relations: ["swaps", "liquidityPositions"],
+      relations: ['swaps', 'liquidityPositions'],
     });
 
     if (!pool) {
-      throw new BadRequestException("Pool not found");
+      throw new BadRequestException('Pool not found');
     }
 
     return pool;
@@ -94,10 +89,7 @@ export class DexService {
   /**
    * Get pools by token pair
    */
-  async getPoolsByTokens(
-    tokenAMint: string,
-    tokenBMint: string,
-  ): Promise<DexPool[]> {
+  async getPoolsByTokens(tokenAMint: string, tokenBMint: string): Promise<DexPool[]> {
     return await this.dexPoolRepository.find({
       where: [
         { tokenAMint, tokenBMint },
@@ -167,21 +159,14 @@ export class DexService {
     const pool = await this.getPool(poolAddress);
 
     // Calculate swap parameters
-    const swapParams = this.calculateSwapAmount(
-      pool,
-      amountIn,
-      direction,
-      slippageTolerance,
-    );
+    const swapParams = this.calculateSwapAmount(pool, amountIn, direction, slippageTolerance);
 
     this.logger.log(
       `Performing DEX swap: ${amountIn} -> ${swapParams.amountOut} with ${swapParams.priceImpact}% price impact`,
     );
 
     // Create swap record
-    const userKeypair = Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(userPrivateKey)),
-    );
+    const userKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(userPrivateKey)));
 
     const swap = this.dexSwapRepository.create({
       transactionSignature: `pending-${Date.now()}`,
@@ -194,7 +179,7 @@ export class DexService {
       priceImpact: swapParams.priceImpact,
       slippage: slippageTolerance,
       minimumAmountOut: swapParams.minimumAmountOut,
-      status: "pending",
+      status: 'pending',
     });
 
     const savedSwap = await this.dexSwapRepository.save(swap);
@@ -220,7 +205,7 @@ export class DexService {
 
       // Update swap with signature
       savedSwap.transactionSignature = signature;
-      savedSwap.status = "confirmed";
+      savedSwap.status = 'confirmed';
 
       // Update pool balances (simplified - in reality would fetch from blockchain)
       if (direction === SwapDirection.A_TO_B) {
@@ -234,7 +219,7 @@ export class DexService {
 
       return await this.dexSwapRepository.save(savedSwap);
     } catch (error) {
-      savedSwap.status = "failed";
+      savedSwap.status = 'failed';
       await this.dexSwapRepository.save(savedSwap);
       throw error;
     }
@@ -278,14 +263,14 @@ export class DexService {
 
     // Simplified instruction data
     const instructionData = {
-      instruction: "swap",
+      instruction: 'swap',
       amountIn,
       minimumAmountOut,
       direction,
     };
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -302,13 +287,11 @@ export class DexService {
   ): Promise<DexLiquidityPosition> {
     const pool = await this.getPool(poolAddress);
 
-    const userKeypair = Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(userPrivateKey)),
-    );
+    const userKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(userPrivateKey)));
 
     // Calculate liquidity shares (simplified)
     const totalLiquidity = pool.tokenABalance + pool.tokenBBalance;
-    const liquidityShares = (tokenAAmount + tokenBAmount) / totalLiquidity * 100; // Percentage
+    const liquidityShares = ((tokenAAmount + tokenBAmount) / totalLiquidity) * 100; // Percentage
 
     const position = this.dexLiquidityPositionRepository.create({
       poolId: pool.id,
@@ -340,19 +323,17 @@ export class DexService {
   ): Promise<DexLiquidityPosition> {
     const position = await this.dexLiquidityPositionRepository.findOne({
       where: { id: positionId },
-      relations: ["pool"],
+      relations: ['pool'],
     });
 
     if (!position) {
-      throw new BadRequestException("Position not found");
+      throw new BadRequestException('Position not found');
     }
 
-    const userKeypair = Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(userPrivateKey)),
-    );
+    const userKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(userPrivateKey)));
 
     if (position.ownerAddress !== userKeypair.publicKey.toString()) {
-      throw new BadRequestException("Unauthorized");
+      throw new BadRequestException('Unauthorized');
     }
 
     // Calculate amounts to remove
@@ -382,7 +363,7 @@ export class DexService {
   async getUserPositions(userAddress: string): Promise<DexLiquidityPosition[]> {
     return await this.dexLiquidityPositionRepository.find({
       where: { ownerAddress: userAddress, isActive: true },
-      relations: ["pool"],
+      relations: ['pool'],
     });
   }
 
@@ -392,8 +373,8 @@ export class DexService {
   async getUserSwapHistory(userAddress: string): Promise<DexSwap[]> {
     return await this.dexSwapRepository.find({
       where: { userAddress },
-      relations: ["pool"],
-      order: { createdAt: "DESC" },
+      relations: ['pool'],
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -405,12 +386,12 @@ export class DexService {
 
     const recentSwaps = await this.dexSwapRepository.find({
       where: { poolId: pool.id },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
       take: 100,
     });
 
     const volume24h = recentSwaps
-      .filter(swap => {
+      .filter((swap) => {
         const swapTime = swap.createdAt.getTime();
         const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
         return swapTime > dayAgo;

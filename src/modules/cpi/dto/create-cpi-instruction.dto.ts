@@ -5,8 +5,8 @@ import {
   IsObject,
   IsArray,
   ValidateNested,
-} from "class-validator";
-import { Type } from "class-transformer";
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateCpiInstructionDto {
   @IsString()

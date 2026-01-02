@@ -5,9 +5,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from "typeorm";
-import { DexSwap } from "./dex-swap.entity";
-import { DexLiquidityPosition } from "./dex-liquidity-position.entity";
+} from 'typeorm';
+import { DexSwap } from './dex-swap.entity';
+import { DexLiquidityPosition } from './dex-liquidity-position.entity';
 
 /**
  * DEX Type Enum
@@ -15,44 +15,44 @@ import { DexLiquidityPosition } from "./dex-liquidity-position.entity";
  * reference: https://solana.com/ecosystem/dex
  */
 export enum DexType {
-  AMM = "amm",
-  ORDER_BOOK = "order_book",
-  CLAMM = "clamm", // Concentrated Liquidity AMM
+  AMM = 'amm',
+  ORDER_BOOK = 'order_book',
+  CLAMM = 'clamm', // Concentrated Liquidity AMM
 }
 
 /**
  * DEX Pool Entity
- * 
+ *
  * Represents a decentralized exchange liquidity pool on Solana. DEX pools enable
  * trustless token swaps using various mechanisms like AMMs (Automated Market Makers)
  * or order books.
- * 
+ *
  * Key DEX concepts:
  * - AMM: Uses x*y=k formula to determine prices (e.g., Raydium, Orca)
  * - CLAMM: Concentrated Liquidity AMM allows LPs to provide liquidity in price ranges
  * - Order Book: Traditional order matching (e.g., Serum/OpenBook)
- * 
+ *
  * Popular Solana DEXs:
  * - Raydium: Hybrid AMM with order book integration
  * - Orca: User-friendly AMM with Whirlpools (CLAMM)
  * - Jupiter: DEX aggregator for best prices across pools
  * - OpenBook: Decentralized order book (Serum fork)
- * 
+ *
  * CPI Integration:
  * DEX pools are frequently called via CPI for composable swaps in DeFi protocols.
- * 
+ *
  * @example
  * const pool = new DexPool();
  * pool.dexType = DexType.CLAMM;
  * pool.dexProgramId = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc";
  * pool.tokenAMint = "So11111111111111111111111111111111111111112"; // SOL
  * pool.tokenBMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"; // USDC
- * 
+ *
  * @see https://docs.raydium.io/
  * @see https://docs.orca.so/
  * @see https://solana.com/docs/core/cpi
  */
-@Entity("dex_pools")
+@Entity('dex_pools')
 export class DexPool {
   /**
    * unique identifier for the pool record
@@ -60,7 +60,7 @@ export class DexPool {
    * example: "c3d4e5f6-g7h8-9012-3456-789012abcdef"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -114,7 +114,7 @@ export class DexPool {
    * example: 50000.123456789
    * reference: https://docs.raydium.io/raydium/pool/amm
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   tokenABalance: number;
 
   /**
@@ -123,7 +123,7 @@ export class DexPool {
    * example: 5000000.123456789
    * reference: https://docs.raydium.io/raydium/pool/amm
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   tokenBBalance: number;
 
   /**
@@ -132,7 +132,7 @@ export class DexPool {
    * example: 30
    * reference: https://docs.orca.so/orca-whirlpools/overview#fee-tiers
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   feeRate: number; // Fee rate in basis points (e.g., 30 = 0.3%)
 
   /**
@@ -159,7 +159,7 @@ export class DexPool {
    * example: { "name": "SOL-USDC", "dexName": "Orca" }
    * reference: none
    */
-  @Column("jsonb", { nullable: true })
+  @Column('jsonb', { nullable: true })
   metadata: {
     name?: string;
     description?: string;

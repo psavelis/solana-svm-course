@@ -1,8 +1,8 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { SmartAccountsConsumer } from "./smart-accounts.consumer";
-import { SmartAccountsService } from "./smart-accounts.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { SmartAccountsConsumer } from './smart-accounts.consumer';
+import { SmartAccountsService } from './smart-accounts.service';
 
-describe("SmartAccountsConsumer", () => {
+describe('SmartAccountsConsumer', () => {
   let consumer: SmartAccountsConsumer;
   let serviceMock: any;
   let kafkaClientMock: any;
@@ -25,7 +25,7 @@ describe("SmartAccountsConsumer", () => {
           useValue: serviceMock,
         },
         {
-          provide: "KAFKA_SERVICE",
+          provide: 'KAFKA_SERVICE',
           useValue: kafkaClientMock,
         },
       ],
@@ -34,45 +34,38 @@ describe("SmartAccountsConsumer", () => {
     consumer = module.get<SmartAccountsConsumer>(SmartAccountsConsumer);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(consumer).toBeDefined();
   });
 
-  describe("handleAuthorizationRequest", () => {
+  describe('handleAuthorizationRequest', () => {
     const mockMessage = {
-      transactionId: "tx-123",
-      smartAccountAddress: "smart-123",
+      transactionId: 'tx-123',
+      smartAccountAddress: 'smart-123',
       amount: 100,
-      programId: "prog-1",
+      programId: 'prog-1',
     };
 
-    it("should validate and authorize transaction", async () => {
+    it('should validate and authorize transaction', async () => {
       serviceMock.validateTransaction.mockResolvedValue({ valid: true });
 
       await consumer.handleAuthorizationRequest(mockMessage, {} as any);
 
-      expect(serviceMock.validateTransaction).toHaveBeenCalledWith(
-        "smart-123",
-        100,
-        "prog-1",
-      );
-      expect(serviceMock.recordTransaction).toHaveBeenCalledWith(
-        "smart-123",
-        100,
-      );
+      expect(serviceMock.validateTransaction).toHaveBeenCalledWith('smart-123', 100, 'prog-1');
+      expect(serviceMock.recordTransaction).toHaveBeenCalledWith('smart-123', 100);
       expect(kafkaClientMock.emit).toHaveBeenCalledWith(
-        "transaction.authorized",
+        'transaction.authorized',
         expect.objectContaining({
-          transactionId: "tx-123",
-          smartAccountAddress: "smart-123",
+          transactionId: 'tx-123',
+          smartAccountAddress: 'smart-123',
         }),
       );
     });
 
-    it("should validate and reject transaction", async () => {
+    it('should validate and reject transaction', async () => {
       serviceMock.validateTransaction.mockResolvedValue({
         valid: false,
-        reason: "limit exceeded",
+        reason: 'limit exceeded',
       });
 
       await consumer.handleAuthorizationRequest(mockMessage, {} as any);
@@ -80,15 +73,15 @@ describe("SmartAccountsConsumer", () => {
       expect(serviceMock.validateTransaction).toHaveBeenCalled();
       expect(serviceMock.recordTransaction).not.toHaveBeenCalled();
       expect(kafkaClientMock.emit).toHaveBeenCalledWith(
-        "transaction.rejected",
+        'transaction.rejected',
         expect.objectContaining({
-          transactionId: "tx-123",
-          reason: "limit exceeded",
+          transactionId: 'tx-123',
+          reason: 'limit exceeded',
         }),
       );
     });
 
-    it("should ignore invalid messages", async () => {
+    it('should ignore invalid messages', async () => {
       await consumer.handleAuthorizationRequest({}, {} as any);
       expect(serviceMock.validateTransaction).not.toHaveBeenCalled();
     });

@@ -1,15 +1,23 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { NFTListing } from "./nft-listing.entity";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { NFTListing } from './nft-listing.entity';
 
 export enum BidStatus {
-  ACTIVE = "active",
-  ACCEPTED = "accepted",
-  REJECTED = "rejected",
-  CANCELLED = "cancelled",
-  OUTBID = "outbid",
+  ACTIVE = 'active',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+  CANCELLED = 'cancelled',
+  OUTBID = 'outbid',
 }
 
-@Entity("nft_bids")
+@Entity('nft_bids')
 export class NFTBid {
   /**
    * unique identifier for the bid
@@ -17,7 +25,7 @@ export class NFTBid {
    * example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -26,7 +34,7 @@ export class NFTBid {
    * example: "b2c3d4e5-f6g7-8901-2345-678901bcdef0"
    * reference: https://typeorm.io/relations
    */
-  @Column({ name: "listing_id" })
+  @Column({ name: 'listing_id' })
   listingId: string;
 
   /**
@@ -35,8 +43,8 @@ export class NFTBid {
    * example: NFTListing object
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
-  @ManyToOne(() => NFTListing, listing => listing.bids)
-  @JoinColumn({ name: "listing_id" })
+  @ManyToOne(() => NFTListing, (listing) => listing.bids)
+  @JoinColumn({ name: 'listing_id' })
   listing: NFTListing;
 
   /**
@@ -45,7 +53,7 @@ export class NFTBid {
    * example: "3x4y5z6a-7b8c-9d0e-1f2g-3h4i5j6k7l8m"
    * reference: https://solana.com/docs/core/accounts
    */
-  @Column({ name: "bidder_address" })
+  @Column({ name: 'bidder_address' })
   bidderAddress: string;
 
   /**
@@ -54,7 +62,7 @@ export class NFTBid {
    * example: 10.5
    * reference: none
    */
-  @Column({ type: "decimal", precision: 20, scale: 9 })
+  @Column({ type: 'decimal', precision: 20, scale: 9 })
   amount: number;
 
   /**
@@ -63,7 +71,7 @@ export class NFTBid {
    * example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" (usdc)
    * reference: https://spl.solana.com/token
    */
-  @Column({ name: "currency_mint", nullable: true })
+  @Column({ name: 'currency_mint', nullable: true })
   currencyMint: string;
 
   /**
@@ -73,7 +81,7 @@ export class NFTBid {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: BidStatus,
     default: BidStatus.ACTIVE,
   })
@@ -85,7 +93,7 @@ export class NFTBid {
    * example: "2024-07-01T10:00:00Z"
    * reference: https://typeorm.io/entities#createdatecolumn
    */
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   /**
@@ -94,6 +102,6 @@ export class NFTBid {
    * example: "2024-07-02T11:00:00Z"
    * reference: https://typeorm.io/entities#updatedatecolumn
    */
-  @UpdateDateColumn({ name: "updated_at" })
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

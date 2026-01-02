@@ -6,20 +6,20 @@ import { TestUtils } from '../src/test-utils';
 
 /**
  * End-to-End Tests for the Solana SVM Study Application
- * 
+ *
  * These tests require a PostgreSQL database and Kafka to run properly.
  * The application uses PostgreSQL-specific features (enum, jsonb) that
  * are not supported by SQLite in-memory databases.
- * 
+ *
  * To run these tests:
  * 1. Start infrastructure: docker-compose up -d
  * 2. Run: npm run test:e2e
- * 
+ *
  * Environment requirements:
  * - PostgreSQL on localhost:5432
  * - Kafka on localhost:9092
  * - Redis on localhost:6379
- * 
+ *
  * @see https://solana.com/docs
  */
 describe.skip('App (e2e)', () => {
@@ -181,9 +181,7 @@ describe.skip('App (e2e)', () => {
 
   describe('Error Handling', () => {
     it('should handle 404 for non-existent endpoints', () => {
-      return request(app.getHttpServer())
-        .get('/non-existent-endpoint')
-        .expect(404);
+      return request(app.getHttpServer()).get('/non-existent-endpoint').expect(404);
     });
 
     it('should handle invalid request data', () => {
@@ -198,9 +196,7 @@ describe.skip('App (e2e)', () => {
     it('should respond within acceptable time', async () => {
       const startTime = Date.now();
 
-      await request(app.getHttpServer())
-        .get('/health')
-        .expect(200);
+      await request(app.getHttpServer()).get('/health').expect(200);
 
       const endTime = Date.now();
       const responseTime = endTime - startTime;

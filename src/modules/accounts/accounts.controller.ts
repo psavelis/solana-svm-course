@@ -8,14 +8,14 @@ import {
   Delete,
   Query,
   UseInterceptors,
-} from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from "@nestjs/swagger";
-import { AccountsService } from "./accounts.service";
-import { PdaService } from "./pda.service";
-import { Account } from "./account.entity";
-import { PublicKey } from "@solana/web3.js";
-import { Cache } from "../../common/decorators/cache.decorator";
-import { CacheInterceptor } from "../../common/interceptors/cache.interceptor";
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { AccountsService } from './accounts.service';
+import { PdaService } from './pda.service';
+import { Account } from './account.entity';
+import { PublicKey } from '@solana/web3.js';
+import { Cache } from '../../common/decorators/cache.decorator';
+import { CacheInterceptor } from '../../common/interceptors/cache.interceptor';
 
 /**
  * # Accounts Controller
@@ -71,8 +71,8 @@ import { CacheInterceptor } from "../../common/interceptors/cache.interceptor";
  * @see https://docs.solana.com/developing/programming-model/calling-between-programs#program-derived-addresses - PDAs
  * @see [docs/diagrams/01-accounts-programs.md](docs/diagrams/01-accounts-programs.md) - Architecture Diagrams
  */
-@ApiTags("accounts")
-@Controller("accounts")
+@ApiTags('accounts')
+@Controller('accounts')
 @UseInterceptors(CacheInterceptor)
 export class AccountsController {
   constructor(
@@ -99,24 +99,29 @@ export class AccountsController {
    */
   @Post()
   @ApiOperation({
-    summary: "Create a new account record",
-    description: "Store metadata about a Solana account in the local database. Does not create on-chain accounts.",
+    summary: 'Create a new account record',
+    description:
+      'Store metadata about a Solana account in the local database. Does not create on-chain accounts.',
   })
   @ApiBody({
-    description: "Account data to store",
+    description: 'Account data to store',
     schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        address: { type: "string", example: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM" },
-        type: { type: "string", enum: ["wallet", "program", "token", "pda", "system"], example: "wallet" },
-        label: { type: "string", example: "My Treasury" },
+        address: { type: 'string', example: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM' },
+        type: {
+          type: 'string',
+          enum: ['wallet', 'program', 'token', 'pda', 'system'],
+          example: 'wallet',
+        },
+        label: { type: 'string', example: 'My Treasury' },
       },
-      required: ["address"],
+      required: ['address'],
     },
   })
   @ApiResponse({
     status: 201,
-    description: "Account created successfully",
+    description: 'Account created successfully',
     type: Account,
   })
   create(@Body() createAccountDto: Partial<Account>) {
@@ -130,12 +135,12 @@ export class AccountsController {
    */
   @Get()
   @ApiOperation({
-    summary: "Get all accounts",
-    description: "Retrieve all account records stored in the local database.",
+    summary: 'Get all accounts',
+    description: 'Retrieve all account records stored in the local database.',
   })
   @ApiResponse({
     status: 200,
-    description: "List of accounts",
+    description: 'List of accounts',
     type: [Account],
   })
   findAll() {
@@ -147,16 +152,17 @@ export class AccountsController {
    *
    * Results are cached for 5 minutes to reduce database load.
    */
-  @Get(":id")
+  @Get(':id')
   @Cache({ ttl: 300, prefix: 'accounts' }) // Cache for 5 minutes
   @ApiOperation({
-    summary: "Get account by ID",
-    description: "Retrieve a specific account record by its database ID. Results are cached for 5 minutes.",
+    summary: 'Get account by ID',
+    description:
+      'Retrieve a specific account record by its database ID. Results are cached for 5 minutes.',
   })
-  @ApiParam({ name: "id", description: "Database UUID of the account record" })
-  @ApiResponse({ status: 200, description: "Account details", type: Account })
-  @ApiResponse({ status: 404, description: "Account not found" })
-  findOne(@Param("id") id: string) {
+  @ApiParam({ name: 'id', description: 'Database UUID of the account record' })
+  @ApiResponse({ status: 200, description: 'Account details', type: Account })
+  @ApiResponse({ status: 404, description: 'Account not found' })
+  findOne(@Param('id') id: string) {
     return this.accountsService.findOne(id);
   }
 
@@ -168,33 +174,38 @@ export class AccountsController {
    * curl http://localhost:3000/accounts/address/9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM
    * ```
    */
-  @Get("address/:address")
+  @Get('address/:address')
   @Cache({ ttl: 300, prefix: 'accounts' }) // Cache for 5 minutes
   @ApiOperation({
-    summary: "Get account by address",
-    description: "Retrieve account record by Solana public key (base58 encoded). Cached for 5 minutes.",
+    summary: 'Get account by address',
+    description:
+      'Retrieve account record by Solana public key (base58 encoded). Cached for 5 minutes.',
   })
-  @ApiParam({ name: "address", description: "Solana public key (base58)", example: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM" })
-  @ApiResponse({ status: 200, description: "Account details", type: Account })
-  findByAddress(@Param("address") address: string) {
+  @ApiParam({
+    name: 'address',
+    description: 'Solana public key (base58)',
+    example: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+  })
+  @ApiResponse({ status: 200, description: 'Account details', type: Account })
+  findByAddress(@Param('address') address: string) {
     return this.accountsService.findByAddress(address);
   }
 
   /**
    * Update an account record in the database.
    */
-  @Put(":id")
+  @Put(':id')
   @ApiOperation({
-    summary: "Update account",
-    description: "Update an existing account record by its database ID.",
+    summary: 'Update account',
+    description: 'Update an existing account record by its database ID.',
   })
-  @ApiParam({ name: "id", description: "Database UUID of the account record" })
+  @ApiParam({ name: 'id', description: 'Database UUID of the account record' })
   @ApiResponse({
     status: 200,
-    description: "Account updated successfully",
+    description: 'Account updated successfully',
     type: Account,
   })
-  update(@Param("id") id: string, @Body() updateAccountDto: Partial<Account>) {
+  update(@Param('id') id: string, @Body() updateAccountDto: Partial<Account>) {
     return this.accountsService.update(id, updateAccountDto);
   }
 
@@ -203,14 +214,14 @@ export class AccountsController {
    *
    * Note: This only removes the local record, not the on-chain account.
    */
-  @Delete(":id")
+  @Delete(':id')
   @ApiOperation({
-    summary: "Delete account",
-    description: "Remove an account record from the local database. Does not affect on-chain data.",
+    summary: 'Delete account',
+    description: 'Remove an account record from the local database. Does not affect on-chain data.',
   })
-  @ApiParam({ name: "id", description: "Database UUID of the account record" })
-  @ApiResponse({ status: 200, description: "Account deleted successfully" })
-  remove(@Param("id") id: string) {
+  @ApiParam({ name: 'id', description: 'Database UUID of the account record' })
+  @ApiResponse({ status: 200, description: 'Account deleted successfully' })
+  remove(@Param('id') id: string) {
     return this.accountsService.remove(id);
   }
 
@@ -230,15 +241,15 @@ export class AccountsController {
    * curl http://localhost:3000/accounts/info/11111111111111111111111111111111
    * ```
    */
-  @Get("info/:address")
+  @Get('info/:address')
   @Cache({ ttl: 60, prefix: 'blockchain' }) // Cache for 1 minute
   @ApiOperation({
-    summary: "Get Solana account info from blockchain",
-    description: "Fetch live account data from Solana RPC. Cached for 1 minute.",
+    summary: 'Get Solana account info from blockchain',
+    description: 'Fetch live account data from Solana RPC. Cached for 1 minute.',
   })
-  @ApiParam({ name: "address", description: "Solana public key (base58)" })
-  @ApiResponse({ status: 200, description: "Account info from Solana" })
-  getAccountInfo(@Param("address") address: string) {
+  @ApiParam({ name: 'address', description: 'Solana public key (base58)' })
+  @ApiResponse({ status: 200, description: 'Account info from Solana' })
+  getAccountInfo(@Param('address') address: string) {
     return this.accountsService.getAccountInfo(address);
   }
 
@@ -253,15 +264,15 @@ export class AccountsController {
    * # Response: { "lamports": 1000000000, "sol": 1.0 }
    * ```
    */
-  @Get("balance/:address")
+  @Get('balance/:address')
   @Cache({ ttl: 30, prefix: 'blockchain' }) // Cache for 30 seconds
   @ApiOperation({
-    summary: "Get account balance from Solana",
-    description: "Fetch current SOL balance from blockchain. Cached for 30 seconds.",
+    summary: 'Get account balance from Solana',
+    description: 'Fetch current SOL balance from blockchain. Cached for 30 seconds.',
   })
-  @ApiParam({ name: "address", description: "Solana public key (base58)" })
-  @ApiResponse({ status: 200, description: "Account balance" })
-  getBalance(@Param("address") address: string) {
+  @ApiParam({ name: 'address', description: 'Solana public key (base58)' })
+  @ApiResponse({ status: 200, description: 'Account balance' })
+  getBalance(@Param('address') address: string) {
     return this.accountsService.getBalance(address);
   }
 
@@ -293,23 +304,28 @@ export class AccountsController {
    *
    * @see https://docs.solana.com/developing/programming-model/calling-between-programs#program-derived-addresses
    */
-  @Post("pda/derive")
+  @Post('pda/derive')
   @ApiOperation({
-    summary: "Derive a Program Derived Address",
-    description: "Compute a PDA from program ID and seeds. PDAs have no private key and can only be signed for by the owning program.",
+    summary: 'Derive a Program Derived Address',
+    description:
+      'Compute a PDA from program ID and seeds. PDAs have no private key and can only be signed for by the owning program.',
   })
   @ApiBody({
-    description: "PDA derivation parameters",
+    description: 'PDA derivation parameters',
     schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        programId: { type: "string", example: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-        seeds: { type: "array", items: { oneOf: [{ type: "string" }, { type: "number" }] }, example: ["user", 12345] },
+        programId: { type: 'string', example: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
+        seeds: {
+          type: 'array',
+          items: { oneOf: [{ type: 'string' }, { type: 'number' }] },
+          example: ['user', 12345],
+        },
       },
-      required: ["programId", "seeds"],
+      required: ['programId', 'seeds'],
     },
   })
-  @ApiResponse({ status: 200, description: "PDA derivation result" })
+  @ApiResponse({ status: 200, description: 'PDA derivation result' })
   derivePDA(@Body() body: { programId: string; seeds: (string | number)[] }) {
     const programId = new PublicKey(body.programId);
     return this.pdaService.derivePDA(programId, body.seeds);
@@ -331,12 +347,12 @@ export class AccountsController {
    *   }'
    * ```
    */
-  @Post("pda/account")
+  @Post('pda/account')
   @ApiOperation({
-    summary: "Derive an account PDA",
-    description: "Derive a PDA for storing per-user data in a program.",
+    summary: 'Derive an account PDA',
+    description: 'Derive a PDA for storing per-user data in a program.',
   })
-  @ApiResponse({ status: 200, description: "Account PDA derivation result" })
+  @ApiResponse({ status: 200, description: 'Account PDA derivation result' })
   deriveAccountPDA(@Body() body: { programId: string; ownerAddress: string; accountType: string }) {
     const programId = new PublicKey(body.programId);
     const ownerAddress = new PublicKey(body.ownerAddress);
@@ -370,12 +386,13 @@ export class AccountsController {
    *
    * @see https://spl.solana.com/associated-token-account
    */
-  @Post("pda/ata")
+  @Post('pda/ata')
   @ApiOperation({
-    summary: "Derive Associated Token Account address",
-    description: "Compute the ATA address for a wallet/mint pair. ATAs are the standard token holding accounts in Solana.",
+    summary: 'Derive Associated Token Account address',
+    description:
+      'Compute the ATA address for a wallet/mint pair. ATAs are the standard token holding accounts in Solana.',
   })
-  @ApiResponse({ status: 200, description: "ATA address" })
+  @ApiResponse({ status: 200, description: 'ATA address' })
   deriveATA(@Body() body: { tokenProgramId: string; mintAddress: string; ownerAddress: string }) {
     const tokenProgramId = new PublicKey(body.tokenProgramId);
     const mintAddress = new PublicKey(body.mintAddress);
@@ -388,12 +405,12 @@ export class AccountsController {
    *
    * Useful for verifying PDAs before using them in transactions.
    */
-  @Post("pda/validate")
+  @Post('pda/validate')
   @ApiOperation({
-    summary: "Validate if address is a valid PDA",
-    description: "Check if an address matches the expected PDA for given program and seeds.",
+    summary: 'Validate if address is a valid PDA',
+    description: 'Check if an address matches the expected PDA for given program and seeds.',
   })
-  @ApiResponse({ status: 200, description: "PDA validation result" })
+  @ApiResponse({ status: 200, description: 'PDA validation result' })
   validatePDA(@Body() body: { address: string; programId: string; seeds: (string | number)[] }) {
     const address = new PublicKey(body.address);
     const programId = new PublicKey(body.programId);
@@ -424,12 +441,12 @@ export class AccountsController {
    *   }'
    * ```
    */
-  @Post("pda/escrow")
+  @Post('pda/escrow')
   @ApiOperation({
-    summary: "Derive an escrow PDA",
-    description: "Derive a PDA for an escrow account that can securely hold funds.",
+    summary: 'Derive an escrow PDA',
+    description: 'Derive a PDA for an escrow account that can securely hold funds.',
   })
-  @ApiResponse({ status: 200, description: "Escrow PDA derivation result" })
+  @ApiResponse({ status: 200, description: 'Escrow PDA derivation result' })
   deriveEscrowPDA(@Body() body: { programId: string; escrowId: string; authority: string }) {
     const programId = new PublicKey(body.programId);
     const authority = new PublicKey(body.authority);
@@ -444,12 +461,12 @@ export class AccountsController {
    *
    * @see https://docs.metaplex.com/programs/token-metadata/accounts
    */
-  @Post("pda/metadata")
+  @Post('pda/metadata')
   @ApiOperation({
-    summary: "Derive NFT metadata account PDA",
-    description: "Compute the Metaplex metadata PDA for an NFT mint.",
+    summary: 'Derive NFT metadata account PDA',
+    description: 'Compute the Metaplex metadata PDA for an NFT mint.',
   })
-  @ApiResponse({ status: 200, description: "Metadata PDA address" })
+  @ApiResponse({ status: 200, description: 'Metadata PDA address' })
   deriveMetadataPDA(@Body() body: { metadataProgramId: string; mintAddress: string }) {
     const metadataProgramId = new PublicKey(body.metadataProgramId);
     const mintAddress = new PublicKey(body.mintAddress);
@@ -463,12 +480,12 @@ export class AccountsController {
    *
    * @see https://docs.metaplex.com/programs/token-metadata/accounts#master-edition
    */
-  @Post("pda/master-edition")
+  @Post('pda/master-edition')
   @ApiOperation({
-    summary: "Derive NFT master edition PDA",
-    description: "Compute the Metaplex master edition PDA for an NFT mint.",
+    summary: 'Derive NFT master edition PDA',
+    description: 'Compute the Metaplex master edition PDA for an NFT mint.',
   })
-  @ApiResponse({ status: 200, description: "Master edition PDA address" })
+  @ApiResponse({ status: 200, description: 'Master edition PDA address' })
   deriveMasterEditionPDA(@Body() body: { metadataProgramId: string; mintAddress: string }) {
     const metadataProgramId = new PublicKey(body.metadataProgramId);
     const mintAddress = new PublicKey(body.mintAddress);

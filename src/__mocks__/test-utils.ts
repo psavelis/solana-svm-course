@@ -80,10 +80,7 @@ export class TestModuleBuilder {
 
 // Repository helpers
 export class RepositoryHelpers {
-  static async createEntity<T>(
-    repository: Repository<T>,
-    data: Partial<T>
-  ): Promise<T> {
+  static async createEntity<T>(repository: Repository<T>, data: Partial<T>): Promise<T> {
     const entity = repository.create(data as any);
     return repository.save(entity as any) as Promise<T>;
   }
@@ -105,7 +102,8 @@ export class BlockchainHelpers {
 
   static mockTransactionSignature(signature: string) {
     // Mock transaction confirmation
-    jest.spyOn(MockServices.connection, 'sendAndConfirmTransaction')
+    jest
+      .spyOn(MockServices.connection, 'sendAndConfirmTransaction')
       .mockResolvedValueOnce(signature);
   }
 
@@ -114,8 +112,9 @@ export class BlockchainHelpers {
   }
 
   static mockAssociatedTokenAddress(mint: string, owner: string, ata: string) {
-    MockServices.splToken.getAssociatedTokenAddress
-      .mockResolvedValueOnce(new (require('@solana/web3.js').PublicKey)(ata));
+    MockServices.splToken.getAssociatedTokenAddress.mockResolvedValueOnce(
+      new (require('@solana/web3.js').PublicKey)(ata),
+    );
   }
 }
 
@@ -150,9 +149,4 @@ export function setupTestEnvironment() {
 }
 
 // Export everything
-export {
-  MockConnection,
-  createMockConnection,
-  setupSplTokenMocks,
-  setupWeb3Mocks,
-};
+export { MockConnection, createMockConnection, setupSplTokenMocks, setupWeb3Mocks };

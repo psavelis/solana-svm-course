@@ -1,9 +1,9 @@
-import { Controller, Get } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
-import { HealthCheckService, HealthCheck } from "@nestjs/terminus";
-import { DatabaseHealthIndicator } from "./database.health";
-import { KafkaHealthIndicator } from "./kafka.health";
-import { RedisHealthIndicator } from "./redis.health";
+import { Controller, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { HealthCheckService, HealthCheck } from '@nestjs/terminus';
+import { DatabaseHealthIndicator } from './database.health';
+import { KafkaHealthIndicator } from './kafka.health';
+import { RedisHealthIndicator } from './redis.health';
 
 /**
  * # Health Controller
@@ -60,8 +60,8 @@ import { RedisHealthIndicator } from "./redis.health";
  * # Returns 200 if healthy, 503 if unhealthy
  * ```
  */
-@ApiTags("Health")
-@Controller("health")
+@ApiTags('Health')
+@Controller('health')
 export class HealthController {
   constructor(
     private health: HealthCheckService,
@@ -78,16 +78,16 @@ export class HealthController {
   @Get()
   @HealthCheck()
   @ApiOperation({
-    summary: "Check application health",
-    description: "Verify database, Kafka, and Redis connectivity.",
+    summary: 'Check application health',
+    description: 'Verify database, Kafka, and Redis connectivity.',
   })
-  @ApiResponse({ status: 200, description: "All systems healthy" })
-  @ApiResponse({ status: 503, description: "One or more systems unhealthy" })
+  @ApiResponse({ status: 200, description: 'All systems healthy' })
+  @ApiResponse({ status: 503, description: 'One or more systems unhealthy' })
   check() {
     return this.health.check([
-      () => this.db.isHealthy("database"),
-      () => this.kafka.isHealthy("kafka"),
-      () => this.redis.isHealthy("redis"),
+      () => this.db.isHealthy('database'),
+      () => this.kafka.isHealthy('kafka'),
+      () => this.redis.isHealthy('redis'),
     ]);
   }
 }

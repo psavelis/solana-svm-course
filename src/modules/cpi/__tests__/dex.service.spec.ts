@@ -1,25 +1,25 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { getRepositoryToken } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Keypair } from "@solana/web3.js";
-import { DexService } from "../dex.service";
-import { DexPool, DexType } from "../dex-pool.entity";
-import { DexSwap, SwapDirection } from "../dex-swap.entity";
-import { DexLiquidityPosition, PositionType } from "../dex-liquidity-position.entity";
-import { CpiService } from "../cpi.service";
-import { TransactionsService } from "../../transactions/transactions.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Keypair } from '@solana/web3.js';
+import { DexService } from '../dex.service';
+import { DexPool, DexType } from '../dex-pool.entity';
+import { DexSwap, SwapDirection } from '../dex-swap.entity';
+import { DexLiquidityPosition, PositionType } from '../dex-liquidity-position.entity';
+import { CpiService } from '../cpi.service';
+import { TransactionsService } from '../../transactions/transactions.service';
 
 // Mock Keypair
-jest.mock("@solana/web3.js", () => ({
-  ...jest.requireActual("@solana/web3.js"),
+jest.mock('@solana/web3.js', () => ({
+  ...jest.requireActual('@solana/web3.js'),
   Keypair: {
     fromSecretKey: jest.fn().mockReturnValue({
-      publicKey: { toString: () => "user123" },
+      publicKey: { toString: () => 'user123' },
     }),
   },
 }));
 
-describe("DexService", () => {
+describe('DexService', () => {
   let service: DexService;
   let dexPoolRepository: Repository<DexPool>;
   let dexSwapRepository: Repository<DexSwap>;
@@ -55,7 +55,7 @@ describe("DexService", () => {
   const mockTransactionsService = {
     createTransaction: jest.fn(),
     executeTransaction: jest.fn(),
-    sendProgramInvocation: jest.fn().mockResolvedValue("mock-signature"),
+    sendProgramInvocation: jest.fn().mockResolvedValue('mock-signature'),
   };
 
   beforeEach(async () => {
@@ -86,12 +86,8 @@ describe("DexService", () => {
     }).compile();
 
     service = module.get<DexService>(DexService);
-    dexPoolRepository = module.get<Repository<DexPool>>(
-      getRepositoryToken(DexPool),
-    );
-    dexSwapRepository = module.get<Repository<DexSwap>>(
-      getRepositoryToken(DexSwap),
-    );
+    dexPoolRepository = module.get<Repository<DexPool>>(getRepositoryToken(DexPool));
+    dexSwapRepository = module.get<Repository<DexSwap>>(getRepositoryToken(DexSwap));
     dexLiquidityPositionRepository = module.get<Repository<DexLiquidityPosition>>(
       getRepositoryToken(DexLiquidityPosition),
     );
@@ -99,24 +95,24 @@ describe("DexService", () => {
     transactionsService = module.get<TransactionsService>(TransactionsService);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe("createOrUpdatePool", () => {
-    it("should create a new DEX pool", async () => {
+  describe('createOrUpdatePool', () => {
+    it('should create a new DEX pool', async () => {
       const poolData = {
-        poolAddress: "pool123",
+        poolAddress: 'pool123',
         dexType: DexType.AMM,
-        dexProgramId: "program123",
-        tokenAMint: "tokenA123",
-        tokenBMint: "tokenB123",
+        dexProgramId: 'program123',
+        tokenAMint: 'tokenA123',
+        tokenBMint: 'tokenB123',
         tokenABalance: 1000,
         tokenBBalance: 2000,
         feeRate: 0.003,
       };
 
-      const mockPool = { id: "1", ...poolData };
+      const mockPool = { id: '1', ...poolData };
       mockDexPoolRepository.findOne.mockResolvedValue(null);
       mockDexPoolRepository.create.mockReturnValue(mockPool);
       mockDexPoolRepository.save.mockResolvedValue(mockPool);
@@ -139,20 +135,20 @@ describe("DexService", () => {
       });
     });
 
-    it("should update an existing DEX pool", async () => {
+    it('should update an existing DEX pool', async () => {
       const existingPool = {
-        id: "1",
-        poolAddress: "pool123",
+        id: '1',
+        poolAddress: 'pool123',
         tokenABalance: 1000,
         tokenBBalance: 2000,
       };
 
       const updateData = {
-        poolAddress: "pool123",
+        poolAddress: 'pool123',
         dexType: DexType.AMM,
-        dexProgramId: "program123",
-        tokenAMint: "tokenA123",
-        tokenBMint: "tokenB123",
+        dexProgramId: 'program123',
+        tokenAMint: 'tokenA123',
+        tokenBMint: 'tokenB123',
         tokenABalance: 1500,
         tokenBBalance: 2500,
         feeRate: 0.003,
@@ -180,56 +176,55 @@ describe("DexService", () => {
     });
   });
 
-  describe("getPool", () => {
-    it("should return a DEX pool by address", async () => {
-      const mockPool = { id: "1", poolAddress: "pool123" };
+  describe('getPool', () => {
+    it('should return a DEX pool by address', async () => {
+      const mockPool = { id: '1', poolAddress: 'pool123' };
       mockDexPoolRepository.findOne.mockResolvedValue(mockPool);
 
-      const result = await service.getPool("pool123");
+      const result = await service.getPool('pool123');
 
       expect(result).toEqual(mockPool);
       expect(mockDexPoolRepository.findOne).toHaveBeenCalledWith({
-        where: { poolAddress: "pool123" },
-        relations: ["swaps", "liquidityPositions"],
+        where: { poolAddress: 'pool123' },
+        relations: ['swaps', 'liquidityPositions'],
       });
     });
 
-    it("should throw error when pool not found", async () => {
+    it('should throw error when pool not found', async () => {
       mockDexPoolRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getPool("pool123")).rejects.toThrow("Pool not found");
+      await expect(service.getPool('pool123')).rejects.toThrow('Pool not found');
     });
   });
 
-  describe("getPoolsByTokens", () => {
-    it("should return pools by token mints", async () => {
-      const mockPools = [
-        { id: "1", tokenAMint: "tokenA123", tokenBMint: "tokenB123" },
-      ];
+  describe('getPoolsByTokens', () => {
+    it('should return pools by token mints', async () => {
+      const mockPools = [{ id: '1', tokenAMint: 'tokenA123', tokenBMint: 'tokenB123' }];
 
       mockDexPoolRepository.find.mockResolvedValue(mockPools);
 
-      const result = await service.getPoolsByTokens("tokenA123", "tokenB123");
+      const result = await service.getPoolsByTokens('tokenA123', 'tokenB123');
 
       expect(result).toEqual(mockPools);
       expect(mockDexPoolRepository.find).toHaveBeenCalledWith({
         where: [
-          { tokenAMint: "tokenA123", tokenBMint: "tokenB123" },
-          { tokenAMint: "tokenB123", tokenBMint: "tokenA123" },
+          { tokenAMint: 'tokenA123', tokenBMint: 'tokenB123' },
+          { tokenAMint: 'tokenB123', tokenBMint: 'tokenA123' },
         ],
       });
     });
   });
 
-  describe("performSwap", () => {
-    it("should perform a DEX swap", async () => {
-      const userPrivateKey = "[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]";
-      const poolAddress = "pool123";
+  describe('performSwap', () => {
+    it('should perform a DEX swap', async () => {
+      const userPrivateKey =
+        '[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]';
+      const poolAddress = 'pool123';
       const amountIn = 100;
       const direction = SwapDirection.A_TO_B;
 
       const mockPool = {
-        id: "1",
+        id: '1',
         poolAddress,
         tokenABalance: 1000,
         tokenBBalance: 2000,
@@ -237,9 +232,9 @@ describe("DexService", () => {
       };
 
       const mockSwap = {
-        id: "1",
+        id: '1',
         transactionSignature: expect.any(String),
-        poolId: "1",
+        poolId: '1',
         userAddress: expect.any(String),
         direction,
         amountIn,
@@ -248,52 +243,49 @@ describe("DexService", () => {
         priceImpact: expect.any(Number),
         slippage: 0.5,
         minimumAmountOut: expect.any(Number),
-        status: "pending",
+        status: 'pending',
       };
 
       mockDexPoolRepository.findOne.mockResolvedValue(mockPool);
       mockDexSwapRepository.create.mockReturnValue(mockSwap);
       mockDexSwapRepository.save.mockResolvedValue(mockSwap);
 
-      const result = await service.performSwap(
-        userPrivateKey,
-        poolAddress,
-        amountIn,
-        direction,
-      );
+      const result = await service.performSwap(userPrivateKey, poolAddress, amountIn, direction);
 
       expect(result).toEqual(mockSwap);
       expect(mockDexSwapRepository.create).toHaveBeenCalled();
       expect(mockDexSwapRepository.save).toHaveBeenCalledWith(mockSwap);
     });
 
-    it("should throw error when pool not found", async () => {
-      const userPrivateKey = "[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]";
+    it('should throw error when pool not found', async () => {
+      const userPrivateKey =
+        '[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]';
       mockDexPoolRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.performSwap(userPrivateKey, "pool123", 100, SwapDirection.A_TO_B),
-      ).rejects.toThrow("Pool not found");
+        service.performSwap(userPrivateKey, 'pool123', 100, SwapDirection.A_TO_B),
+      ).rejects.toThrow('Pool not found');
     });
   });
 
-  describe("addLiquidity", () => {
-    it("should add liquidity to a pool", async () => {
-      const userPrivateKey = "[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]";
-      const poolAddress = "pool123";
+  describe('addLiquidity', () => {
+    it('should add liquidity to a pool', async () => {
+      const userPrivateKey =
+        '[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]';
+      const poolAddress = 'pool123';
       const tokenAAmount = 100;
       const tokenBAmount = 200;
 
       const mockPool = {
-        id: "1",
+        id: '1',
         poolAddress,
         tokenABalance: 1000,
         tokenBBalance: 2000,
       };
 
       const mockPosition = {
-        id: "1",
-        poolId: "1",
+        id: '1',
+        poolId: '1',
         ownerAddress: expect.any(String),
         positionType: PositionType.STANDARD,
         tokenAAmount,
@@ -328,22 +320,23 @@ describe("DexService", () => {
     });
   });
 
-  describe("removeLiquidity", () => {
-    it("should remove liquidity from a pool", async () => {
-      const userPrivateKey = "[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]";
-      const positionId = "position123";
+  describe('removeLiquidity', () => {
+    it('should remove liquidity from a pool', async () => {
+      const userPrivateKey =
+        '[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]';
+      const positionId = 'position123';
       const percentage = 50;
 
       const mockPosition = {
         id: positionId,
-        poolId: "1",
-        ownerAddress: "user123",
+        poolId: '1',
+        ownerAddress: 'user123',
         tokenAAmount: 100,
         tokenBAmount: 200,
         liquidityShares: 10,
         isActive: true,
         pool: {
-          id: "1",
+          id: '1',
           tokenABalance: 1000,
           tokenBBalance: 2000,
         },
@@ -364,22 +357,21 @@ describe("DexService", () => {
       expect(result.liquidityShares).toBe(5);
     });
 
-    it("should throw error when position not found", async () => {
-      const userPrivateKey = "[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]";
+    it('should throw error when position not found', async () => {
+      const userPrivateKey =
+        '[174,47,154,16,202,193,206,113,199,190,53,133,169,175,31,56,222,53,138,189,224,216,117,173,10,149,53,45,73,46,49,173,32,136,97,143,99,10,122,172,88,196,64,8,232,165,71,127,201,183,58,43,4,96,95,240,166,172,125,31,63,226,38,223]';
       mockDexLiquidityPositionRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.removeLiquidity(userPrivateKey, "position123")).rejects.toThrow(
-        "Position not found",
+      await expect(service.removeLiquidity(userPrivateKey, 'position123')).rejects.toThrow(
+        'Position not found',
       );
     });
   });
 
-  describe("getUserPositions", () => {
-    it("should return user liquidity positions", async () => {
-      const userAddress = "user123";
-      const mockPositions = [
-        { id: "1", ownerAddress: userAddress, isActive: true },
-      ];
+  describe('getUserPositions', () => {
+    it('should return user liquidity positions', async () => {
+      const userAddress = 'user123';
+      const mockPositions = [{ id: '1', ownerAddress: userAddress, isActive: true }];
 
       mockDexLiquidityPositionRepository.find.mockResolvedValue(mockPositions);
 
@@ -388,57 +380,47 @@ describe("DexService", () => {
       expect(result).toEqual(mockPositions);
       expect(mockDexLiquidityPositionRepository.find).toHaveBeenCalledWith({
         where: { ownerAddress: userAddress, isActive: true },
-        relations: ["pool"],
+        relations: ['pool'],
       });
     });
   });
 
-  describe("calculateSwapAmount", () => {
-    it("should calculate swap amount for A to B", () => {
+  describe('calculateSwapAmount', () => {
+    it('should calculate swap amount for A to B', () => {
       const pool = {
         tokenABalance: 1000,
         tokenBBalance: 2000,
         feeRate: 0.003,
       };
 
-      const result = service.calculateSwapAmount(
-        pool as any,
-        100,
-        SwapDirection.A_TO_B,
-        0.5,
-      );
+      const result = service.calculateSwapAmount(pool as any, 100, SwapDirection.A_TO_B, 0.5);
 
       expect(result.amountOut).toBeGreaterThan(0);
       expect(result.feeAmount).toBe(0.3);
-      expect(typeof result.priceImpact).toBe("number");
+      expect(typeof result.priceImpact).toBe('number');
       expect(result.minimumAmountOut).toBe(result.amountOut * 0.995);
     });
 
-    it("should calculate swap amount for B to A", () => {
+    it('should calculate swap amount for B to A', () => {
       const pool = {
         tokenABalance: 1000,
         tokenBBalance: 2000,
         feeRate: 0.003,
       };
 
-      const result = service.calculateSwapAmount(
-        pool as any,
-        100,
-        SwapDirection.B_TO_A,
-        0.5,
-      );
+      const result = service.calculateSwapAmount(pool as any, 100, SwapDirection.B_TO_A, 0.5);
 
       expect(result.amountOut).toBeGreaterThan(0);
       expect(result.feeAmount).toBe(0.3);
-      expect(typeof result.priceImpact).toBe("number");
+      expect(typeof result.priceImpact).toBe('number');
       expect(result.minimumAmountOut).toBe(result.amountOut * 0.995);
     });
   });
 
-  describe("getUserSwapHistory", () => {
-    it("should return user swap history", async () => {
-      const userAddress = "user123";
-      const mockSwaps = [{ id: "1", userAddress }];
+  describe('getUserSwapHistory', () => {
+    it('should return user swap history', async () => {
+      const userAddress = 'user123';
+      const mockSwaps = [{ id: '1', userAddress }];
 
       mockDexSwapRepository.find.mockResolvedValue(mockSwaps);
 
@@ -447,17 +429,17 @@ describe("DexService", () => {
       expect(result).toEqual(mockSwaps);
       expect(mockDexSwapRepository.find).toHaveBeenCalledWith({
         where: { userAddress },
-        relations: ["pool"],
-        order: { createdAt: "DESC" },
+        relations: ['pool'],
+        order: { createdAt: 'DESC' },
       });
     });
   });
 
-  describe("getPoolStats", () => {
-    it("should return pool statistics", async () => {
-      const poolAddress = "pool123";
+  describe('getPoolStats', () => {
+    it('should return pool statistics', async () => {
+      const poolAddress = 'pool123';
       const mockPool = {
-        id: "1",
+        id: '1',
         poolAddress,
         tokenABalance: 1000,
         tokenBBalance: 2000,
@@ -474,7 +456,7 @@ describe("DexService", () => {
 
       const result = await service.getPoolStats(poolAddress);
 
-      expect(result.poolAddress).toBe("pool123");
+      expect(result.poolAddress).toBe('pool123');
       expect(result.liquidity).toBe(3000); // 1000+2000
       expect(result.volume24h).toBe(300); // 100+200
       expect(result.swapCount).toBe(2);

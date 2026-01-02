@@ -1,27 +1,14 @@
-import {
-  Injectable,
-  Logger,
-  BadRequestException,
-  ForbiddenException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import {
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-  AccountMeta,
-} from "@solana/web3.js";
-import { CpiInstruction } from "./cpi-instruction.entity";
-import { CpiPermission } from "./cpi-permission.entity";
-import { CpiInvocation } from "./cpi-invocation.entity";
-import { CreateCpiInstructionDto } from "./dto/create-cpi-instruction.dto";
-import {
-  CreateCpiPermissionDto,
-  UpdateCpiPermissionDto,
-} from "./dto/cpi-permission.dto";
-import { CreateCpiInvocationDto } from "./dto/cpi-invocation.dto";
-import { SvmService } from "../svm/svm.service";
+import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Connection, PublicKey, TransactionInstruction, AccountMeta } from '@solana/web3.js';
+import { CpiInstruction } from './cpi-instruction.entity';
+import { CpiPermission } from './cpi-permission.entity';
+import { CpiInvocation } from './cpi-invocation.entity';
+import { CreateCpiInstructionDto } from './dto/create-cpi-instruction.dto';
+import { CreateCpiPermissionDto, UpdateCpiPermissionDto } from './dto/cpi-permission.dto';
+import { CreateCpiInvocationDto } from './dto/cpi-invocation.dto';
+import { SvmService } from '../svm/svm.service';
 
 @Injectable()
 /**
@@ -44,9 +31,7 @@ export class CpiService {
   /**
    * Create a new CPI instruction template
    */
-  async createInstruction(
-    dto: CreateCpiInstructionDto,
-  ): Promise<CpiInstruction> {
+  async createInstruction(dto: CreateCpiInstructionDto): Promise<CpiInstruction> {
     this.logger.log(`Creating CPI instruction for program ${dto.programId}`);
 
     const instruction = this.cpiInstructionRepository.create({
@@ -63,7 +48,7 @@ export class CpiService {
   async getInstructionsByProgram(programId: string): Promise<CpiInstruction[]> {
     return await this.cpiInstructionRepository.find({
       where: { programId, isActive: true },
-      relations: ["program", "callerProgram"],
+      relations: ['program', 'callerProgram'],
     });
   }
 
@@ -86,15 +71,12 @@ export class CpiService {
   /**
    * Update a CPI permission
    */
-  async updatePermission(
-    id: string,
-    dto: UpdateCpiPermissionDto,
-  ): Promise<CpiPermission> {
+  async updatePermission(id: string, dto: UpdateCpiPermissionDto): Promise<CpiPermission> {
     const permission = await this.cpiPermissionRepository.findOne({
       where: { id },
     });
     if (!permission) {
-      throw new BadRequestException("Permission not found");
+      throw new BadRequestException('Permission not found');
     }
 
     Object.assign(permission, dto);
@@ -107,7 +89,7 @@ export class CpiService {
   async checkPermission(
     callerProgramId: string,
     targetProgramId: string,
-    permissionType: string = "invoke",
+    permissionType: string = 'invoke',
     accountId?: string,
   ): Promise<boolean> {
     const permission = await this.cpiPermissionRepository.findOne({
@@ -136,9 +118,7 @@ export class CpiService {
    * Execute a CPI call
    */
   async executeCpi(dto: CreateCpiInvocationDto): Promise<CpiInvocation> {
-    this.logger.log(
-      `Executing CPI from ${dto.callerProgramId} to ${dto.targetProgramId}`,
-    );
+    this.logger.log(`Executing CPI from ${dto.callerProgramId} to ${dto.targetProgramId}`);
 
     // Check permissions if required
     const instruction = await this.cpiInstructionRepository.findOne({
@@ -154,18 +134,18 @@ export class CpiService {
       const hasPermission = await this.checkPermission(
         dto.callerProgramId,
         dto.targetProgramId,
-        instruction.permissionLevel || "invoke",
+        instruction.permissionLevel || 'invoke',
       );
 
       if (!hasPermission) {
-        throw new ForbiddenException("Insufficient permissions for CPI call");
+        throw new ForbiddenException('Insufficient permissions for CPI call');
       }
     }
 
     // Create invocation record
     const invocation = this.cpiInvocationRepository.create({
       ...dto,
-      status: "pending",
+      status: 'pending',
     });
 
     const savedInvocation = await this.cpiInvocationRepository.save(invocation);
@@ -175,9 +155,7 @@ export class CpiService {
       const result = await this.svmService.executeProgram(
         {
           programId: dto.targetProgramId,
-          instructionData: Buffer.from(
-            JSON.stringify(dto.instructionData),
-          ).toString("base64"),
+          instructionData: Buffer.from(JSON.stringify(dto.instructionData)).toString('base64'),
           accounts: dto.accounts?.map((a) => a.pubkey) || [],
           maxComputeUnits: 200000, // Default compute units
         },
@@ -185,14 +163,14 @@ export class CpiService {
       ); // No signer for CPI calls
 
       // Update invocation with success
-      savedInvocation.status = "success";
+      savedInvocation.status = 'success';
       savedInvocation.gasUsed = result.computeUnitsUsed;
       savedInvocation.returnData = result.logs;
     } catch (error) {
       this.logger.error(`CPI execution failed: ${error.message}`);
 
       // Update invocation with failure
-      savedInvocation.status = "failed";
+      savedInvocation.status = 'failed';
       savedInvocation.errorMessage = error.message;
     }
 
@@ -213,8 +191,8 @@ export class CpiService {
 
     return await this.cpiInvocationRepository.find({
       where,
-      relations: ["callerProgram", "targetProgram", "execution"],
-      order: { createdAt: "DESC" },
+      relations: ['callerProgram', 'targetProgram', 'execution'],
+      order: { createdAt: 'DESC' },
       take: limit,
     });
   }

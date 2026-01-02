@@ -27,12 +27,13 @@ export class CacheInterceptor implements NestInterceptor {
     }
 
     // Generate cache key
-    const cacheKey = cacheOptions.key ||
+    const cacheKey =
+      cacheOptions.key ||
       `${request.method}:${request.url}:${JSON.stringify(request.query)}:${JSON.stringify(request.body)}`;
 
     // Try to get cached response
     const cachedResponse = await this.cacheService.get(cacheKey, {
-      keyPrefix: cacheOptions.prefix || 'response'
+      keyPrefix: cacheOptions.prefix || 'response',
     });
 
     if (cachedResponse) {
@@ -47,10 +48,10 @@ export class CacheInterceptor implements NestInterceptor {
         // Cache the response
         await this.cacheService.set(cacheKey, data, {
           ttl: cacheOptions.ttl,
-          keyPrefix: cacheOptions.prefix || 'response'
+          keyPrefix: cacheOptions.prefix || 'response',
         });
         response.setHeader('X-Cache', 'MISS');
-      })
+      }),
     );
   }
 }

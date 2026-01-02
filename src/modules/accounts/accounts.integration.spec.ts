@@ -6,15 +6,15 @@ import { AccountsModule } from './accounts.module';
 
 /**
  * Integration Tests for Accounts Module
- * 
+ *
  * These tests require a PostgreSQL database connection to run properly.
  * SQLite (used in unit tests) does not support enum and jsonb column types
  * that are used in the entity definitions.
- * 
+ *
  * To run these tests:
  * 1. Start PostgreSQL: docker-compose up -d postgres
  * 2. Run: npm run test:e2e
- * 
+ *
  * @see https://solana.com/docs/core/accounts
  */
 describe.skip('Accounts (Integration)', () => {
@@ -68,10 +68,7 @@ describe.skip('Accounts (Integration)', () => {
     });
 
     it('should validate required fields', () => {
-      return request(app.getHttpServer())
-        .post('/accounts')
-        .send({})
-        .expect(400);
+      return request(app.getHttpServer()).post('/accounts').send({}).expect(400);
     });
   });
 
@@ -102,9 +99,7 @@ describe.skip('Accounts (Integration)', () => {
     });
 
     it('should return 404 for non-existent account', () => {
-      return request(app.getHttpServer())
-        .get('/accounts/non-existent-id')
-        .expect(404);
+      return request(app.getHttpServer()).get('/accounts/non-existent-id').expect(404);
     });
   });
 
@@ -154,14 +149,10 @@ describe.skip('Accounts (Integration)', () => {
       const accountId = createResponse.body.id;
 
       // Then delete it
-      await request(app.getHttpServer())
-        .delete(`/accounts/${accountId}`)
-        .expect(200);
+      await request(app.getHttpServer()).delete(`/accounts/${accountId}`).expect(200);
 
       // Verify it's deleted
-      return request(app.getHttpServer())
-        .get(`/accounts/${accountId}`)
-        .expect(404);
+      return request(app.getHttpServer()).get(`/accounts/${accountId}`).expect(404);
     });
   });
 });

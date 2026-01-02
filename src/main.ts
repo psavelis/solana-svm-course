@@ -1,8 +1,8 @@
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
-import { ValidationPipe, Logger } from "@nestjs/common";
-import { TracingInterceptor } from "./common/interceptors/tracing.interceptor";
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { TracingInterceptor } from './common/interceptors/tracing.interceptor';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,42 +24,40 @@ async function bootstrap() {
 
   // setup swagger
   const config = new DocumentBuilder()
-    .setTitle("Solana SVM Study API")
-    .setDescription(
-      "API for managing Solana and SVM integrations with secure authentication",
-    )
-    .setVersion("1.0")
-    .addTag("solana")
-    .addTag("svm")
-    .addTag("blockchain")
-    .addTag("Authentication")
+    .setTitle('Solana SVM Study API')
+    .setDescription('API for managing Solana and SVM integrations with secure authentication')
+    .setVersion('1.0')
+    .addTag('solana')
+    .addTag('svm')
+    .addTag('blockchain')
+    .addTag('Authentication')
     .addBearerAuth(
       {
-        type: "http",
-        scheme: "bearer",
-        bearerFormat: "JWT",
-        name: "JWT",
-        description: "Enter JWT token",
-        in: "header",
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
       },
-      "JWT-auth",
+      'JWT-auth',
     )
     .addApiKey(
       {
-        type: "apiKey",
-        name: "X-API-Key",
-        in: "header",
-        description: "Enter API key",
+        type: 'apiKey',
+        name: 'X-API-Key',
+        in: 'header',
+        description: 'Enter API key',
       },
-      "api-key",
+      'api-key',
     )
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup("api", app, document);
+  SwaggerModule.setup('api', app, document);
 
   await app.listen(3000);
-  const logger = new Logger("bootstrap");
-  logger.log("application is running on: http://localhost:3000");
-  logger.log("api documentation: http://localhost:3000/api");
+  const logger = new Logger('bootstrap');
+  logger.log('application is running on: http://localhost:3000');
+  logger.log('api documentation: http://localhost:3000/api');
 }
 bootstrap();

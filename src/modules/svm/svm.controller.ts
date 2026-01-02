@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from "@nestjs/common";
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -16,30 +6,30 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
-} from "@nestjs/swagger";
-import { SvmService } from "./svm.service";
-import { Program } from "./program.entity";
-import { RuntimeExecution } from "./runtime-execution.entity";
-import { GasMeter } from "./gas-meter.entity";
+} from '@nestjs/swagger';
+import { SvmService } from './svm.service';
+import { Program } from './program.entity';
+import { RuntimeExecution } from './runtime-execution.entity';
+import { GasMeter } from './gas-meter.entity';
 import {
   CreateProgramDto,
   UpdateProgramDto,
   DeployProgramDto,
   ProgramQueryDto,
-} from "./dto/program.dto";
+} from './dto/program.dto';
 import {
   ExecuteProgramDto,
   ParallelExecutionDto,
   RuntimeExecutionQueryDto,
   ExecutionMetricsDto,
-} from "./dto/runtime-execution.dto";
+} from './dto/runtime-execution.dto';
 import {
   CreateGasMeterDto,
   UpdateGasMeterDto,
   GasMeterQueryDto,
   GasUsageDto,
   ResetGasMeterDto,
-} from "./dto/gas-meter.dto";
+} from './dto/gas-meter.dto';
 
 /**
  * # SVM Controller (Solana Virtual Machine)
@@ -124,79 +114,73 @@ import {
  * @see https://docs.solana.com/developing/programming-model/accounts - Account Model
  * @see [docs/diagrams/09-svm.md](docs/diagrams/09-svm.md) - Architecture
  */
-@ApiTags("SVM")
+@ApiTags('SVM')
 @ApiBearerAuth()
-@Controller("svm")
+@Controller('svm')
 export class SvmController {
   constructor(private readonly svmService: SvmService) {}
 
   // Program Management Endpoints
 
-  @Post("programs")
-  @ApiOperation({ summary: "Create a new program" })
+  @Post('programs')
+  @ApiOperation({ summary: 'Create a new program' })
   @ApiResponse({
     status: 201,
-    description: "Program created successfully",
+    description: 'Program created successfully',
     type: Program,
   })
   async createProgram(@Body() dto: CreateProgramDto): Promise<Program> {
     // In a real implementation, you'd get the owner from the authenticated user
-    const owner = "placeholder-owner";
+    const owner = 'placeholder-owner';
     return this.svmService.createProgram(dto, owner);
   }
 
-  @Get("programs/:id")
-  @ApiOperation({ summary: "Get program by ID" })
+  @Get('programs/:id')
+  @ApiOperation({ summary: 'Get program by ID' })
   @ApiResponse({
     status: 200,
-    description: "Program retrieved successfully",
+    description: 'Program retrieved successfully',
     type: Program,
   })
-  async getProgram(@Param("id") id: string): Promise<Program> {
+  async getProgram(@Param('id') id: string): Promise<Program> {
     return this.svmService.getProgram(id);
   }
 
-  @Get("programs")
-  @ApiOperation({ summary: "Query programs with filters" })
-  @ApiResponse({ status: 200, description: "Programs retrieved successfully" })
+  @Get('programs')
+  @ApiOperation({ summary: 'Query programs with filters' })
+  @ApiResponse({ status: 200, description: 'Programs retrieved successfully' })
   async queryPrograms(
     @Query() query: ProgramQueryDto,
   ): Promise<{ programs: Program[]; total: number }> {
     return this.svmService.queryPrograms(query);
   }
 
-  @Put("programs/:id")
-  @ApiOperation({ summary: "Update program" })
+  @Put('programs/:id')
+  @ApiOperation({ summary: 'Update program' })
   @ApiResponse({
     status: 200,
-    description: "Program updated successfully",
+    description: 'Program updated successfully',
     type: Program,
   })
-  async updateProgram(
-    @Param("id") id: string,
-    @Body() dto: UpdateProgramDto,
-  ): Promise<Program> {
+  async updateProgram(@Param('id') id: string, @Body() dto: UpdateProgramDto): Promise<Program> {
     return this.svmService.updateProgram(id, dto);
   }
 
-  @Delete("programs/:id")
-  @ApiOperation({ summary: "Delete program" })
-  @ApiResponse({ status: 200, description: "Program deleted successfully" })
-  async deleteProgram(@Param("id") id: string): Promise<void> {
+  @Delete('programs/:id')
+  @ApiOperation({ summary: 'Delete program' })
+  @ApiResponse({ status: 200, description: 'Program deleted successfully' })
+  async deleteProgram(@Param('id') id: string): Promise<void> {
     return this.svmService.deleteProgram(id);
   }
 
-  @Post("programs/:id/deploy")
-  @ApiOperation({ summary: "Deploy program to Solana" })
+  @Post('programs/:id/deploy')
+  @ApiOperation({ summary: 'Deploy program to Solana' })
   @ApiResponse({
     status: 200,
-    description: "Program deployed successfully",
+    description: 'Program deployed successfully',
     type: Program,
   })
-  async deployProgram(
-    @Param("id") id: string,
-    @Body() dto: DeployProgramDto,
-  ): Promise<Program> {
+  async deployProgram(@Param('id') id: string, @Body() dto: DeployProgramDto): Promise<Program> {
     // In a real implementation, you'd get the signer from the authenticated user
     const signer = null; // placeholder
     return this.svmService.deployProgram(id, dto, signer);
@@ -204,52 +188,48 @@ export class SvmController {
 
   // Runtime Execution Endpoints
 
-  @Post("execute")
-  @ApiOperation({ summary: "Execute a program instruction" })
+  @Post('execute')
+  @ApiOperation({ summary: 'Execute a program instruction' })
   @ApiResponse({
     status: 201,
-    description: "Program executed successfully",
+    description: 'Program executed successfully',
     type: RuntimeExecution,
   })
-  async executeProgram(
-    @Body() dto: ExecuteProgramDto,
-  ): Promise<RuntimeExecution> {
+  async executeProgram(@Body() dto: ExecuteProgramDto): Promise<RuntimeExecution> {
     // In a real implementation, you'd get the signer from the authenticated user
     const signer = null; // placeholder
     return this.svmService.executeProgram(dto, signer);
   }
 
-  @Post("execute/parallel")
-  @ApiOperation({ summary: "Execute multiple programs in parallel" })
+  @Post('execute/parallel')
+  @ApiOperation({ summary: 'Execute multiple programs in parallel' })
   @ApiResponse({
     status: 201,
-    description: "Programs executed successfully",
+    description: 'Programs executed successfully',
     type: [RuntimeExecution],
   })
-  async executeParallel(
-    @Body() dto: ParallelExecutionDto,
-  ): Promise<RuntimeExecution[]> {
+  async executeParallel(@Body() dto: ParallelExecutionDto): Promise<RuntimeExecution[]> {
     // In a real implementation, you'd get the signer from the authenticated user
     const signer = null; // placeholder
     return this.svmService.executeParallel(dto, signer);
   }
 
-  @Get("executions/:id")
-  @ApiOperation({ summary: "Get execution by ID" })
+  @Get('executions/:id')
+  @ApiOperation({ summary: 'Get execution by ID' })
   @ApiResponse({
     status: 200,
-    description: "Execution retrieved successfully",
+    description: 'Execution retrieved successfully',
     type: RuntimeExecution,
   })
-  async getExecution(@Param("id") id: string): Promise<RuntimeExecution> {
+  async getExecution(@Param('id') id: string): Promise<RuntimeExecution> {
     return this.svmService.getExecution(id);
   }
 
-  @Get("executions")
-  @ApiOperation({ summary: "Query executions with filters" })
+  @Get('executions')
+  @ApiOperation({ summary: 'Query executions with filters' })
   @ApiResponse({
     status: 200,
-    description: "Executions retrieved successfully",
+    description: 'Executions retrieved successfully',
   })
   async queryExecutions(
     @Query() query: RuntimeExecutionQueryDto,
@@ -257,42 +237,42 @@ export class SvmController {
     return this.svmService.queryExecutions(query);
   }
 
-  @Get("metrics/executions")
-  @ApiOperation({ summary: "Get execution metrics" })
-  @ApiResponse({ status: 200, description: "Metrics retrieved successfully" })
+  @Get('metrics/executions')
+  @ApiOperation({ summary: 'Get execution metrics' })
+  @ApiResponse({ status: 200, description: 'Metrics retrieved successfully' })
   async getExecutionMetrics(@Query() dto: ExecutionMetricsDto): Promise<any> {
     return this.svmService.getExecutionMetrics(dto);
   }
 
   // Gas Metering Endpoints
 
-  @Post("gas-meters")
-  @ApiOperation({ summary: "Create a gas meter" })
+  @Post('gas-meters')
+  @ApiOperation({ summary: 'Create a gas meter' })
   @ApiResponse({
     status: 201,
-    description: "Gas meter created successfully",
+    description: 'Gas meter created successfully',
     type: GasMeter,
   })
   async createGasMeter(@Body() dto: CreateGasMeterDto): Promise<GasMeter> {
     return this.svmService.createGasMeter(dto);
   }
 
-  @Get("gas-meters/:id")
-  @ApiOperation({ summary: "Get gas meter by ID" })
+  @Get('gas-meters/:id')
+  @ApiOperation({ summary: 'Get gas meter by ID' })
   @ApiResponse({
     status: 200,
-    description: "Gas meter retrieved successfully",
+    description: 'Gas meter retrieved successfully',
     type: GasMeter,
   })
-  async getGasMeter(@Param("id") id: string): Promise<GasMeter> {
+  async getGasMeter(@Param('id') id: string): Promise<GasMeter> {
     return this.svmService.getGasMeter(id);
   }
 
-  @Get("gas-meters")
-  @ApiOperation({ summary: "Query gas meters with filters" })
+  @Get('gas-meters')
+  @ApiOperation({ summary: 'Query gas meters with filters' })
   @ApiResponse({
     status: 200,
-    description: "Gas meters retrieved successfully",
+    description: 'Gas meters retrieved successfully',
   })
   async queryGasMeters(
     @Query() query: GasMeterQueryDto,
@@ -300,74 +280,61 @@ export class SvmController {
     return this.svmService.queryGasMeters(query);
   }
 
-  @Put("gas-meters/:id")
-  @ApiOperation({ summary: "Update gas meter" })
+  @Put('gas-meters/:id')
+  @ApiOperation({ summary: 'Update gas meter' })
   @ApiResponse({
     status: 200,
-    description: "Gas meter updated successfully",
+    description: 'Gas meter updated successfully',
     type: GasMeter,
   })
-  async updateGasMeter(
-    @Param("id") id: string,
-    @Body() dto: UpdateGasMeterDto,
-  ): Promise<GasMeter> {
+  async updateGasMeter(@Param('id') id: string, @Body() dto: UpdateGasMeterDto): Promise<GasMeter> {
     return this.svmService.updateGasMeter(id, dto);
   }
 
-  @Delete("gas-meters/:id")
-  @ApiOperation({ summary: "Delete gas meter" })
-  @ApiResponse({ status: 200, description: "Gas meter deleted successfully" })
-  async deleteGasMeter(@Param("id") id: string): Promise<void> {
+  @Delete('gas-meters/:id')
+  @ApiOperation({ summary: 'Delete gas meter' })
+  @ApiResponse({ status: 200, description: 'Gas meter deleted successfully' })
+  async deleteGasMeter(@Param('id') id: string): Promise<void> {
     return this.svmService.deleteGasMeter(id);
   }
 
-  @Post("gas-meters/:id/consume")
-  @ApiOperation({ summary: "Consume gas from meter" })
-  @ApiResponse({ status: 200, description: "Gas consumed successfully" })
-  async consumeGas(
-    @Param("id") id: string,
-    @Body() dto: GasUsageDto,
-  ): Promise<void> {
-    return this.svmService.consumeGas(
-      dto.meterId,
-      dto.gasAmount,
-      dto.operation,
-    );
+  @Post('gas-meters/:id/consume')
+  @ApiOperation({ summary: 'Consume gas from meter' })
+  @ApiResponse({ status: 200, description: 'Gas consumed successfully' })
+  async consumeGas(@Param('id') id: string, @Body() dto: GasUsageDto): Promise<void> {
+    return this.svmService.consumeGas(dto.meterId, dto.gasAmount, dto.operation);
   }
 
-  @Post("gas-meters/:id/reset")
-  @ApiOperation({ summary: "Reset gas meter" })
+  @Post('gas-meters/:id/reset')
+  @ApiOperation({ summary: 'Reset gas meter' })
   @ApiResponse({
     status: 200,
-    description: "Gas meter reset successfully",
+    description: 'Gas meter reset successfully',
     type: GasMeter,
   })
-  async resetGasMeter(
-    @Param("id") id: string,
-    @Body() dto: ResetGasMeterDto,
-  ): Promise<GasMeter> {
+  async resetGasMeter(@Param('id') id: string, @Body() dto: ResetGasMeterDto): Promise<GasMeter> {
     return this.svmService.resetGasMeter(id, dto);
   }
 
   // Utility Endpoints
 
-  @Get("runtime/info")
-  @ApiOperation({ summary: "Get SVM runtime information" })
+  @Get('runtime/info')
+  @ApiOperation({ summary: 'Get SVM runtime information' })
   @ApiResponse({
     status: 200,
-    description: "Runtime info retrieved successfully",
+    description: 'Runtime info retrieved successfully',
   })
   async getRuntimeInfo(): Promise<any> {
     return this.svmService.getRuntimeInfo();
   }
 
-  @Get("programs/:programId/stats")
-  @ApiOperation({ summary: "Get program execution statistics" })
+  @Get('programs/:programId/stats')
+  @ApiOperation({ summary: 'Get program execution statistics' })
   @ApiResponse({
     status: 200,
-    description: "Program stats retrieved successfully",
+    description: 'Program stats retrieved successfully',
   })
-  async getProgramStats(@Param("programId") programId: string): Promise<any> {
+  async getProgramStats(@Param('programId') programId: string): Promise<any> {
     return this.svmService.getProgramStats(programId);
   }
 }

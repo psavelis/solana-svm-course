@@ -7,27 +7,27 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
-} from "typeorm";
+} from 'typeorm';
 
 export enum EventType {
-  TRANSACTION_CONFIRMED = "transaction_confirmed",
-  ACCOUNT_CHANGED = "account_changed",
-  PROGRAM_LOG = "program_log",
-  CPI_INVOCATION = "cpi_invocation",
-  BLOCK_PRODUCED = "block_produced",
-  SLOT_UPDATED = "slot_updated",
+  TRANSACTION_CONFIRMED = 'transaction_confirmed',
+  ACCOUNT_CHANGED = 'account_changed',
+  PROGRAM_LOG = 'program_log',
+  CPI_INVOCATION = 'cpi_invocation',
+  BLOCK_PRODUCED = 'block_produced',
+  SLOT_UPDATED = 'slot_updated',
 }
 
 export enum EventStatus {
-  PENDING = "pending",
-  PROCESSED = "processed",
-  FAILED = "failed",
+  PENDING = 'pending',
+  PROCESSED = 'processed',
+  FAILED = 'failed',
 }
 
-@Entity("events")
-@Index(["eventType"])
-@Index(["source"])
-@Index(["createdAt"])
+@Entity('events')
+@Index(['eventType'])
+@Index(['source'])
+@Index(['createdAt'])
 export class Event {
   /**
    * unique identifier for the event
@@ -35,7 +35,7 @@ export class Event {
    * example: "f6g7h8i9-j0k1-2l3m-4n5o-6p7q8r9s0t1u"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -45,7 +45,7 @@ export class Event {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: EventType,
   })
   eventType: EventType;
@@ -56,7 +56,7 @@ export class Event {
    * example: "5K8q3s7T8U9V1W2X3Y4Z..."
    * reference: none
    */
-  @Column({ type: "varchar", length: 88 })
+  @Column({ type: 'varchar', length: 88 })
   @Index()
   source: string; // Account, transaction, or program ID
 
@@ -66,7 +66,7 @@ export class Event {
    * example: { "amount": 100, "token": "usdc" }
    * reference: none
    */
-  @Column({ type: "jsonb" })
+  @Column({ type: 'jsonb' })
   data: any; // Event-specific data
 
   /**
@@ -75,7 +75,7 @@ export class Event {
    * example: 245678901
    * reference: https://solana.com/docs/core/slots
    */
-  @Column({ type: "bigint", nullable: true })
+  @Column({ type: 'bigint', nullable: true })
   slot?: number; // Solana slot number
 
   /**
@@ -84,7 +84,7 @@ export class Event {
    * example: "4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZAMdL4VZHir..."
    * reference: https://solana.com/docs/core/transactions#signature
    */
-  @Column({ type: "varchar", nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   signature?: string; // Transaction signature
 
   /**
@@ -94,7 +94,7 @@ export class Event {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: EventStatus,
     default: EventStatus.PENDING,
   })
@@ -106,7 +106,7 @@ export class Event {
    * example: "connection timeout"
    * reference: none
    */
-  @Column({ type: "text", nullable: true })
+  @Column({ type: 'text', nullable: true })
   errorMessage?: string;
 
   /**

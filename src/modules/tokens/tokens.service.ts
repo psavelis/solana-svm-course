@@ -1,9 +1,11 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Token } from "./token.entity";import { NFTListing, ListingStatus, ListingType } from "./nft-listing.entity";
-import { NFTBid, BidStatus } from "./nft-bid.entity";
-import { NFTSale } from "./nft-sale.entity";import {
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Token } from './token.entity';
+import { NFTListing, ListingStatus, ListingType } from './nft-listing.entity';
+import { NFTBid, BidStatus } from './nft-bid.entity';
+import { NFTSale } from './nft-sale.entity';
+import {
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   getAccount,
@@ -18,7 +20,7 @@ import { NFTSale } from "./nft-sale.entity";import {
   approve,
   revoke,
   createTransferInstruction,
-} from "@solana/spl-token";
+} from '@solana/spl-token';
 import {
   PublicKey,
   SystemProgram,
@@ -26,9 +28,9 @@ import {
   sendAndConfirmTransaction,
   Keypair,
   Connection,
-} from "@solana/web3.js";
-import { QueryCacheService } from "../../common/cache/query-cache.service";
-import { QueryCache } from "../../common/cache/query-cache.decorator";
+} from '@solana/web3.js';
+import { QueryCacheService } from '../../common/cache/query-cache.service';
+import { QueryCache } from '../../common/cache/query-cache.decorator';
 
 @Injectable()
 /**
@@ -50,7 +52,7 @@ export class TokensService {
     private readonly queryCacheService: QueryCacheService,
   ) {
     this.connection = new Connection(
-      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+      process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
     );
   }
 
@@ -89,7 +91,7 @@ export class TokensService {
       const mintInfo = await this.connection.getAccountInfo(mintPublicKey);
 
       if (!mintInfo) {
-        throw new Error("Token mint not found");
+        throw new Error('Token mint not found');
       }
 
       // Parse mint data (simplified)
@@ -104,23 +106,14 @@ export class TokensService {
     }
   }
 
-  async getTokenBalance(
-    ownerAddress: string,
-    mintAddress: string,
-  ): Promise<string> {
+  async getTokenBalance(ownerAddress: string, mintAddress: string): Promise<string> {
     try {
       const ownerPublicKey = new PublicKey(ownerAddress);
       const mintPublicKey = new PublicKey(mintAddress);
 
-      const associatedTokenAddress = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerPublicKey,
-      );
+      const associatedTokenAddress = await getAssociatedTokenAddress(mintPublicKey, ownerPublicKey);
 
-      const accountInfo = await getAccount(
-        this.connection,
-        associatedTokenAddress,
-      );
+      const accountInfo = await getAccount(this.connection, associatedTokenAddress);
       return accountInfo.amount.toString();
     } catch (error) {
       throw new Error(`Failed to get token balance: ${error.message}`);
@@ -130,12 +123,9 @@ export class TokensService {
   async getTokenAccounts(ownerAddress: string) {
     try {
       const ownerPublicKey = new PublicKey(ownerAddress);
-      const tokenAccounts = await this.connection.getTokenAccountsByOwner(
-        ownerPublicKey,
-        {
-          programId: TOKEN_PROGRAM_ID,
-        },
-      );
+      const tokenAccounts = await this.connection.getTokenAccountsByOwner(ownerPublicKey, {
+        programId: TOKEN_PROGRAM_ID,
+      });
 
       return tokenAccounts.value.map((account) => ({
         address: account.account.owner.toString(),
@@ -156,13 +146,9 @@ export class TokensService {
     freezeAuthority?: string,
   ): Promise<{ mintAddress: string; signature: string }> {
     try {
-      const payerKeypair = Keypair.fromSecretKey(
-        Buffer.from(payerPrivateKey, 'base64')
-      );
+      const payerKeypair = Keypair.fromSecretKey(Buffer.from(payerPrivateKey, 'base64'));
 
-      const freezeAuthorityPubkey = freezeAuthority
-        ? new PublicKey(freezeAuthority)
-        : null;
+      const freezeAuthorityPubkey = freezeAuthority ? new PublicKey(freezeAuthority) : null;
 
       const mint = await createMint(
         this.connection,
@@ -192,9 +178,7 @@ export class TokensService {
     sellerFeeBasisPoints: number = 500, // 5%
   ): Promise<{ mintAddress: string; metadataAddress: string; signature: string }> {
     try {
-      const payerKeypair = Keypair.fromSecretKey(
-        Buffer.from(payerPrivateKey, 'base64')
-      );
+      const payerKeypair = Keypair.fromSecretKey(Buffer.from(payerPrivateKey, 'base64'));
 
       // Create NFT mint (supply = 1, decimals = 0)
       const mint = await createMint(
@@ -259,11 +243,7 @@ export class TokensService {
 
     // Derive metadata account address
     const [metadataAddress] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from('metadata'),
-        METADATA_PROGRAM_ID.toBuffer(),
-        mint.toBuffer(),
-      ],
+      [Buffer.from('metadata'), METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
       METADATA_PROGRAM_ID,
     );
 
@@ -273,11 +253,13 @@ export class TokensService {
       symbol,
       uri,
       sellerFeeBasisPoints,
-      creators: [{
-        address: payerKeypair.publicKey.toString(),
-        verified: true,
-        share: 100,
-      }],
+      creators: [
+        {
+          address: payerKeypair.publicKey.toString(),
+          verified: true,
+          share: 100,
+        },
+      ],
     };
 
     // In a full implementation, this would create the proper Metaplex instruction
@@ -295,9 +277,7 @@ export class TokensService {
     amount: number,
   ): Promise<{ signature: string }> {
     try {
-      const payerKeypair = Keypair.fromSecretKey(
-        Buffer.from(payerPrivateKey, 'base64')
-      );
+      const payerKeypair = Keypair.fromSecretKey(Buffer.from(payerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
       const recipientPublicKey = new PublicKey(recipientAddress);
@@ -335,17 +315,12 @@ export class TokensService {
     amount: number,
   ): Promise<{ signature: string }> {
     try {
-      const ownerKeypair = Keypair.fromSecretKey(
-        Buffer.from(ownerPrivateKey, 'base64')
-      );
+      const ownerKeypair = Keypair.fromSecretKey(Buffer.from(ownerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
 
       // Get associated token account
-      const tokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerKeypair.publicKey,
-      );
+      const tokenAccount = await getAssociatedTokenAddress(mintPublicKey, ownerKeypair.publicKey);
 
       // Burn tokens
       const signature = await burn(
@@ -377,7 +352,7 @@ export class TokensService {
       const mintInfo = await this.connection.getAccountInfo(mintPublicKey);
 
       if (!mintInfo) {
-        throw new Error("Token mint not found");
+        throw new Error('Token mint not found');
       }
 
       const data = mintInfo.data;
@@ -386,7 +361,8 @@ export class TokensService {
         supply: data.slice(36, 44).readBigUInt64LE().toString(),
         decimals: data[44],
         mintAuthority: data[4] === 1 ? new PublicKey(data.slice(4, 36)).toString() : null,
-        freezeAuthority: data[44 + 1] === 1 ? new PublicKey(data.slice(44 + 1, 44 + 33)).toString() : null,
+        freezeAuthority:
+          data[44 + 1] === 1 ? new PublicKey(data.slice(44 + 1, 44 + 33)).toString() : null,
       };
     } catch (error) {
       throw new Error(`Failed to get token supply: ${error.message}`);
@@ -402,18 +378,13 @@ export class TokensService {
     ownerAddress: string,
   ): Promise<{ ataAddress: string; created: boolean; signature?: string }> {
     try {
-      const payerKeypair = Keypair.fromSecretKey(
-        Buffer.from(payerPrivateKey, 'base64')
-      );
+      const payerKeypair = Keypair.fromSecretKey(Buffer.from(payerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
       const ownerPublicKey = new PublicKey(ownerAddress);
 
       // Check if ATA already exists
-      const ataAddress = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerPublicKey,
-      );
+      const ataAddress = await getAssociatedTokenAddress(mintPublicKey, ownerPublicKey);
 
       let created = false;
       try {
@@ -449,10 +420,7 @@ export class TokensService {
       const mintPublicKey = new PublicKey(mintAddress);
       const ownerPublicKey = new PublicKey(ownerAddress);
 
-      const ataAddress = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerPublicKey,
-      );
+      const ataAddress = await getAssociatedTokenAddress(mintPublicKey, ownerPublicKey);
 
       return ataAddress.toString();
     } catch (error) {
@@ -469,9 +437,7 @@ export class TokensService {
     recipientAddress?: string,
   ): Promise<{ signature: string }> {
     try {
-      const ownerKeypair = Keypair.fromSecretKey(
-        Buffer.from(ownerPrivateKey, 'base64')
-      );
+      const ownerKeypair = Keypair.fromSecretKey(Buffer.from(ownerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
       const recipientPublicKey = recipientAddress
@@ -479,10 +445,7 @@ export class TokensService {
         : ownerKeypair.publicKey;
 
       // Get associated token account
-      const tokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerKeypair.publicKey,
-      );
+      const tokenAccount = await getAssociatedTokenAddress(mintPublicKey, ownerKeypair.publicKey);
 
       // Close the token account
       const signature = await closeAccount(
@@ -509,7 +472,7 @@ export class TokensService {
   ): Promise<{ signature: string }> {
     try {
       const freezeAuthorityKeypair = Keypair.fromSecretKey(
-        Buffer.from(freezeAuthorityPrivateKey, 'base64')
+        Buffer.from(freezeAuthorityPrivateKey, 'base64'),
       );
 
       const mintPublicKey = new PublicKey(mintAddress);
@@ -540,7 +503,7 @@ export class TokensService {
   ): Promise<{ signature: string }> {
     try {
       const freezeAuthorityKeypair = Keypair.fromSecretKey(
-        Buffer.from(freezeAuthorityPrivateKey, 'base64')
+        Buffer.from(freezeAuthorityPrivateKey, 'base64'),
       );
 
       const mintPublicKey = new PublicKey(mintAddress);
@@ -571,18 +534,13 @@ export class TokensService {
     amount: number,
   ): Promise<{ signature: string }> {
     try {
-      const ownerKeypair = Keypair.fromSecretKey(
-        Buffer.from(ownerPrivateKey, 'base64')
-      );
+      const ownerKeypair = Keypair.fromSecretKey(Buffer.from(ownerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
       const delegatePublicKey = new PublicKey(delegateAddress);
 
       // Get associated token account
-      const tokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerKeypair.publicKey,
-      );
+      const tokenAccount = await getAssociatedTokenAddress(mintPublicKey, ownerKeypair.publicKey);
 
       // Approve delegation
       const signature = await approve(
@@ -608,17 +566,12 @@ export class TokensService {
     mintAddress: string,
   ): Promise<{ signature: string }> {
     try {
-      const ownerKeypair = Keypair.fromSecretKey(
-        Buffer.from(ownerPrivateKey, 'base64')
-      );
+      const ownerKeypair = Keypair.fromSecretKey(Buffer.from(ownerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
 
       // Get associated token account
-      const tokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerKeypair.publicKey,
-      );
+      const tokenAccount = await getAssociatedTokenAddress(mintPublicKey, ownerKeypair.publicKey);
 
       // Revoke delegation
       const signature = await revoke(
@@ -643,9 +596,7 @@ export class TokensService {
     recipientAddress: string,
   ): Promise<{ signature: string }> {
     try {
-      const ownerKeypair = Keypair.fromSecretKey(
-        Buffer.from(ownerPrivateKey, 'base64')
-      );
+      const ownerKeypair = Keypair.fromSecretKey(Buffer.from(ownerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
       const recipientPublicKey = new PublicKey(recipientAddress);
@@ -675,11 +626,9 @@ export class TokensService {
 
       const transaction = new Transaction().add(transferInstruction);
 
-      const signature = await sendAndConfirmTransaction(
-        this.connection,
-        transaction,
-        [ownerKeypair],
-      );
+      const signature = await sendAndConfirmTransaction(this.connection, transaction, [
+        ownerKeypair,
+      ]);
 
       return { signature };
     } catch (error) {
@@ -697,18 +646,13 @@ export class TokensService {
     amount: number,
   ): Promise<{ signature: string }> {
     try {
-      const ownerKeypair = Keypair.fromSecretKey(
-        Buffer.from(ownerPrivateKey, 'base64')
-      );
+      const ownerKeypair = Keypair.fromSecretKey(Buffer.from(ownerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
       const spenderPublicKey = new PublicKey(spenderAddress);
 
       // Get associated token account
-      const tokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerKeypair.publicKey,
-      );
+      const tokenAccount = await getAssociatedTokenAddress(mintPublicKey, ownerKeypair.publicKey);
 
       // Approve spending
       const signature = await approve(
@@ -734,17 +678,12 @@ export class TokensService {
     mintAddress: string,
   ): Promise<{ signature: string }> {
     try {
-      const ownerKeypair = Keypair.fromSecretKey(
-        Buffer.from(ownerPrivateKey, 'base64')
-      );
+      const ownerKeypair = Keypair.fromSecretKey(Buffer.from(ownerPrivateKey, 'base64'));
 
       const mintPublicKey = new PublicKey(mintAddress);
 
       // Get associated token account
-      const tokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerKeypair.publicKey,
-      );
+      const tokenAccount = await getAssociatedTokenAddress(mintPublicKey, ownerKeypair.publicKey);
 
       // Revoke approval
       const signature = await revoke(
@@ -774,7 +713,7 @@ export class TokensService {
       // Get mint info to check if it's an NFT (supply = 1, decimals = 0)
       const mintInfo = await this.connection.getAccountInfo(mintPublicKey);
       if (!mintInfo) {
-        throw new Error("Token mint not found");
+        throw new Error('Token mint not found');
       }
 
       const supply = mintInfo.data.slice(36, 44).readBigUInt64LE();
@@ -782,21 +721,18 @@ export class TokensService {
       const isNFT = supply === BigInt(1) && decimals === 0;
 
       // Get token balance
-      const tokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
-        ownerPublicKey,
-      );
+      const tokenAccount = await getAssociatedTokenAddress(mintPublicKey, ownerPublicKey);
 
-      let balance = "0";
+      let balance = '0';
       try {
         const accountInfo = await getAccount(this.connection, tokenAccount);
         balance = accountInfo.amount.toString();
       } catch (error) {
         // Token account doesn't exist or has no balance
-        balance = "0";
+        balance = '0';
       }
 
-      const isOwner = balance === "1";
+      const isOwner = balance === '1';
 
       return {
         isOwner,
@@ -821,9 +757,12 @@ export class TokensService {
     auctionEndTime?: Date;
   }): Promise<NFTListing> {
     // Verify NFT ownership
-    const ownership = await this.verifyNFTOwnership(listingData.nftMintAddress, listingData.sellerAddress);
+    const ownership = await this.verifyNFTOwnership(
+      listingData.nftMintAddress,
+      listingData.sellerAddress,
+    );
     if (!ownership.isOwner) {
-      throw new Error("Seller does not own this NFT");
+      throw new Error('Seller does not own this NFT');
     }
 
     const listing = this.nftListingRepository.create({
@@ -846,11 +785,11 @@ export class TokensService {
     });
 
     if (!listing) {
-      throw new Error("Listing not found");
+      throw new Error('Listing not found');
     }
 
     if (listing.status !== ListingStatus.ACTIVE) {
-      throw new Error("Listing is not active");
+      throw new Error('Listing is not active');
     }
 
     if (listing.listingType === ListingType.FIXED_PRICE) {
@@ -860,13 +799,13 @@ export class TokensService {
     } else if (listing.listingType === ListingType.AUCTION) {
       // Check if auction has ended
       if (listing.auctionEndTime && new Date() > listing.auctionEndTime) {
-        throw new Error("Auction has ended");
+        throw new Error('Auction has ended');
       }
 
       // Get highest bid
       const highestBid = await this.nftBidRepository.findOne({
         where: { listingId: bidData.listingId, status: BidStatus.ACTIVE },
-        order: { amount: "DESC" },
+        order: { amount: 'DESC' },
       });
 
       if (highestBid && bidData.amount <= highestBid.amount) {
@@ -896,7 +835,7 @@ export class TokensService {
     });
 
     if (!listing) {
-      throw new Error("Listing not found");
+      throw new Error('Listing not found');
     }
 
     const bid = await this.nftBidRepository.findOne({
@@ -904,11 +843,11 @@ export class TokensService {
     });
 
     if (!bid) {
-      throw new Error("Bid not found");
+      throw new Error('Bid not found');
     }
 
     if (bid.status !== BidStatus.ACTIVE) {
-      throw new Error("Bid is not active");
+      throw new Error('Bid is not active');
     }
 
     // Calculate fees
@@ -954,11 +893,11 @@ export class TokensService {
     });
 
     if (!listing) {
-      throw new Error("Listing not found or not owned by seller");
+      throw new Error('Listing not found or not owned by seller');
     }
 
     if (listing.status !== ListingStatus.ACTIVE) {
-      throw new Error("Listing is not active");
+      throw new Error('Listing is not active');
     }
 
     await this.nftListingRepository.update(listingId, {
@@ -979,47 +918,47 @@ export class TokensService {
     listingType?: ListingType;
   }): Promise<NFTListing[]> {
     const query = this.nftListingRepository
-      .createQueryBuilder("listing")
-      .where("listing.status = :status", { status: ListingStatus.ACTIVE });
+      .createQueryBuilder('listing')
+      .where('listing.status = :status', { status: ListingStatus.ACTIVE });
 
     if (filters?.sellerAddress) {
-      query.andWhere("listing.seller_address = :sellerAddress", {
+      query.andWhere('listing.seller_address = :sellerAddress', {
         sellerAddress: filters.sellerAddress,
       });
     }
 
     if (filters?.minPrice !== undefined) {
-      query.andWhere("listing.price >= :minPrice", {
+      query.andWhere('listing.price >= :minPrice', {
         minPrice: filters.minPrice,
       });
     }
 
     if (filters?.maxPrice !== undefined) {
-      query.andWhere("listing.price <= :maxPrice", {
+      query.andWhere('listing.price <= :maxPrice', {
         maxPrice: filters.maxPrice,
       });
     }
 
     if (filters?.listingType) {
-      query.andWhere("listing.listing_type = :listingType", {
+      query.andWhere('listing.listing_type = :listingType', {
         listingType: filters.listingType,
       });
     }
 
-    return query.orderBy("listing.created_at", "DESC").getMany();
+    return query.orderBy('listing.created_at', 'DESC').getMany();
   }
 
   async getListingBids(listingId: string): Promise<NFTBid[]> {
     return this.nftBidRepository.find({
       where: { listingId },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
   }
 
   async getNFTSalesHistory(nftMintAddress: string): Promise<NFTSale[]> {
     return this.nftSaleRepository.find({
       where: { nftMintAddress },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
   }
 }

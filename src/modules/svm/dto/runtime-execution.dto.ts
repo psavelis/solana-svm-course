@@ -1,42 +1,34 @@
-import { ApiProperty } from "@nestjs/swagger";
-import {
-  IsString,
-  IsOptional,
-  IsEnum,
-  IsNumber,
-  IsObject,
-  Min,
-  Max,
-} from "class-validator";
-import { ExecutionStatus, ExecutionType } from "../runtime-execution.entity";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional, IsEnum, IsNumber, IsObject, Min, Max } from 'class-validator';
+import { ExecutionStatus, ExecutionType } from '../runtime-execution.entity';
 
 export class ExecuteProgramDto {
   @ApiProperty({
-    description: "Program ID to execute",
-    example: "11111111111111111111111111111112",
+    description: 'Program ID to execute',
+    example: '11111111111111111111111111111112',
   })
   @IsString()
   programId: string;
 
   @ApiProperty({
-    description: "Instruction data (base64 encoded)",
-    example: "AQAAAAYAAAB0cmFuc2Zlcg==",
+    description: 'Instruction data (base64 encoded)',
+    example: 'AQAAAAYAAAB0cmFuc2Zlcg==',
   })
   @IsString()
   instructionData: string;
 
   @ApiProperty({
-    description: "Account public keys involved in the instruction",
+    description: 'Account public keys involved in the instruction',
     example: [
-      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-      "So11111111111111111111111111111111111111112",
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      'So11111111111111111111111111111111111111112',
     ],
   })
   @IsString({ each: true })
   accounts: string[];
 
   @ApiProperty({
-    description: "Maximum compute units to allocate",
+    description: 'Maximum compute units to allocate',
     example: 200000,
     required: false,
   })
@@ -47,7 +39,7 @@ export class ExecuteProgramDto {
   maxComputeUnits?: number;
 
   @ApiProperty({
-    description: "Execution priority (higher = more fees)",
+    description: 'Execution priority (higher = more fees)',
     example: 1,
     required: false,
   })
@@ -58,8 +50,8 @@ export class ExecuteProgramDto {
   priority?: number;
 
   @ApiProperty({
-    description: "Additional execution metadata",
-    example: { source: "api", userId: "123" },
+    description: 'Additional execution metadata',
+    example: { source: 'api', userId: '123' },
     required: false,
   })
   @IsOptional()
@@ -69,13 +61,13 @@ export class ExecuteProgramDto {
 
 export class ParallelExecutionDto {
   @ApiProperty({
-    description: "Array of program executions to run in parallel",
+    description: 'Array of program executions to run in parallel',
     type: [ExecuteProgramDto],
   })
   executions: ExecuteProgramDto[];
 
   @ApiProperty({
-    description: "Maximum total compute units for all executions",
+    description: 'Maximum total compute units for all executions',
     example: 1000000,
     required: false,
   })
@@ -85,7 +77,7 @@ export class ParallelExecutionDto {
   maxTotalComputeUnits?: number;
 
   @ApiProperty({
-    description: "Execution timeout in seconds",
+    description: 'Execution timeout in seconds',
     example: 30,
     required: false,
   })
@@ -96,7 +88,7 @@ export class ParallelExecutionDto {
   timeoutSeconds?: number;
 
   @ApiProperty({
-    description: "Whether to continue on individual execution failures",
+    description: 'Whether to continue on individual execution failures',
     example: false,
     required: false,
   })
@@ -106,8 +98,8 @@ export class ParallelExecutionDto {
 
 export class RuntimeExecutionQueryDto {
   @ApiProperty({
-    description: "Filter by program ID",
-    example: "11111111111111111111111111111112",
+    description: 'Filter by program ID',
+    example: '11111111111111111111111111111112',
     required: false,
   })
   @IsOptional()
@@ -115,9 +107,9 @@ export class RuntimeExecutionQueryDto {
   programId?: string;
 
   @ApiProperty({
-    description: "Filter by transaction ID",
+    description: 'Filter by transaction ID',
     example:
-      "5K8q3s7T8U9V1W2X3Y4Z5A6B7C8D9E1F2G3H4I5J6K7L8M9N1O2P3Q4R5S6T7U8V9W1X2Y3Z4A5B6C7D8E9F1G2H3",
+      '5K8q3s7T8U9V1W2X3Y4Z5A6B7C8D9E1F2G3H4I5J6K7L8M9N1O2P3Q4R5S6T7U8V9W1X2Y3Z4A5B6C7D8E9F1G2H3',
     required: false,
   })
   @IsOptional()
@@ -125,7 +117,7 @@ export class RuntimeExecutionQueryDto {
   transactionId?: string;
 
   @ApiProperty({
-    description: "Filter by execution status",
+    description: 'Filter by execution status',
     enum: ExecutionStatus,
     required: false,
   })
@@ -134,7 +126,7 @@ export class RuntimeExecutionQueryDto {
   status?: ExecutionStatus;
 
   @ApiProperty({
-    description: "Filter by execution type",
+    description: 'Filter by execution type',
     enum: ExecutionType,
     required: false,
   })
@@ -143,8 +135,8 @@ export class RuntimeExecutionQueryDto {
   executionType?: ExecutionType;
 
   @ApiProperty({
-    description: "Filter executions after this timestamp",
-    example: "2024-01-01T00:00:00Z",
+    description: 'Filter executions after this timestamp',
+    example: '2024-01-01T00:00:00Z',
     required: false,
   })
   @IsOptional()
@@ -152,8 +144,8 @@ export class RuntimeExecutionQueryDto {
   startDate?: string;
 
   @ApiProperty({
-    description: "Filter executions before this timestamp",
-    example: "2024-01-31T23:59:59Z",
+    description: 'Filter executions before this timestamp',
+    example: '2024-01-31T23:59:59Z',
     required: false,
   })
   @IsOptional()
@@ -161,7 +153,7 @@ export class RuntimeExecutionQueryDto {
   endDate?: string;
 
   @ApiProperty({
-    description: "Minimum compute units used",
+    description: 'Minimum compute units used',
     example: 1000,
     required: false,
   })
@@ -171,7 +163,7 @@ export class RuntimeExecutionQueryDto {
   minComputeUnits?: number;
 
   @ApiProperty({
-    description: "Maximum compute units used",
+    description: 'Maximum compute units used',
     example: 500000,
     required: false,
   })
@@ -181,7 +173,7 @@ export class RuntimeExecutionQueryDto {
   maxComputeUnits?: number;
 
   @ApiProperty({
-    description: "Page number (0-based)",
+    description: 'Page number (0-based)',
     example: 0,
     required: false,
   })
@@ -191,7 +183,7 @@ export class RuntimeExecutionQueryDto {
   page?: number = 0;
 
   @ApiProperty({
-    description: "Items per page",
+    description: 'Items per page',
     example: 20,
     required: false,
   })
@@ -204,7 +196,7 @@ export class RuntimeExecutionQueryDto {
 
 export class ExecutionMetricsDto {
   @ApiProperty({
-    description: "Time range for metrics (in hours)",
+    description: 'Time range for metrics (in hours)',
     example: 24,
     required: false,
   })
@@ -215,7 +207,7 @@ export class ExecutionMetricsDto {
   timeRangeHours?: number = 24;
 
   @ApiProperty({
-    description: "Group metrics by program",
+    description: 'Group metrics by program',
     example: true,
     required: false,
   })
@@ -223,7 +215,7 @@ export class ExecutionMetricsDto {
   groupByProgram?: boolean;
 
   @ApiProperty({
-    description: "Include detailed execution logs",
+    description: 'Include detailed execution logs',
     example: false,
     required: false,
   })

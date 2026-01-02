@@ -1,9 +1,6 @@
-import { Controller, Get, Post, Logger } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
-import {
-  DatabaseConnectionService,
-  DatabaseHealthStatus,
-} from "./database-connection.service";
+import { Controller, Get, Post, Logger } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { DatabaseConnectionService, DatabaseHealthStatus } from './database-connection.service';
 
 /**
  * # Database Connection Controller
@@ -45,68 +42,66 @@ import {
  * curl -X POST http://localhost:3000/database/pool/close-idle
  * ```
  */
-@ApiTags("Database")
-@Controller("database")
+@ApiTags('Database')
+@Controller('database')
 export class DatabaseConnectionController {
   private readonly logger = new Logger(DatabaseConnectionController.name);
 
-  constructor(
-    private readonly databaseConnectionService: DatabaseConnectionService,
-  ) {}
+  constructor(private readonly databaseConnectionService: DatabaseConnectionService) {}
 
   /**
    * Get in-depth database health status including connection pool metrics.
    */
-  @Get("health")
+  @Get('health')
   @ApiOperation({
-    summary: "Get database health status",
-    description: "Returns connection pool health and metrics.",
+    summary: 'Get database health status',
+    description: 'Returns connection pool health and metrics.',
   })
-  @ApiResponse({ status: 200, description: "Health status retrieved" })
+  @ApiResponse({ status: 200, description: 'Health status retrieved' })
   async getHealth(): Promise<DatabaseHealthStatus> {
-    this.logger.debug("Health check requested");
+    this.logger.debug('Health check requested');
     return this.databaseConnectionService.getHealthStatus();
   }
 
   /**
    * Get detailed connection pool statistics.
    */
-  @Get("pool/stats")
+  @Get('pool/stats')
   @ApiOperation({
-    summary: "Get connection pool statistics",
-    description: "Returns active, idle, and pending connection counts.",
+    summary: 'Get connection pool statistics',
+    description: 'Returns active, idle, and pending connection counts.',
   })
-  @ApiResponse({ status: 200, description: "Pool stats retrieved" })
+  @ApiResponse({ status: 200, description: 'Pool stats retrieved' })
   async getPoolStats() {
-    this.logger.debug("Pool stats requested");
+    this.logger.debug('Pool stats requested');
     return this.databaseConnectionService.getPoolStats();
   }
 
   /**
    * Get database connection configuration information.
    */
-  @Get("info")
+  @Get('info')
   @ApiOperation({
-    summary: "Get database connection information",
-    description: "Returns database type, host, and pool configuration.",
+    summary: 'Get database connection information',
+    description: 'Returns database type, host, and pool configuration.',
   })
-  @ApiResponse({ status: 200, description: "Connection info retrieved" })
+  @ApiResponse({ status: 200, description: 'Connection info retrieved' })
   getConnectionInfo() {
-    this.logger.debug("Connection info requested");
+    this.logger.debug('Connection info requested');
     return this.databaseConnectionService.getConnectionInfo();
   }
 
   /**
    * Perform an active health check by executing a test query.
    */
-  @Get("health/check")
+  @Get('health/check')
   @ApiOperation({
-    summary: "Perform manual health check",
-    description: "Executes SELECT 1 to verify database connectivity.",
+    summary: 'Perform manual health check',
+    description: 'Executes SELECT 1 to verify database connectivity.',
   })
-  @ApiResponse({ status: 200, description: "Health check performed" })
+  @ApiResponse({ status: 200, description: 'Health check performed' })
   async performHealthCheck() {
-    this.logger.debug("Manual health check requested");
+    this.logger.debug('Manual health check requested');
     const isHealthy = await this.databaseConnectionService.performHealthCheck();
     return {
       healthy: isHealthy,
@@ -119,17 +114,17 @@ export class DatabaseConnectionController {
    *
    * Use during maintenance windows or when reducing resource usage.
    */
-  @Post("pool/close-idle")
+  @Post('pool/close-idle')
   @ApiOperation({
-    summary: "Close idle connections",
-    description: "Releases all unused connections back to the database.",
+    summary: 'Close idle connections',
+    description: 'Releases all unused connections back to the database.',
   })
-  @ApiResponse({ status: 200, description: "Idle connections closed" })
+  @ApiResponse({ status: 200, description: 'Idle connections closed' })
   async closeIdleConnections() {
-    this.logger.warn("Closing idle connections requested");
+    this.logger.warn('Closing idle connections requested');
     await this.databaseConnectionService.closeIdleConnections();
     return {
-      message: "Idle connections closed",
+      message: 'Idle connections closed',
       timestamp: new Date().toISOString(),
     };
   }
@@ -137,12 +132,12 @@ export class DatabaseConnectionController {
   /**
    * Get current active connection count.
    */
-  @Get("connections/count")
+  @Get('connections/count')
   @ApiOperation({
-    summary: "Get current connection count",
-    description: "Returns the number of active database connections.",
+    summary: 'Get current connection count',
+    description: 'Returns the number of active database connections.',
   })
-  @ApiResponse({ status: 200, description: "Connection count retrieved" })
+  @ApiResponse({ status: 200, description: 'Connection count retrieved' })
   getConnectionCount() {
     const count = this.databaseConnectionService.getConnectionCount();
     return {

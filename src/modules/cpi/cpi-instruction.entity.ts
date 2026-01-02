@@ -6,44 +6,44 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-} from "typeorm";
-import { Program } from "../svm/program.entity";
+} from 'typeorm';
+import { Program } from '../svm/program.entity';
 
 /**
  * CPI Instruction Entity
- * 
+ *
  * Represents a Cross-Program Invocation (CPI) instruction template on Solana.
  * CPIs allow programs to call other programs within a single transaction,
  * enabling composability - a cornerstone of Solana's DeFi ecosystem.
- * 
+ *
  * Key CPI concepts:
  * - Caller Program: The program initiating the CPI call
  * - Target Program: The program being invoked
  * - Instruction Data: Serialized arguments for the invoked instruction
  * - Account Metas: Accounts passed to the invoked program with their permissions
- * 
+ *
  * CPI Permissions:
  * - Signer privileges can be extended to CPIs via Program Derived Addresses (PDAs)
  * - The `invoke_signed` function allows PDAs to sign on behalf of programs
  * - Account permissions must be explicitly passed in account metas
- * 
+ *
  * Common CPI Use Cases:
  * - Token transfers via SPL Token program
  * - DEX swaps through aggregator protocols
  * - Lending operations in DeFi protocols
  * - NFT minting via Metaplex
- * 
+ *
  * @example
  * const cpi = new CpiInstruction();
  * cpi.programId = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
  * cpi.callerProgramId = "myDeFiProgram...";
  * cpi.methodName = "transfer";
  * cpi.instructionData = { amount: 1000000 };
- * 
+ *
  * @see https://solana.com/docs/core/cpi
  * @see https://solana.com/docs/core/pda#how-to-sign-with-a-pda
  */
-@Entity("cpi_instructions")
+@Entity('cpi_instructions')
 export class CpiInstruction {
   /**
    * unique identifier for the cpi instruction template
@@ -51,7 +51,7 @@ export class CpiInstruction {
    * example: "f6g7h8i9-j0k1-2l3m-4n5o-6p7q8r9s0t1u"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -60,7 +60,7 @@ export class CpiInstruction {
    * example: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
    * reference: https://solana.com/docs/core/cpi
    */
-  @Column({ type: "varchar", length: 88 })
+  @Column({ type: 'varchar', length: 88 })
   programId: string; // The program being invoked
 
   /**
@@ -69,7 +69,7 @@ export class CpiInstruction {
    * example: "myDeFiProgramAddress..."
    * reference: https://solana.com/docs/core/cpi
    */
-  @Column({ type: "varchar", length: 88 })
+  @Column({ type: 'varchar', length: 88 })
   callerProgramId: string; // The program making the CPI call
 
   /**
@@ -78,7 +78,7 @@ export class CpiInstruction {
    * example: { "amount": 1000000, "decimals": 6 }
    * reference: https://solana.com/docs/core/transactions#instructions
    */
-  @Column({ type: "jsonb" })
+  @Column({ type: 'jsonb' })
   instructionData: any; // The instruction data for the CPI
 
   /**
@@ -87,7 +87,7 @@ export class CpiInstruction {
    * example: [{ pubkey: "...", isSigner: false, isWritable: true }]
    * reference: https://solana.com/docs/core/transactions#account-metas
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   accounts: any[]; // Account metas for the instruction
 
   /**
@@ -96,7 +96,7 @@ export class CpiInstruction {
    * example: "transfer"
    * reference: none
    */
-  @Column({ type: "varchar", length: 64, nullable: true })
+  @Column({ type: 'varchar', length: 64, nullable: true })
   methodName: string; // The method being called (for logging/debugging)
 
   /**
@@ -105,7 +105,7 @@ export class CpiInstruction {
    * example: true
    * reference: https://solana.com/docs/core/cpi#privilege-extension
    */
-  @Column({ type: "boolean", default: false })
+  @Column({ type: 'boolean', default: false })
   requiresPermission: boolean;
 
   /**
@@ -114,7 +114,7 @@ export class CpiInstruction {
    * example: "permissionProgramAddress..."
    * reference: none
    */
-  @Column({ type: "varchar", length: 88, nullable: true })
+  @Column({ type: 'varchar', length: 88, nullable: true })
   permissionProgramId: string; // Program that manages permissions
 
   /**
@@ -123,7 +123,7 @@ export class CpiInstruction {
    * example: "admin"
    * reference: none
    */
-  @Column({ type: "varchar", length: 64, nullable: true })
+  @Column({ type: 'varchar', length: 64, nullable: true })
   permissionLevel: string; // e.g., 'read', 'write', 'admin'
 
   /**
@@ -132,7 +132,7 @@ export class CpiInstruction {
    * example: true
    * reference: none
    */
-  @Column({ type: "boolean", default: true })
+  @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
   /**
@@ -160,7 +160,7 @@ export class CpiInstruction {
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
   @ManyToOne(() => Program)
-  @JoinColumn({ name: "programId" })
+  @JoinColumn({ name: 'programId' })
   program: Program;
 
   /**
@@ -170,6 +170,6 @@ export class CpiInstruction {
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
   @ManyToOne(() => Program)
-  @JoinColumn({ name: "callerProgramId" })
+  @JoinColumn({ name: 'callerProgramId' })
   callerProgram: Program;
 }
