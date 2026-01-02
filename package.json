@@ -46,7 +46,7 @@
     "@opentelemetry/auto-instrumentations-node": "^0.52.1",
     "@opentelemetry/exporter-jaeger": "^1.28.0",
     "@opentelemetry/sdk-node": "^0.52.1",
-    "@solana/spl-token": "^0.3.11",
+    "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "@types/bcrypt": "^6.0.0",
     "@types/passport-jwt": "^4.0.1",
