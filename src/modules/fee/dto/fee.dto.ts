@@ -1,11 +1,4 @@
-import {
-  IsOptional,
-  IsString,
-  IsEnum,
-  IsNumber,
-  Min,
-  Max,
-} from "class-validator";
+import { IsOptional, IsString, IsEnum, IsNumber, Min, Max } from 'class-validator';
 
 export class GetFeeEstimateDto {
   @IsOptional()
@@ -26,12 +19,12 @@ export class UserFeePreferencesDto {
   targetSuccessRate?: number;
 
   @IsOptional()
-  @IsEnum(["slow", "normal", "fast", "urgent"])
-  speed?: "slow" | "normal" | "fast" | "urgent";
+  @IsEnum(['slow', 'normal', 'fast', 'urgent'])
+  speed?: 'slow' | 'normal' | 'fast' | 'urgent';
 
   @IsOptional()
-  @IsEnum(["conservative", "moderate", "aggressive"])
-  riskTolerance?: "conservative" | "moderate" | "aggressive";
+  @IsEnum(['conservative', 'moderate', 'aggressive'])
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
 }
 
 export class GetFeeRecommendationsDto {
@@ -40,8 +33,8 @@ export class GetFeeRecommendationsDto {
   transactionData?: string; // Base64 encoded transaction (optional)
 
   @IsOptional()
-  @IsEnum(["min", "low", "medium", "high", "veryHigh", "unsafeMax"])
-  priorityLevel?: "min" | "low" | "medium" | "high" | "veryHigh" | "unsafeMax";
+  @IsEnum(['min', 'low', 'medium', 'high', 'veryHigh', 'unsafeMax'])
+  priorityLevel?: 'min' | 'low' | 'medium' | 'high' | 'veryHigh' | 'unsafeMax';
 
   @IsOptional()
   includeVotes?: boolean;

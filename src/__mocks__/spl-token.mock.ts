@@ -21,13 +21,13 @@ export const mockSplToken = {
   TOKEN_PROGRAM_ID: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
 
   // getAssociatedTokenAddress
-  getAssociatedTokenAddress: jest.fn().mockImplementation(
-    async (mint: PublicKey, owner: PublicKey): Promise<PublicKey> => {
+  getAssociatedTokenAddress: jest
+    .fn()
+    .mockImplementation(async (mint: PublicKey, owner: PublicKey): Promise<PublicKey> => {
       // Return a deterministic associated token address
       const seed = `${mint.toString()}-${owner.toString()}`;
       return new PublicKey('AT' + seed.slice(0, 40).padEnd(40, '0'));
-    }
-  ),
+    }),
 
   // getAccount
   getAccount: jest.fn().mockResolvedValue(mockTokenAccount),
@@ -36,9 +36,9 @@ export const mockSplToken = {
   createMint: jest.fn().mockResolvedValue(new PublicKey('11111111111111111111111111111112')),
 
   // createAssociatedTokenAccount
-  createAssociatedTokenAccount: jest.fn().mockResolvedValue(
-    new PublicKey('11111111111111111111111111111112')
-  ),
+  createAssociatedTokenAccount: jest
+    .fn()
+    .mockResolvedValue(new PublicKey('11111111111111111111111111111112')),
 
   // mintTo
   mintTo: jest.fn().mockResolvedValue('mock-mint-signature'),
@@ -73,12 +73,12 @@ export const mockSplToken = {
       keys: [],
       programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
       data: Buffer.from('mock-transfer-data'),
-    })
+    }),
   ),
 
   // Reset all mocks
-  resetAllMocks: function() {
-    Object.values(this).forEach(mock => {
+  resetAllMocks: function () {
+    Object.values(this).forEach((mock) => {
       if (jest.isMockFunction(mock)) {
         mock.mockReset();
       }

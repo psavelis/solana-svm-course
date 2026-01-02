@@ -1,17 +1,17 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, MoreThan } from "typeorm";
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import {
   Connection,
   PublicKey,
   Logs,
   AccountChangeCallback,
   ProgramAccountChangeCallback,
-} from "@solana/web3.js";
-import { Event, EventType, EventStatus } from "./event.entity";
-import { CreateEventDto, UpdateEventDto } from "./dto/event.dto";
-import { EventsGateway } from "./gateway/events.gateway";
-import { EventSubscriptionService } from "./event-subscription.service";
+} from '@solana/web3.js';
+import { Event, EventType, EventStatus } from './event.entity';
+import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import { EventsGateway } from './gateway/events.gateway';
+import { EventSubscriptionService } from './event-subscription.service';
 
 @Injectable()
 /**
@@ -31,8 +31,8 @@ export class EventsService implements OnModuleInit {
     private readonly subscriptionService: EventSubscriptionService,
   ) {
     this.connection = new Connection(
-      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
-      "confirmed",
+      process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+      'confirmed',
     );
   }
 
@@ -88,7 +88,7 @@ export class EventsService implements OnModuleInit {
 
     return await this.eventRepository.find({
       where,
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
       take: limit,
       skip: offset,
     });
@@ -103,7 +103,7 @@ export class EventsService implements OnModuleInit {
 
     return await this.eventRepository.find({
       where,
-      order: { createdAt: "ASC" },
+      order: { createdAt: 'ASC' },
     });
   }
 
@@ -113,14 +113,14 @@ export class EventsService implements OnModuleInit {
   private async startBlockchainMonitoring() {
     try {
       // Monitor transaction confirmations
-      this.connection.onLogs("all", this.handleProgramLogs.bind(this));
+      this.connection.onLogs('all', this.handleProgramLogs.bind(this));
 
       // Monitor slot updates
       this.connection.onSlotUpdate(this.handleSlotUpdate.bind(this));
 
-      this.logger.log("Blockchain event monitoring started");
+      this.logger.log('Blockchain event monitoring started');
     } catch (error) {
-      this.logger.error("Failed to start blockchain monitoring:", error);
+      this.logger.error('Failed to start blockchain monitoring:', error);
     }
   }
 
@@ -131,7 +131,7 @@ export class EventsService implements OnModuleInit {
     try {
       const event: CreateEventDto = {
         eventType: EventType.PROGRAM_LOG,
-        source: logs.logs[0]?.split(" ")[1] || "unknown", // Extract program ID from logs
+        source: logs.logs[0]?.split(' ')[1] || 'unknown', // Extract program ID from logs
         data: {
           signature: logs.signature,
           logs: logs.logs,
@@ -157,7 +157,7 @@ export class EventsService implements OnModuleInit {
         await this.createEvent(txEvent);
       }
     } catch (error) {
-      this.logger.error("Error handling program logs:", error);
+      this.logger.error('Error handling program logs:', error);
     }
   }
 
@@ -168,14 +168,14 @@ export class EventsService implements OnModuleInit {
     try {
       const event: CreateEventDto = {
         eventType: EventType.SLOT_UPDATED,
-        source: "network",
+        source: 'network',
         data: slotUpdate,
         slot: slotUpdate.slot.toString(),
       };
 
       await this.createEvent(event);
     } catch (error) {
-      this.logger.error("Error handling slot update:", error);
+      this.logger.error('Error handling slot update:', error);
     }
   }
 
@@ -191,7 +191,7 @@ export class EventsService implements OnModuleInit {
       const subscriptionId = this.connection.onAccountChange(
         new PublicKey(accountId),
         this.handleAccountChange.bind(this, accountId),
-        "confirmed",
+        'confirmed',
       );
 
       this.accountSubscriptions.set(accountId, subscriptionId);
@@ -212,10 +212,7 @@ export class EventsService implements OnModuleInit {
         this.accountSubscriptions.delete(accountId);
         this.logger.log(`Unsubscribed from account changes: ${accountId}`);
       } catch (error) {
-        this.logger.error(
-          `Failed to unsubscribe from account ${accountId}:`,
-          error,
-        );
+        this.logger.error(`Failed to unsubscribe from account ${accountId}:`, error);
       }
     }
   }
@@ -240,20 +237,14 @@ export class EventsService implements OnModuleInit {
 
       await this.createEvent(event);
     } catch (error) {
-      this.logger.error(
-        `Error handling account change for ${accountId}:`,
-        error,
-      );
+      this.logger.error(`Error handling account change for ${accountId}:`, error);
     }
   }
 
   /**
    * Subscribe to program account changes
    */
-  async subscribeToProgramAccounts(
-    programId: string,
-    filters?: any,
-  ): Promise<void> {
+  async subscribeToProgramAccounts(programId: string, filters?: any): Promise<void> {
     const key = `program:${programId}`;
     if (this.accountSubscriptions.has(key)) {
       return; // Already subscribed
@@ -263,27 +254,21 @@ export class EventsService implements OnModuleInit {
       const subscriptionId = this.connection.onProgramAccountChange(
         new PublicKey(programId),
         this.handleProgramAccountChange.bind(this, programId),
-        "confirmed",
+        'confirmed',
         filters,
       );
 
       this.accountSubscriptions.set(key, subscriptionId);
       this.logger.log(`Subscribed to program account changes: ${programId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to subscribe to program accounts ${programId}:`,
-        error,
-      );
+      this.logger.error(`Failed to subscribe to program accounts ${programId}:`, error);
     }
   }
 
   /**
    * Handle program account changes
    */
-  private async handleProgramAccountChange(
-    programId: string,
-    accountInfo: any,
-  ) {
+  private async handleProgramAccountChange(programId: string, accountInfo: any) {
     try {
       const event: CreateEventDto = {
         eventType: EventType.ACCOUNT_CHANGED,
@@ -297,10 +282,7 @@ export class EventsService implements OnModuleInit {
 
       await this.createEvent(event);
     } catch (error) {
-      this.logger.error(
-        `Error handling program account change for ${programId}:`,
-        error,
-      );
+      this.logger.error(`Error handling program account change for ${programId}:`, error);
     }
   }
 
@@ -310,10 +292,10 @@ export class EventsService implements OnModuleInit {
   async getEventStats(): Promise<any> {
     const totalEvents = await this.eventRepository.count();
     const eventsByType = await this.eventRepository
-      .createQueryBuilder("event")
-      .select("event.eventType", "type")
-      .addSelect("COUNT(*)", "count")
-      .groupBy("event.eventType")
+      .createQueryBuilder('event')
+      .select('event.eventType', 'type')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('event.eventType')
       .getRawMany();
 
     const recentEvents = await this.eventRepository.count({

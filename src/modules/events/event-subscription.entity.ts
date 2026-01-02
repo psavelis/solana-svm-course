@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-} from "typeorm";
+} from 'typeorm';
 
 /**
  * Subscription Type Enum
@@ -13,9 +13,9 @@ import {
  * reference: https://solana.com/docs/rpc/websocket
  */
 export enum SubscriptionType {
-  WEBSOCKET = "websocket",
-  WEBHOOK = "webhook",
-  KAFKA = "kafka",
+  WEBSOCKET = 'websocket',
+  WEBHOOK = 'webhook',
+  KAFKA = 'kafka',
 }
 
 /**
@@ -24,41 +24,41 @@ export enum SubscriptionType {
  * reference: none
  */
 export enum SubscriptionStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  SUSPENDED = "suspended",
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
 }
 
 /**
  * Event Subscription Entity
- * 
+ *
  * Represents a subscription to Solana blockchain events. Subscriptions define how
  * clients receive notifications when filtered events occur. This supports multiple
  * delivery mechanisms including WebSocket, webhooks, and Kafka.
- * 
+ *
  * Key subscription concepts:
  * - WebSocket: Real-time bidirectional communication for low-latency updates
  * - Webhook: HTTP callbacks to client endpoints for server-to-server notifications
  * - Kafka: Message queue integration for high-throughput event streaming
- * 
+ *
  * Solana RPC provides native WebSocket subscriptions for:
  * - accountSubscribe: Monitor account data changes
  * - programSubscribe: Track program account changes
  * - signatureSubscribe: Watch transaction confirmations
  * - slotSubscribe: Receive slot updates
- * 
+ *
  * @example
  * const sub = new EventSubscription();
  * sub.subscriptionType = SubscriptionType.WEBHOOK;
  * sub.eventType = "transaction_confirmed";
  * sub.endpoint = "https://myapp.com/webhooks/solana";
- * 
+ *
  * @see https://solana.com/docs/rpc/websocket
  */
-@Entity("event_subscriptions")
-@Index(["clientId"])
-@Index(["eventType"])
-@Index(["status"])
+@Entity('event_subscriptions')
+@Index(['clientId'])
+@Index(['eventType'])
+@Index(['status'])
 export class EventSubscription {
   /**
    * unique identifier for the subscription
@@ -66,7 +66,7 @@ export class EventSubscription {
    * example: "d4e5f6g7-h8i9-0j1k-2l3m-4n5o6p7q8r9s"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -75,7 +75,7 @@ export class EventSubscription {
    * example: "client_abc123"
    * reference: none
    */
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   @Index()
   clientId: string; // Unique identifier for the subscribing client
 
@@ -85,7 +85,7 @@ export class EventSubscription {
    * example: "transaction_confirmed" or "*" for all events
    * reference: none
    */
-  @Column({ type: "varchar", length: 100 })
+  @Column({ type: 'varchar', length: 100 })
   eventType: string; // Event type to subscribe to (can be wildcard)
 
   /**
@@ -95,7 +95,7 @@ export class EventSubscription {
    * reference: https://solana.com/docs/rpc/websocket
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: SubscriptionType,
   })
   subscriptionType: SubscriptionType;
@@ -106,7 +106,7 @@ export class EventSubscription {
    * example: { "minAmount": 1000000, "programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" }
    * reference: none
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   filters?: any; // Additional filters for the subscription
 
   /**
@@ -115,7 +115,7 @@ export class EventSubscription {
    * example: "https://myapp.com/webhooks/solana" or "solana-events"
    * reference: none
    */
-  @Column({ type: "varchar", nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   endpoint?: string; // Webhook URL or Kafka topic
 
   /**
@@ -125,7 +125,7 @@ export class EventSubscription {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: SubscriptionStatus,
     default: SubscriptionStatus.ACTIVE,
   })
@@ -137,7 +137,7 @@ export class EventSubscription {
    * example: "2024-12-31T23:59:59Z"
    * reference: none
    */
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   expiresAt?: Date; // Optional expiration
 
   /**
@@ -146,7 +146,7 @@ export class EventSubscription {
    * example: { "maxRetries": 3, "batchSize": 100 }
    * reference: none
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   metadata?: any; // Additional subscription metadata
 
   /**

@@ -1,39 +1,108 @@
-import { Injectable, Logger, OnModuleInit, Inject } from "@nestjs/common";
-import {
-  ClientKafka,
-  EventPattern,
-  Payload,
-  Ctx,
-  KafkaContext,
-} from "@nestjs/microservices";
-import {
-  TransactionEvent,
-  TransactionEventType,
-} from "./message-publisher.service";
+import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
+import { ClientKafka, EventPattern, Payload, Ctx, KafkaContext } from '@nestjs/microservices';
+import { TransactionEvent, TransactionEventType } from './message-publisher.service';
 
+/**
+ * # Transaction Event Consumer
+ *
+ * Kafka consumer for processing transaction events asynchronously.
+ *
+ * ## Async Event Flow
+ *
+ * ```
+ * [TransactionsController] → POST /transactions/transfer
+ *           ↓
+ * [TransactionsService.sendTransfer()]
+ *           ↓
+ * [MessagePublisherService.publishTransactionCreated()]
+ *           ↓
+ * [Kafka 'transactions' topic]
+ *           ↓
+ * [TransactionEventConsumer.handleTransactionEvent()]
+ *           ↓
+ *     ┌─────┴─────┐
+ *     ↓           ↓
+ * [CREATED]  [STATUS_UPDATED]  [CONFIRMED]  [FAILED]
+ *     ↓           ↓                ↓           ↓
+ * [Process]  [Update dashboards] [Notify]  [Alert]
+ * ```
+ *
+ * ## Event Types
+ *
+ * | Event | Trigger | Processing |
+ * |-------|---------|------------|
+ * | `transaction.created` | New tx submitted | Update metrics, validate |
+ * | `transaction.status_updated` | Status change | Refresh dashboards |
+ * | `transaction.confirmed` | On-chain finalized | Send confirmation |
+ * | `transaction.failed` | Tx rejected | Send failure alert |
+ *
+ * ## Retry Strategy
+ *
+ * Failed message processing follows this pattern:
+ *
+ * ```
+ * [Initial Attempt] → Failed
+ *         ↓
+ * [Retry 1 (immediate)] → Failed
+ *         ↓
+ * [Retry 2 (immediate)] → Failed
+ *         ↓
+ * [Retry 3 (immediate)] → Failed
+ *         ↓
+ * [Dead Letter Queue (DLQ)]
+ * ```
+ *
+ * After 3 retries, messages go to `transaction-events-dlq` topic
+ * for manual investigation.
+ *
+ * ## Offset Management
+ *
+ * Uses manual offset commits for exactly-once semantics:
+ * - Commit only after successful processing
+ * - Commit after DLQ on max retries
+ * - Never block partition with poison messages
+ *
+ * ## Configuration
+ *
+ * Environment variables:
+ * - `KAFKA_BROKERS`: Comma-separated broker list
+ * - `KAFKA_GROUP_ID`: Consumer group (default: solana-study-consumer)
+ *
+ * @see [src/common/kafka/kafka.module.ts](src/common/kafka/kafka.module.ts) - Kafka config
+ * @see [src/modules/transactions/message-publisher.service.ts](src/modules/transactions/message-publisher.service.ts) - Publisher
+ */
 @Injectable()
 export class TransactionEventConsumer implements OnModuleInit {
   private readonly logger = new Logger(TransactionEventConsumer.name);
 
-  constructor(
-    @Inject("KAFKA_SERVICE") private readonly kafkaClient: ClientKafka,
-  ) {}
+  constructor(@Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka) {}
 
+  /**
+   * Initialize Kafka subscriptions on module startup.
+   *
+   * Subscribes to:
+   * - `transactions`: Main event topic
+   * - `transaction-events-dlq`: Dead letter queue for failed events
+   */
   async onModuleInit() {
     // Subscribe to transaction events topic
-    this.kafkaClient.subscribeToResponseOf("transactions");
-    this.kafkaClient.subscribeToResponseOf("transaction-events-dlq");
+    this.kafkaClient.subscribeToResponseOf('transactions');
+    this.kafkaClient.subscribeToResponseOf('transaction-events-dlq');
     await this.kafkaClient.connect();
 
-    this.logger.log(
-      "Transaction event consumer initialized and connected to Kafka",
-    );
+    this.logger.log('Transaction event consumer initialized and connected to Kafka');
   }
 
   /**
-   * Handle transaction created events
+   * Main event handler for transaction events.
+   *
+   * Routes events to appropriate handlers based on event type.
+   * Implements retry logic with DLQ fallback.
+   *
+   * @param message - Kafka message containing TransactionEvent
+   * @param context - Kafka context for offset management
    */
-  @EventPattern("transactions")
+  @EventPattern('transactions')
   async handleTransactionEvent(
     @Payload()
     message: {
@@ -44,9 +113,7 @@ export class TransactionEventConsumer implements OnModuleInit {
     @Ctx() context: KafkaContext,
   ) {
     const { key, value: event, headers } = message;
-    const retryCount = headers?.["retry-count"]
-      ? parseInt(headers["retry-count"], 10)
-      : 0;
+    const retryCount = headers?.['retry-count'] ? parseInt(headers['retry-count'], 10) : 0;
     const MAX_RETRIES = 3;
 
     try {
@@ -116,9 +183,7 @@ export class TransactionEventConsumer implements OnModuleInit {
   /**
    * Handle transaction created event
    */
-  private async handleTransactionCreated(
-    event: TransactionEvent,
-  ): Promise<void> {
+  private async handleTransactionCreated(event: TransactionEvent): Promise<void> {
     this.logger.log(`Processing transaction created: ${event.transactionId}`);
 
     // Example processing logic:
@@ -130,17 +195,13 @@ export class TransactionEventConsumer implements OnModuleInit {
     // Simulate some processing time
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    this.logger.log(
-      `Successfully processed transaction created event: ${event.transactionId}`,
-    );
+    this.logger.log(`Successfully processed transaction created event: ${event.transactionId}`);
   }
 
   /**
    * Handle transaction status updated event
    */
-  private async handleTransactionStatusUpdated(
-    event: TransactionEvent,
-  ): Promise<void> {
+  private async handleTransactionStatusUpdated(event: TransactionEvent): Promise<void> {
     this.logger.log(
       `Processing transaction status update: ${event.transactionId} (${event.metadata?.previousStatus} -> ${event.status})`,
     );
@@ -154,17 +215,13 @@ export class TransactionEventConsumer implements OnModuleInit {
     // Simulate some processing time
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    this.logger.log(
-      `Successfully processed transaction status update: ${event.transactionId}`,
-    );
+    this.logger.log(`Successfully processed transaction status update: ${event.transactionId}`);
   }
 
   /**
    * Handle transaction confirmed event
    */
-  private async handleTransactionConfirmed(
-    event: TransactionEvent,
-  ): Promise<void> {
+  private async handleTransactionConfirmed(event: TransactionEvent): Promise<void> {
     this.logger.log(`Processing transaction confirmed: ${event.transactionId}`);
 
     // Example processing logic:
@@ -176,17 +233,13 @@ export class TransactionEventConsumer implements OnModuleInit {
     // Simulate some processing time
     await new Promise((resolve) => setTimeout(resolve, 200));
 
-    this.logger.log(
-      `Successfully processed transaction confirmed event: ${event.transactionId}`,
-    );
+    this.logger.log(`Successfully processed transaction confirmed event: ${event.transactionId}`);
   }
 
   /**
    * Handle transaction failed event
    */
-  private async handleTransactionFailed(
-    event: TransactionEvent,
-  ): Promise<void> {
+  private async handleTransactionFailed(event: TransactionEvent): Promise<void> {
     this.logger.error(
       `Processing transaction failed: ${event.transactionId}`,
       event.metadata?.error,
@@ -201,9 +254,7 @@ export class TransactionEventConsumer implements OnModuleInit {
     // Simulate some processing time
     await new Promise((resolve) => setTimeout(resolve, 150));
 
-    this.logger.log(
-      `Successfully processed transaction failed event: ${event.transactionId}`,
-    );
+    this.logger.log(`Successfully processed transaction failed event: ${event.transactionId}`);
   }
 
   /**
@@ -219,12 +270,12 @@ export class TransactionEventConsumer implements OnModuleInit {
   ): Promise<void> {
     const headers = {
       ...originalMessage.headers,
-      "retry-count": retryCount.toString(),
+      'retry-count': retryCount.toString(),
     };
 
     // Re-emit to the same topic
     await this.kafkaClient
-      .emit("transactions", {
+      .emit('transactions', {
         key: originalMessage.key,
         value: originalMessage.value,
         headers,
@@ -252,19 +303,14 @@ export class TransactionEventConsumer implements OnModuleInit {
       };
 
       // Publish to a dead letter queue topic
-      await this.kafkaClient
-        .emit("transaction-events-dlq", dlqMessage)
-        .toPromise();
+      await this.kafkaClient.emit('transaction-events-dlq', dlqMessage).toPromise();
 
       this.logger.warn(
         `Sent message to dead letter queue: ${originalMessage.value.transactionId}`,
         dlqMessage.error,
       );
     } catch (dlqError) {
-      this.logger.error(
-        "Failed to send message to dead letter queue",
-        dlqError,
-      );
+      this.logger.error('Failed to send message to dead letter queue', dlqError);
     }
   }
 
@@ -273,9 +319,9 @@ export class TransactionEventConsumer implements OnModuleInit {
    */
   getHealthStatus() {
     return {
-      consumer: "transaction-events",
-      status: "healthy",
-      topics: ["transactions"],
+      consumer: 'transaction-events',
+      status: 'healthy',
+      topics: ['transactions'],
       lastProcessed: new Date().toISOString(),
     };
   }

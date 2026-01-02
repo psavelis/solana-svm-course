@@ -1,13 +1,13 @@
-import { Injectable, Logger, BadRequestException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { CpiService } from "./cpi.service";
-import { TransactionsService } from "../transactions/transactions.service";
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CpiService } from './cpi.service';
+import { TransactionsService } from '../transactions/transactions.service';
 
 export enum MarketplaceProgram {
-  MAGIC_EDEN = "M2mx93ekt1fmXSVkTrUL9xVFHkmME8HTUi5Cyc5aF7K",
-  TENSOR = "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",
-  HYPERSPACE = "HYPERfwdTjyJ2SCaKHmpF2MtrXqWxrsotYDsTrshHWq",
+  MAGIC_EDEN = 'M2mx93ekt1fmXSVkTrUL9xVFHkmME8HTUi5Cyc5aF7K',
+  TENSOR = 'TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN',
+  HYPERSPACE = 'HYPERfwdTjyJ2SCaKHmpF2MtrXqWxrsotYDsTrshHWq',
 }
 
 export interface NFTListingCPI {
@@ -49,10 +49,7 @@ export class NFTMarketplaceCpiService {
   /**
    * List NFT on external marketplace via CPI
    */
-  async listNFTOnMarketplace(
-    userPrivateKey: string,
-    listing: NFTListingCPI,
-  ): Promise<string> {
+  async listNFTOnMarketplace(userPrivateKey: string, listing: NFTListingCPI): Promise<string> {
     this.logger.log(
       `Listing NFT ${listing.nftMint} on ${listing.marketplace} for ${listing.price} SOL`,
     );
@@ -74,19 +71,14 @@ export class NFTMarketplaceCpiService {
       return signature;
     } catch (error) {
       this.logger.error(`Failed to list NFT on marketplace: ${error.message}`);
-      throw new BadRequestException(
-        `Failed to list NFT on marketplace: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to list NFT on marketplace: ${error.message}`);
     }
   }
 
   /**
    * Place bid on NFT via CPI
    */
-  async placeBidOnMarketplace(
-    userPrivateKey: string,
-    bid: NFTBidCPI,
-  ): Promise<string> {
+  async placeBidOnMarketplace(userPrivateKey: string, bid: NFTBidCPI): Promise<string> {
     this.logger.log(
       `Placing bid of ${bid.bidAmount} SOL on NFT ${bid.nftMint} via ${bid.marketplace}`,
     );
@@ -108,19 +100,14 @@ export class NFTMarketplaceCpiService {
       return signature;
     } catch (error) {
       this.logger.error(`Failed to place bid on marketplace: ${error.message}`);
-      throw new BadRequestException(
-        `Failed to place bid on marketplace: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to place bid on marketplace: ${error.message}`);
     }
   }
 
   /**
    * Execute NFT sale via CPI
    */
-  async executeNFTSale(
-    userPrivateKey: string,
-    sale: NFTSaleCPI,
-  ): Promise<string> {
+  async executeNFTSale(userPrivateKey: string, sale: NFTSaleCPI): Promise<string> {
     this.logger.log(
       `Executing sale of NFT ${sale.nftMint} for ${sale.salePrice} SOL via ${sale.marketplace}`,
     );
@@ -142,9 +129,7 @@ export class NFTMarketplaceCpiService {
       return signature;
     } catch (error) {
       this.logger.error(`Failed to execute NFT sale: ${error.message}`);
-      throw new BadRequestException(
-        `Failed to execute NFT sale: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to execute NFT sale: ${error.message}`);
     }
   }
 
@@ -157,9 +142,7 @@ export class NFTMarketplaceCpiService {
     nftMint: string,
     auctionHouse?: string,
   ): Promise<string> {
-    this.logger.log(
-      `Canceling listing for NFT ${nftMint} on ${marketplace}`,
-    );
+    this.logger.log(`Canceling listing for NFT ${nftMint} on ${marketplace}`);
 
     try {
       // Build marketplace-specific cancel instruction
@@ -182,9 +165,7 @@ export class NFTMarketplaceCpiService {
       return signature;
     } catch (error) {
       this.logger.error(`Failed to cancel NFT listing: ${error.message}`);
-      throw new BadRequestException(
-        `Failed to cancel NFT listing: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to cancel NFT listing: ${error.message}`);
     }
   }
 
@@ -224,9 +205,7 @@ export class NFTMarketplaceCpiService {
       return signature;
     } catch (error) {
       this.logger.error(`Failed to update NFT listing: ${error.message}`);
-      throw new BadRequestException(
-        `Failed to update NFT listing: ${error.message}`,
-      );
+      throw new BadRequestException(`Failed to update NFT listing: ${error.message}`);
     }
   }
 
@@ -259,7 +238,7 @@ export class NFTMarketplaceCpiService {
             isWritable: false,
           },
           {
-            pubkey: listing.auctionHouse || "E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz",
+            pubkey: listing.auctionHouse || 'E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz',
             isSigner: false,
             isWritable: true,
           },
@@ -269,7 +248,7 @@ export class NFTMarketplaceCpiService {
       case MarketplaceProgram.TENSOR:
         // Tensor listing instruction structure
         instructionData = {
-          instruction: "list",
+          instruction: 'list',
           nftMint: listing.nftMint,
           price: listing.price,
           expiry: listing.expiry,
@@ -293,7 +272,7 @@ export class NFTMarketplaceCpiService {
     }
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -301,9 +280,7 @@ export class NFTMarketplaceCpiService {
   /**
    * Build bid instruction for different marketplaces
    */
-  private async buildBidInstruction(
-    bid: NFTBidCPI,
-  ): Promise<{ data: string; accounts: any[] }> {
+  private async buildBidInstruction(bid: NFTBidCPI): Promise<{ data: string; accounts: any[] }> {
     let instructionData: any;
     let accounts: any[];
 
@@ -325,7 +302,7 @@ export class NFTMarketplaceCpiService {
             isWritable: false,
           },
           {
-            pubkey: bid.auctionHouse || "E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz",
+            pubkey: bid.auctionHouse || 'E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz',
             isSigner: false,
             isWritable: true,
           },
@@ -334,7 +311,7 @@ export class NFTMarketplaceCpiService {
 
       case MarketplaceProgram.TENSOR:
         instructionData = {
-          instruction: "bid",
+          instruction: 'bid',
           nftMint: bid.nftMint,
           bidAmount: bid.bidAmount,
         };
@@ -357,7 +334,7 @@ export class NFTMarketplaceCpiService {
     }
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -365,9 +342,7 @@ export class NFTMarketplaceCpiService {
   /**
    * Build sale instruction for different marketplaces
    */
-  private async buildSaleInstruction(
-    sale: NFTSaleCPI,
-  ): Promise<{ data: string; accounts: any[] }> {
+  private async buildSaleInstruction(sale: NFTSaleCPI): Promise<{ data: string; accounts: any[] }> {
     let instructionData: any;
     let accounts: any[];
 
@@ -395,7 +370,7 @@ export class NFTMarketplaceCpiService {
             isWritable: true,
           },
           {
-            pubkey: sale.auctionHouse || "E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz",
+            pubkey: sale.auctionHouse || 'E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz',
             isSigner: false,
             isWritable: true,
           },
@@ -404,7 +379,7 @@ export class NFTMarketplaceCpiService {
 
       case MarketplaceProgram.TENSOR:
         instructionData = {
-          instruction: "sale",
+          instruction: 'sale',
           nftMint: sale.nftMint,
           salePrice: sale.salePrice,
           royaltyPaid: sale.royaltyPaid,
@@ -433,7 +408,7 @@ export class NFTMarketplaceCpiService {
     }
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -456,7 +431,7 @@ export class NFTMarketplaceCpiService {
         };
         accounts = [
           {
-            pubkey: "", // Will be set by caller
+            pubkey: '', // Will be set by caller
             isSigner: true,
             isWritable: true,
           },
@@ -466,7 +441,7 @@ export class NFTMarketplaceCpiService {
             isWritable: false,
           },
           {
-            pubkey: auctionHouse || "E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz",
+            pubkey: auctionHouse || 'E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz',
             isSigner: false,
             isWritable: true,
           },
@@ -475,12 +450,12 @@ export class NFTMarketplaceCpiService {
 
       case MarketplaceProgram.TENSOR:
         instructionData = {
-          instruction: "cancel",
+          instruction: 'cancel',
           nftMint,
         };
         accounts = [
           {
-            pubkey: "", // Will be set by caller
+            pubkey: '', // Will be set by caller
             isSigner: true,
             isWritable: true,
           },
@@ -497,7 +472,7 @@ export class NFTMarketplaceCpiService {
     }
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -522,7 +497,7 @@ export class NFTMarketplaceCpiService {
         };
         accounts = [
           {
-            pubkey: "", // Will be set by caller
+            pubkey: '', // Will be set by caller
             isSigner: true,
             isWritable: true,
           },
@@ -532,7 +507,7 @@ export class NFTMarketplaceCpiService {
             isWritable: false,
           },
           {
-            pubkey: auctionHouse || "E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz",
+            pubkey: auctionHouse || 'E8cA9TegvX3cEhpHq7gPs3z7WMXo6Wq9F3mK6T1qBz',
             isSigner: false,
             isWritable: true,
           },
@@ -541,13 +516,13 @@ export class NFTMarketplaceCpiService {
 
       case MarketplaceProgram.TENSOR:
         instructionData = {
-          instruction: "update",
+          instruction: 'update',
           nftMint,
           newPrice,
         };
         accounts = [
           {
-            pubkey: "", // Will be set by caller
+            pubkey: '', // Will be set by caller
             isSigner: true,
             isWritable: true,
           },
@@ -564,7 +539,7 @@ export class NFTMarketplaceCpiService {
     }
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }

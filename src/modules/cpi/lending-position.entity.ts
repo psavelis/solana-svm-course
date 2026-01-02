@@ -6,8 +6,8 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-} from "typeorm";
-import { LendingPool } from "./lending-pool.entity";
+} from 'typeorm';
+import { LendingPool } from './lending-pool.entity';
 
 /**
  * Position Type Enum
@@ -15,8 +15,8 @@ import { LendingPool } from "./lending-pool.entity";
  * reference: https://docs.solend.fi/protocol/core-concepts
  */
 export enum PositionType {
-  SUPPLY = "supply",
-  BORROW = "borrow",
+  SUPPLY = 'supply',
+  BORROW = 'borrow',
 }
 
 /**
@@ -25,38 +25,38 @@ export enum PositionType {
  * reference: none
  */
 export enum PositionStatus {
-  ACTIVE = "active",
-  LIQUIDATED = "liquidated",
-  CLOSED = "closed",
+  ACTIVE = 'active',
+  LIQUIDATED = 'liquidated',
+  CLOSED = 'closed',
 }
 
 /**
  * Lending Position Entity
- * 
+ *
  * Represents a user's supply or borrow position in a Solana lending protocol.
  * This entity tracks the user's assets, accrued interest, and health metrics.
- * 
+ *
  * Key position concepts:
  * - Supply Position: Assets deposited to earn interest (cTokens received)
  * - Borrow Position: Assets borrowed against collateral (obligation created)
  * - Health Factor: Ratio of collateral value to borrowed value
  * - Liquidation: When health factor drops below 1, position can be liquidated
- * 
+ *
  * Interest Accrual:
  * - Interest compounds continuously based on utilization rates
  * - APY changes dynamically based on pool utilization
- * 
+ *
  * @example
  * const position = new LendingPosition();
  * position.positionType = PositionType.SUPPLY;
  * position.assetMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
  * position.amount = 1000;
  * position.apy = 5.2;
- * 
+ *
  * @see https://docs.solend.fi/protocol/core-concepts#obligations
  * @see https://docs.solend.fi/protocol/core-concepts#liquidation
  */
-@Entity("lending_positions")
+@Entity('lending_positions')
 export class LendingPosition {
   /**
    * unique identifier for the position record
@@ -64,7 +64,7 @@ export class LendingPosition {
    * example: "b2c3d4e5-f6g7-8901-2345-678901bcdef0"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -82,8 +82,8 @@ export class LendingPosition {
    * example: LendingPool object
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
-  @ManyToOne(() => LendingPool, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "poolId" })
+  @ManyToOne(() => LendingPool, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'poolId' })
   pool: LendingPool;
 
   /**
@@ -119,7 +119,7 @@ export class LendingPosition {
    * example: 1000.0
    * reference: none
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   amount: number;
 
   /**
@@ -128,7 +128,7 @@ export class LendingPosition {
    * example: 52.5
    * reference: none
    */
-  @Column("decimal", { precision: 36, scale: 9, nullable: true })
+  @Column('decimal', { precision: 36, scale: 9, nullable: true })
   accruedInterest: number;
 
   /**
@@ -137,7 +137,7 @@ export class LendingPosition {
    * example: 5.2
    * reference: https://docs.solend.fi/protocol/core-concepts#interest-rate-curve
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   apy: number; // Annual Percentage Yield
 
   /**
@@ -164,7 +164,7 @@ export class LendingPosition {
    * example: 1.5
    * reference: https://docs.solend.fi/protocol/core-concepts#health-factor
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   healthFactor: number; // For borrow positions
 
   /**
@@ -173,7 +173,7 @@ export class LendingPosition {
    * example: 0.85
    * reference: https://docs.solend.fi/protocol/core-concepts#liquidation
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   liquidationPrice: number;
 
   /**
@@ -182,7 +182,7 @@ export class LendingPosition {
    * example: [{ collateralMint: "So11...", collateralAmount: 10, collateralValue: 1500 }]
    * reference: https://docs.solend.fi/protocol/core-concepts#collateral
    */
-  @Column("jsonb", { nullable: true })
+  @Column('jsonb', { nullable: true })
   collateralInfo: {
     collateralMint: string;
     collateralAmount: number;

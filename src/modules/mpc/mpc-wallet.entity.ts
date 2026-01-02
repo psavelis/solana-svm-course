@@ -5,23 +5,23 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from "typeorm";
-import { KeyShare } from "./key-share.entity";
+} from 'typeorm';
+import { KeyShare } from './key-share.entity';
 
 export enum MpcWalletStatus {
-  CREATING = "creating",
-  ACTIVE = "active",
-  RECOVERING = "recovering",
-  DISABLED = "disabled",
+  CREATING = 'creating',
+  ACTIVE = 'active',
+  RECOVERING = 'recovering',
+  DISABLED = 'disabled',
 }
 
 export enum ThresholdScheme {
-  TSS_2_3 = "2-of-3", // 2 out of 3 shares needed
-  TSS_3_5 = "3-of-5", // 3 out of 5 shares needed
-  TSS_4_7 = "4-of-7", // 4 out of 7 shares needed
+  TSS_2_3 = '2-of-3', // 2 out of 3 shares needed
+  TSS_3_5 = '3-of-5', // 3 out of 5 shares needed
+  TSS_4_7 = '4-of-7', // 4 out of 7 shares needed
 }
 
-@Entity("mpc_wallets")
+@Entity('mpc_wallets')
 export class MpcWallet {
   /**
    * unique identifier for the mpc wallet entity
@@ -29,7 +29,7 @@ export class MpcWallet {
    * example: "d4e5f6g7-h8i9-0j1k-2l3m-4n5o6p7q8r9s"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -57,7 +57,7 @@ export class MpcWallet {
    * reference: https://en.wikipedia.org/wiki/Threshold_cryptosystem
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: ThresholdScheme,
     default: ThresholdScheme.TSS_2_3,
   })
@@ -87,7 +87,7 @@ export class MpcWallet {
    * example: "Awes4Tr6Tx8JDzDdSJg... (hex or base64)"
    * reference: https://en.wikipedia.org/wiki/Public-key_cryptography
    */
-  @Column({ type: "text" })
+  @Column({ type: 'text' })
   publicKey: string; // The combined public key
 
   /**
@@ -97,7 +97,7 @@ export class MpcWallet {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: MpcWalletStatus,
     default: MpcWalletStatus.CREATING,
   })
@@ -109,7 +109,7 @@ export class MpcWallet {
    * example: { "description": "corporate funds", "tags": ["finance"] }
    * reference: none
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   metadata: {
     description?: string;
     tags?: string[];
@@ -150,15 +150,11 @@ export class MpcWallet {
 
   canSign(): boolean {
     return (
-      this.keyShares &&
-      this.keyShares.filter((share) => share.isActive()).length >=
-        this.threshold
+      this.keyShares && this.keyShares.filter((share) => share.isActive()).length >= this.threshold
     );
   }
 
   getActiveSharesCount(): number {
-    return this.keyShares
-      ? this.keyShares.filter((share) => share.isActive()).length
-      : 0;
+    return this.keyShares ? this.keyShares.filter((share) => share.isActive()).length : 0;
   }
 }

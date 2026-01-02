@@ -4,16 +4,16 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-} from "typeorm";
-import { ApiProperty } from "@nestjs/swagger";
+} from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 
 export enum SmartAccountStatus {
-  ACTIVE = "active",
-  FROZEN = "frozen",
-  DISABLED = "disabled",
+  ACTIVE = 'active',
+  FROZEN = 'frozen',
+  DISABLED = 'disabled',
 }
 
-@Entity("smart_accounts")
+@Entity('smart_accounts')
 export class SmartAccount {
   /**
    * unique identifier for the smart account record
@@ -22,10 +22,10 @@ export class SmartAccount {
    * reference: https://typeorm.io/entities#primary-columns
    */
   @ApiProperty({
-    description: "Unique identifier for the smart account record",
-    example: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    description: 'Unique identifier for the smart account record',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
   })
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -35,8 +35,8 @@ export class SmartAccount {
    * reference: https://solana.com/docs/core/accounts
    */
   @ApiProperty({
-    description: "Address of the owner (EOA or another smart account)",
-    example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    description: 'Address of the owner (EOA or another smart account)',
+    example: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
   })
   @Column()
   ownerAddress: string;
@@ -48,8 +48,8 @@ export class SmartAccount {
    * reference: https://solana.com/docs/core/accounts
    */
   @ApiProperty({
-    description: "Address of the smart account on-chain",
-    example: "3x4y5z6a-7b8c-9d0e-1f2g-3h4i5j6k7l8m",
+    description: 'Address of the smart account on-chain',
+    example: '3x4y5z6a-7b8c-9d0e-1f2g-3h4i5j6k7l8m',
   })
   @Column({ unique: true })
   smartAccountAddress: string;
@@ -61,12 +61,12 @@ export class SmartAccount {
    * reference: none
    */
   @ApiProperty({
-    description: "Current status of the smart account",
+    description: 'Current status of the smart account',
     enum: SmartAccountStatus,
     example: SmartAccountStatus.ACTIVE,
   })
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: SmartAccountStatus,
     default: SmartAccountStatus.ACTIVE,
   })
@@ -79,10 +79,10 @@ export class SmartAccount {
    * reference: none
    */
   @ApiProperty({
-    description: "Governance rules for the smart account",
+    description: 'Governance rules for the smart account',
     example: { maxDailySpend: 100, requiredSigners: 2 },
   })
-  @Column("jsonb", { default: {} })
+  @Column('jsonb', { default: {} })
   rules: {
     maxDailySpend?: number;
     allowedPrograms?: string[];
@@ -96,8 +96,8 @@ export class SmartAccount {
    * reference: https://typeorm.io/entities#createdatecolumn
    */
   @ApiProperty({
-    description: "Timestamp when the smart account was created",
-    example: "2024-01-01T00:00:00Z",
+    description: 'Timestamp when the smart account was created',
+    example: '2024-01-01T00:00:00Z',
   })
   @CreateDateColumn()
   createdAt: Date;
@@ -109,8 +109,8 @@ export class SmartAccount {
    * reference: https://typeorm.io/entities#updatedatecolumn
    */
   @ApiProperty({
-    description: "Timestamp when the smart account was last updated",
-    example: "2024-01-02T12:00:00Z",
+    description: 'Timestamp when the smart account was last updated',
+    example: '2024-01-02T12:00:00Z',
   })
   @UpdateDateColumn()
   updatedAt: Date;

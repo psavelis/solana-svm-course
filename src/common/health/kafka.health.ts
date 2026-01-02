@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { HealthIndicator, HealthIndicatorResult } from "@nestjs/terminus";
-import { ConfigService } from "@nestjs/config";
-import { Kafka, logLevel } from "kafkajs";
+import { Injectable } from '@nestjs/common';
+import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
+import { ConfigService } from '@nestjs/config';
+import { Kafka, logLevel } from 'kafkajs';
 
 @Injectable()
 export class KafkaHealthIndicator extends HealthIndicator {
@@ -10,13 +10,12 @@ export class KafkaHealthIndicator extends HealthIndicator {
   }
 
   async isHealthy(key: string): Promise<HealthIndicatorResult> {
-    const brokers =
-      this.configService.get<string>("KAFKA_BROKERS") || "localhost:9092";
+    const brokers = this.configService.get<string>('KAFKA_BROKERS') || 'localhost:9092';
 
     try {
       const kafka = new Kafka({
-        clientId: "health-check",
-        brokers: brokers.split(","),
+        clientId: 'health-check',
+        brokers: brokers.split(','),
         logLevel: logLevel.ERROR,
       });
 

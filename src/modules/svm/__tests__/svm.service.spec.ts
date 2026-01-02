@@ -1,17 +1,13 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { getRepositoryToken } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { SvmService } from "../svm.service";
-import { Program, ProgramStatus, ProgramType } from "../program.entity";
-import {
-  RuntimeExecution,
-  ExecutionStatus,
-  ExecutionType,
-} from "../runtime-execution.entity";
-import { GasMeter, GasMeterType, GasMeterStatus } from "../gas-meter.entity";
-import { Connection } from "@solana/web3.js";
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SvmService } from '../svm.service';
+import { Program, ProgramStatus, ProgramType } from '../program.entity';
+import { RuntimeExecution, ExecutionStatus, ExecutionType } from '../runtime-execution.entity';
+import { GasMeter, GasMeterType, GasMeterStatus } from '../gas-meter.entity';
+import { Connection } from '@solana/web3.js';
 
-describe("SvmService", () => {
+describe('SvmService', () => {
   let service: SvmService;
   let programRepository: Repository<Program>;
   let executionRepository: Repository<RuntimeExecution>;
@@ -70,12 +66,12 @@ describe("SvmService", () => {
 
   beforeEach(async () => {
     mockConnection = {
-      getVersion: jest.fn().mockResolvedValue({ "solana-core": "1.14.0" }),
+      getVersion: jest.fn().mockResolvedValue({ 'solana-core': '1.14.0' }),
       getSlot: jest.fn().mockResolvedValue(123456789),
       getBlockHeight: jest.fn().mockResolvedValue(987654321),
-      rpcEndpoint: "https://api.devnet.solana.com",
+      rpcEndpoint: 'https://api.devnet.solana.com',
       getMinimumBalanceForRentExemption: jest.fn().mockResolvedValue(1000000),
-      sendAndConfirmTransaction: jest.fn().mockResolvedValue("mock-signature"),
+      sendAndConfirmTransaction: jest.fn().mockResolvedValue('mock-signature'),
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -100,31 +96,27 @@ describe("SvmService", () => {
     // Mock the connection property
     (service as any).connection = mockConnection;
 
-    programRepository = module.get<Repository<Program>>(
-      getRepositoryToken(Program),
-    );
+    programRepository = module.get<Repository<Program>>(getRepositoryToken(Program));
     executionRepository = module.get<Repository<RuntimeExecution>>(
       getRepositoryToken(RuntimeExecution),
     );
-    gasMeterRepository = module.get<Repository<GasMeter>>(
-      getRepositoryToken(GasMeter),
-    );
+    gasMeterRepository = module.get<Repository<GasMeter>>(getRepositoryToken(GasMeter));
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe("createProgram", () => {
-    it("should create a program successfully", async () => {
+  describe('createProgram', () => {
+    it('should create a program successfully', async () => {
       const createProgramDto = {
-        name: "Test Program",
-        description: "A test program",
+        name: 'Test Program',
+        description: 'A test program',
         programType: ProgramType.CUSTOM,
       };
-      const owner = "test-owner";
+      const owner = 'test-owner';
       const mockProgram = {
-        id: "test-id",
+        id: 'test-id',
         ...createProgramDto,
         owner,
         status: ProgramStatus.DEPLOYING,
@@ -147,83 +139,83 @@ describe("SvmService", () => {
     });
   });
 
-  describe("getProgramByProgramId", () => {
-    it("should return a program if found by programId", async () => {
-      const mockProgram = { id: "test-id", programId: "program-123", name: "Test Program" };
+  describe('getProgramByProgramId', () => {
+    it('should return a program if found by programId', async () => {
+      const mockProgram = { id: 'test-id', programId: 'program-123', name: 'Test Program' };
       mockProgramRepository.findOne.mockResolvedValue(mockProgram);
 
-      const result = await service.getProgramByProgramId("program-123");
+      const result = await service.getProgramByProgramId('program-123');
 
       expect(result).toEqual(mockProgram);
       expect(mockProgramRepository.findOne).toHaveBeenCalledWith({
-        where: { programId: "program-123" },
+        where: { programId: 'program-123' },
       });
     });
 
-    it("should throw NotFoundException if program not found by programId", async () => {
+    it('should throw NotFoundException if program not found by programId', async () => {
       mockProgramRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getProgramByProgramId("non-existent-program")).rejects.toThrow(
-        "Program with programId non-existent-program not found",
+      await expect(service.getProgramByProgramId('non-existent-program')).rejects.toThrow(
+        'Program with programId non-existent-program not found',
       );
     });
   });
 
-  describe("updateProgram", () => {
-    it("should update a program successfully", async () => {
+  describe('updateProgram', () => {
+    it('should update a program successfully', async () => {
       const existingProgram = {
-        id: "test-id",
-        name: "Old Name",
-        description: "Old Description",
+        id: 'test-id',
+        name: 'Old Name',
+        description: 'Old Description',
         save: jest.fn(),
       };
       const updateDto = {
-        name: "New Name",
-        description: "New Description",
+        name: 'New Name',
+        description: 'New Description',
       };
       const updatedProgram = {
         ...existingProgram,
         ...updateDto,
       };
 
-      jest.spyOn(service, "getProgram").mockResolvedValue(existingProgram as any);
+      jest.spyOn(service, 'getProgram').mockResolvedValue(existingProgram as any);
       mockProgramRepository.save.mockResolvedValue(updatedProgram as any);
 
-      const result = await service.updateProgram("test-id", updateDto);
+      const result = await service.updateProgram('test-id', updateDto);
 
       expect(result).toEqual(updatedProgram);
-      expect(service.getProgram).toHaveBeenCalledWith("test-id");
+      expect(service.getProgram).toHaveBeenCalledWith('test-id');
       expect(mockProgramRepository.save).toHaveBeenCalledWith(existingProgram);
     });
   });
 
-  describe("deleteProgram", () => {
-    it("should delete a program successfully", async () => {
-      const mockProgram = { id: "test-id", name: "Test Program" };
+  describe('deleteProgram', () => {
+    it('should delete a program successfully', async () => {
+      const mockProgram = { id: 'test-id', name: 'Test Program' };
 
-      jest.spyOn(service, "getProgram").mockResolvedValue(mockProgram as any);
+      jest.spyOn(service, 'getProgram').mockResolvedValue(mockProgram as any);
       mockProgramRepository.remove.mockResolvedValue(mockProgram as any);
 
-      await service.deleteProgram("test-id");
+      await service.deleteProgram('test-id');
 
-      expect(service.getProgram).toHaveBeenCalledWith("test-id");
+      expect(service.getProgram).toHaveBeenCalledWith('test-id');
       expect(mockProgramRepository.remove).toHaveBeenCalledWith(mockProgram);
     });
   });
 
-  describe("queryPrograms", () => {
-    it("should return programs with query filters", async () => {
+  describe('queryPrograms', () => {
+    it('should return programs with query filters', async () => {
       const queryDto = {
         programType: ProgramType.CUSTOM,
         status: ProgramStatus.ACTIVE,
-        owner: "test-owner",
-        search: "test",
+        owner: 'test-owner',
+        search: 'test',
         page: 0,
         limit: 10,
       };
       const mockPrograms = [
-        { id: "1", name: "Test Program 1" },
-        { id: "2", name: "Test Program 2" },
+        { id: '1', name: 'Test Program 1' },
+        { id: '2', name: 'Test Program 2' },
       ];
 
       const mockQueryBuilder = {
@@ -240,48 +232,48 @@ describe("SvmService", () => {
       const result = await service.queryPrograms(queryDto);
 
       expect(result).toEqual({ programs: mockPrograms, total: 2 });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("program.programType = :programType", {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('program.programType = :programType', {
         programType: ProgramType.CUSTOM,
       });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("program.status = :status", {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('program.status = :status', {
         status: ProgramStatus.ACTIVE,
       });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("program.owner = :owner", {
-        owner: "test-owner",
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('program.owner = :owner', {
+        owner: 'test-owner',
       });
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        "(program.name ILIKE :search OR program.description ILIKE :search)",
-        { search: "%test%" },
+        '(program.name ILIKE :search OR program.description ILIKE :search)',
+        { search: '%test%' },
       );
     });
   });
 
-  describe("getGasMeter", () => {
-    it("should return a gas meter if found", async () => {
-      const mockGasMeter = { id: "test-id", gasAllocated: 1000000 };
+  describe('getGasMeter', () => {
+    it('should return a gas meter if found', async () => {
+      const mockGasMeter = { id: 'test-id', gasAllocated: 1000000 };
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      const result = await service.getGasMeter("test-id");
+      const result = await service.getGasMeter('test-id');
 
       expect(result).toEqual(mockGasMeter);
       expect(mockGasMeterRepository.findOne).toHaveBeenCalledWith({
-        where: { id: "test-id" },
+        where: { id: 'test-id' },
       });
     });
 
-    it("should throw NotFoundException if gas meter not found", async () => {
+    it('should throw NotFoundException if gas meter not found', async () => {
       mockGasMeterRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getGasMeter("non-existent-id")).rejects.toThrow(
-        "Gas meter with ID non-existent-id not found",
+      await expect(service.getGasMeter('non-existent-id')).rejects.toThrow(
+        'Gas meter with ID non-existent-id not found',
       );
     });
   });
 
-  describe("updateGasMeter", () => {
-    it("should update a gas meter successfully", async () => {
+  describe('updateGasMeter', () => {
+    it('should update a gas meter successfully', async () => {
       const existingMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasAllocated: 1000000,
         gasRemaining: 500000,
         gasUsed: 500000,
@@ -297,36 +289,36 @@ describe("SvmService", () => {
         alertThresholdPercent: 90,
       };
 
-      jest.spyOn(service, "getGasMeter").mockResolvedValue(existingMeter as any);
+      jest.spyOn(service, 'getGasMeter').mockResolvedValue(existingMeter as any);
       mockGasMeterRepository.save.mockResolvedValue(updatedMeter as any);
 
-      const result = await service.updateGasMeter("test-id", updateDto);
+      const result = await service.updateGasMeter('test-id', updateDto);
 
       expect(result).toEqual(updatedMeter);
-      expect(service.getGasMeter).toHaveBeenCalledWith("test-id");
+      expect(service.getGasMeter).toHaveBeenCalledWith('test-id');
       expect(mockGasMeterRepository.save).toHaveBeenCalledWith(existingMeter);
     });
   });
 
-  describe("deleteGasMeter", () => {
-    it("should delete a gas meter successfully", async () => {
-      const mockGasMeter = { id: "test-id", gasAllocated: 1000000 };
+  describe('deleteGasMeter', () => {
+    it('should delete a gas meter successfully', async () => {
+      const mockGasMeter = { id: 'test-id', gasAllocated: 1000000 };
 
-      jest.spyOn(service, "getGasMeter").mockResolvedValue(mockGasMeter as any);
+      jest.spyOn(service, 'getGasMeter').mockResolvedValue(mockGasMeter as any);
       mockGasMeterRepository.remove.mockResolvedValue(mockGasMeter as any);
 
-      await service.deleteGasMeter("test-id");
+      await service.deleteGasMeter('test-id');
 
-      expect(service.getGasMeter).toHaveBeenCalledWith("test-id");
+      expect(service.getGasMeter).toHaveBeenCalledWith('test-id');
       expect(mockGasMeterRepository.remove).toHaveBeenCalledWith(mockGasMeter);
     });
   });
 
-  describe("queryGasMeters", () => {
-    it("should return gas meters with query filters", async () => {
+  describe('queryGasMeters', () => {
+    it('should return gas meters with query filters', async () => {
       const queryDto = {
-        programId: "program-123",
-        accountId: "account-456",
+        programId: 'program-123',
+        accountId: 'account-456',
         meterType: GasMeterType.PROGRAM,
         status: GasMeterStatus.ACTIVE,
         usageThresholdPercent: 50,
@@ -334,8 +326,8 @@ describe("SvmService", () => {
         limit: 10,
       };
       const mockMeters = [
-        { id: "1", gasAllocated: 1000000 },
-        { id: "2", gasAllocated: 2000000 },
+        { id: '1', gasAllocated: 1000000 },
+        { id: '2', gasAllocated: 2000000 },
       ];
 
       const mockQueryBuilder = {
@@ -352,19 +344,19 @@ describe("SvmService", () => {
       const result = await service.queryGasMeters(queryDto);
 
       expect(result).toEqual({ meters: mockMeters, total: 2 });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("meter.programId = :programId", {
-        programId: "program-123",
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('meter.programId = :programId', {
+        programId: 'program-123',
       });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("meter.accountId = :accountId", {
-        accountId: "account-456",
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('meter.accountId = :accountId', {
+        accountId: 'account-456',
       });
     });
   });
 
-  describe("consumeGas", () => {
-    it("should consume gas successfully", async () => {
+  describe('consumeGas', () => {
+    it('should consume gas successfully', async () => {
       const mockGasMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasRemaining: 100000,
         gasUsed: 50000,
         operationCount: 5,
@@ -381,7 +373,7 @@ describe("SvmService", () => {
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
       mockGasMeterRepository.save.mockResolvedValue(mockGasMeter);
 
-      await service.consumeGas("test-id", 25000);
+      await service.consumeGas('test-id', 25000);
 
       expect(mockGasMeter.gasUsed).toBe(75000);
       expect(mockGasMeter.gasRemaining).toBe(75000);
@@ -391,23 +383,21 @@ describe("SvmService", () => {
       expect(mockGasMeterRepository.save).toHaveBeenCalledWith(mockGasMeter);
     });
 
-    it("should throw error if gas meter is not active", async () => {
+    it('should throw error if gas meter is not active', async () => {
       const mockGasMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasRemaining: 1000000,
         status: GasMeterStatus.PAUSED,
       };
 
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      await expect(service.consumeGas("test-id", 50000)).rejects.toThrow(
-        "Gas meter is paused",
-      );
+      await expect(service.consumeGas('test-id', 50000)).rejects.toThrow('Gas meter is paused');
     });
 
-    it("should throw error if insufficient gas remaining", async () => {
+    it('should throw error if insufficient gas remaining', async () => {
       const mockGasMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasRemaining: 10000,
         status: GasMeterStatus.ACTIVE,
         autoPauseOnThreshold: false,
@@ -415,22 +405,22 @@ describe("SvmService", () => {
 
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      await expect(service.consumeGas("test-id", 50000)).rejects.toThrow(
-        "Insufficient gas remaining",
+      await expect(service.consumeGas('test-id', 50000)).rejects.toThrow(
+        'Insufficient gas remaining',
       );
     });
   });
 
-  describe("checkGasMeter", () => {
-    it("should pass if no gas meter found", async () => {
+  describe('checkGasMeter', () => {
+    it('should pass if no gas meter found', async () => {
       mockGasMeterRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.checkGasMeter("test-id", 50000)).resolves.not.toThrow();
+      await expect(service.checkGasMeter('test-id', 50000)).resolves.not.toThrow();
     });
 
-    it("should pass if gas meter is active and has sufficient gas", async () => {
+    it('should pass if gas meter is active and has sufficient gas', async () => {
       const mockGasMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasRemaining: 100000,
         status: GasMeterStatus.ACTIVE,
         gasLimitPerOperation: 100000,
@@ -438,12 +428,12 @@ describe("SvmService", () => {
 
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      await expect(service.checkGasMeter("test-id", 50000)).resolves.not.toThrow();
+      await expect(service.checkGasMeter('test-id', 50000)).resolves.not.toThrow();
     });
 
-    it("should throw error if gas meter is not active", async () => {
+    it('should throw error if gas meter is not active', async () => {
       const mockGasMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasRemaining: 100000,
         status: GasMeterStatus.PAUSED,
         gasLimitPerOperation: 100000,
@@ -451,14 +441,12 @@ describe("SvmService", () => {
 
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      await expect(service.checkGasMeter("test-id", 50000)).rejects.toThrow(
-        "Gas meter is paused",
-      );
+      await expect(service.checkGasMeter('test-id', 50000)).rejects.toThrow('Gas meter is paused');
     });
 
-    it("should throw error if insufficient gas remaining", async () => {
+    it('should throw error if insufficient gas remaining', async () => {
       const mockGasMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasRemaining: 10000,
         status: GasMeterStatus.ACTIVE,
         gasLimitPerOperation: 100000,
@@ -466,14 +454,14 @@ describe("SvmService", () => {
 
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      await expect(service.checkGasMeter("test-id", 50000)).rejects.toThrow(
-        "Insufficient gas remaining for operation",
+      await expect(service.checkGasMeter('test-id', 50000)).rejects.toThrow(
+        'Insufficient gas remaining for operation',
       );
     });
 
-    it("should throw error if gas required exceeds limit per operation", async () => {
+    it('should throw error if gas required exceeds limit per operation', async () => {
       const mockGasMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasRemaining: 100000,
         status: GasMeterStatus.ACTIVE,
         gasLimitPerOperation: 25000,
@@ -481,16 +469,16 @@ describe("SvmService", () => {
 
       mockGasMeterRepository.findOne.mockResolvedValue(mockGasMeter);
 
-      await expect(service.checkGasMeter("test-id", 50000)).rejects.toThrow(
-        "Gas required (50000) exceeds limit per operation (25000)",
+      await expect(service.checkGasMeter('test-id', 50000)).rejects.toThrow(
+        'Gas required (50000) exceeds limit per operation (25000)',
       );
     });
   });
 
-  describe("resetGasMeter", () => {
-    it("should perform full reset successfully", async () => {
+  describe('resetGasMeter', () => {
+    it('should perform full reset successfully', async () => {
       const existingMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasAllocated: 1000000,
         gasUsed: 500000,
         gasRemaining: 500000,
@@ -513,19 +501,19 @@ describe("SvmService", () => {
         lastResetAt: expect.any(Date),
       };
 
-      jest.spyOn(service, "getGasMeter").mockResolvedValue(existingMeter as any);
+      jest.spyOn(service, 'getGasMeter').mockResolvedValue(existingMeter as any);
       mockGasMeterRepository.save.mockResolvedValue(resetMeter as any);
 
-      const result = await service.resetGasMeter("test-id", resetDto);
+      const result = await service.resetGasMeter('test-id', resetDto);
 
       expect(result).toEqual(resetMeter);
-      expect(service.getGasMeter).toHaveBeenCalledWith("test-id");
+      expect(service.getGasMeter).toHaveBeenCalledWith('test-id');
       expect(mockGasMeterRepository.save).toHaveBeenCalledWith(existingMeter);
     });
 
-    it("should update allocation without full reset", async () => {
+    it('should update allocation without full reset', async () => {
       const existingMeter = {
-        id: "test-id",
+        id: 'test-id',
         gasAllocated: 1000000,
         gasUsed: 500000,
         gasRemaining: 500000,
@@ -539,61 +527,61 @@ describe("SvmService", () => {
         lastResetAt: expect.any(Date),
       };
 
-      jest.spyOn(service, "getGasMeter").mockResolvedValue(existingMeter as any);
+      jest.spyOn(service, 'getGasMeter').mockResolvedValue(existingMeter as any);
       mockGasMeterRepository.save.mockResolvedValue(updatedMeter as any);
 
-      const result = await service.resetGasMeter("test-id", resetDto);
+      const result = await service.resetGasMeter('test-id', resetDto);
 
       expect(result).toEqual(updatedMeter);
       expect(mockGasMeterRepository.save).toHaveBeenCalledWith(existingMeter);
     });
   });
 
-  describe("getExecution", () => {
-    it("should return an execution if found", async () => {
+  describe('getExecution', () => {
+    it('should return an execution if found', async () => {
       const mockExecution = {
-        id: "test-id",
-        programId: "program-123",
+        id: 'test-id',
+        programId: 'program-123',
         status: ExecutionStatus.SUCCESS,
-        program: { id: "program-id", name: "Test Program" },
+        program: { id: 'program-id', name: 'Test Program' },
       };
       mockExecutionRepository.findOne.mockResolvedValue(mockExecution);
 
-      const result = await service.getExecution("test-id");
+      const result = await service.getExecution('test-id');
 
       expect(result).toEqual(mockExecution);
       expect(mockExecutionRepository.findOne).toHaveBeenCalledWith({
-        where: { id: "test-id" },
-        relations: ["program"],
+        where: { id: 'test-id' },
+        relations: ['program'],
       });
     });
 
-    it("should throw NotFoundException if execution not found", async () => {
+    it('should throw NotFoundException if execution not found', async () => {
       mockExecutionRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getExecution("non-existent-id")).rejects.toThrow(
-        "Execution with ID non-existent-id not found",
+      await expect(service.getExecution('non-existent-id')).rejects.toThrow(
+        'Execution with ID non-existent-id not found',
       );
     });
   });
 
-  describe("queryExecutions", () => {
-    it("should return executions with query filters", async () => {
+  describe('queryExecutions', () => {
+    it('should return executions with query filters', async () => {
       const queryDto = {
-        programId: "program-123",
-        transactionId: "tx-456",
+        programId: 'program-123',
+        transactionId: 'tx-456',
         status: ExecutionStatus.SUCCESS,
         executionType: ExecutionType.INSTRUCTION,
-        startDate: "2024-01-01",
-        endDate: "2024-12-31",
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
         minComputeUnits: 1000,
         maxComputeUnits: 100000,
         page: 0,
         limit: 10,
       };
       const mockExecutions = [
-        { id: "1", programId: "program-123", status: ExecutionStatus.SUCCESS },
-        { id: "2", programId: "program-123", status: ExecutionStatus.SUCCESS },
+        { id: '1', programId: 'program-123', status: ExecutionStatus.SUCCESS },
+        { id: '2', programId: 'program-123', status: ExecutionStatus.SUCCESS },
       ];
 
       const mockQueryBuilder = {
@@ -615,17 +603,20 @@ describe("SvmService", () => {
       const result = await service.queryExecutions(queryDto);
 
       expect(result).toEqual({ executions: mockExecutions, total: 2 });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("execution.programId = :programId", {
-        programId: "program-123",
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('execution.programId = :programId', {
+        programId: 'program-123',
       });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("execution.transactionId = :transactionId", {
-        transactionId: "tx-456",
-      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'execution.transactionId = :transactionId',
+        {
+          transactionId: 'tx-456',
+        },
+      );
     });
   });
 
-  describe("getExecutionMetrics", () => {
-    it("should return execution metrics", async () => {
+  describe('getExecutionMetrics', () => {
+    it('should return execution metrics', async () => {
       const metricsDto = {
         timeRangeHours: 24,
         groupByProgram: false,
@@ -661,21 +652,21 @@ describe("SvmService", () => {
       const result = await service.getExecutionMetrics(metricsDto);
 
       expect(result).toEqual(mockMetrics);
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("execution.createdAt >= :startDate", {
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('execution.createdAt >= :startDate', {
         startDate: expect.any(Date),
       });
     });
   });
 
-  describe("getRuntimeInfo", () => {
-    it("should return runtime information", async () => {
+  describe('getRuntimeInfo', () => {
+    it('should return runtime information', async () => {
       const result = await service.getRuntimeInfo();
 
-      expect(result).toHaveProperty("version");
-      expect(result).toHaveProperty("currentSlot");
-      expect(result).toHaveProperty("blockHeight");
-      expect(result).toHaveProperty("rpcUrl");
-      expect(result).toHaveProperty("commitment");
+      expect(result).toHaveProperty('version');
+      expect(result).toHaveProperty('currentSlot');
+      expect(result).toHaveProperty('blockHeight');
+      expect(result).toHaveProperty('rpcUrl');
+      expect(result).toHaveProperty('commitment');
     });
   });
 });

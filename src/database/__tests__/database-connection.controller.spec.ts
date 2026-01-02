@@ -1,15 +1,15 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { DatabaseConnectionController } from "../database-connection.controller";
-import { DatabaseConnectionService } from "../database-connection.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { DatabaseConnectionController } from '../database-connection.controller';
+import { DatabaseConnectionService } from '../database-connection.service';
 
-describe("DatabaseConnectionController", () => {
+describe('DatabaseConnectionController', () => {
   let controller: DatabaseConnectionController;
   let mockService: Partial<DatabaseConnectionService>;
 
   beforeEach(async () => {
     mockService = {
       getHealthStatus: jest.fn().mockResolvedValue({
-        status: "healthy",
+        status: 'healthy',
         connectionCount: 10,
         activeConnections: 5,
         idleConnections: 5,
@@ -40,13 +40,13 @@ describe("DatabaseConnectionController", () => {
         },
       }),
       getConnectionInfo: jest.fn().mockReturnValue({
-        name: "test-connection",
-        type: "postgres",
-        host: "localhost",
+        name: 'test-connection',
+        type: 'postgres',
+        host: 'localhost',
         port: 5432,
-        database: "test_db",
+        database: 'test_db',
         isConnected: true,
-        entities: ["Account", "Transaction"],
+        entities: ['Account', 'Transaction'],
       }),
       performHealthCheck: jest.fn().mockResolvedValue(true),
       closeIdleConnections: jest.fn().mockResolvedValue(undefined),
@@ -63,27 +63,25 @@ describe("DatabaseConnectionController", () => {
       ],
     }).compile();
 
-    controller = module.get<DatabaseConnectionController>(
-      DatabaseConnectionController,
-    );
+    controller = module.get<DatabaseConnectionController>(DatabaseConnectionController);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  describe("getHealth", () => {
-    it("should return health status", async () => {
+  describe('getHealth', () => {
+    it('should return health status', async () => {
       const result = await controller.getHealth();
 
-      expect(result.status).toBe("healthy");
+      expect(result.status).toBe('healthy');
       expect(result.connectionCount).toBe(10);
       expect(mockService.getHealthStatus).toHaveBeenCalled();
     });
   });
 
-  describe("getPoolStats", () => {
-    it("should return pool statistics", async () => {
+  describe('getPoolStats', () => {
+    it('should return pool statistics', async () => {
       const result = await controller.getPoolStats();
 
       expect(result.totalConnections).toBe(10);
@@ -92,18 +90,18 @@ describe("DatabaseConnectionController", () => {
     });
   });
 
-  describe("getConnectionInfo", () => {
-    it("should return connection information", () => {
+  describe('getConnectionInfo', () => {
+    it('should return connection information', () => {
       const result = controller.getConnectionInfo();
 
-      expect(result.name).toBe("test-connection");
-      expect(result.type).toBe("postgres");
+      expect(result.name).toBe('test-connection');
+      expect(result.type).toBe('postgres');
       expect(mockService.getConnectionInfo).toHaveBeenCalled();
     });
   });
 
-  describe("performHealthCheck", () => {
-    it("should perform health check and return result", async () => {
+  describe('performHealthCheck', () => {
+    it('should perform health check and return result', async () => {
       const result = await controller.performHealthCheck();
 
       expect(result.healthy).toBe(true);
@@ -112,18 +110,18 @@ describe("DatabaseConnectionController", () => {
     });
   });
 
-  describe("closeIdleConnections", () => {
-    it("should close idle connections", async () => {
+  describe('closeIdleConnections', () => {
+    it('should close idle connections', async () => {
       const result = await controller.closeIdleConnections();
 
-      expect(result.message).toBe("Idle connections closed");
+      expect(result.message).toBe('Idle connections closed');
       expect(result.timestamp).toBeDefined();
       expect(mockService.closeIdleConnections).toHaveBeenCalled();
     });
   });
 
-  describe("getConnectionCount", () => {
-    it("should return connection count", () => {
+  describe('getConnectionCount', () => {
+    it('should return connection count', () => {
       const result = controller.getConnectionCount();
 
       expect(result.connectionCount).toBe(10);

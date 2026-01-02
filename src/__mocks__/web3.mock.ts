@@ -63,9 +63,9 @@ class MockPublicKey {
 
   static async findProgramAddress(seeds: any[], programId: any) {
     // Create a deterministic mock address based on seeds and programId
-    const input = seeds.map(seed => 
-      Buffer.isBuffer(seed) ? seed.toString('hex') : String(seed)
-    ).join('') + programId.toString();
+    const input =
+      seeds.map((seed) => (Buffer.isBuffer(seed) ? seed.toString('hex') : String(seed))).join('') +
+      programId.toString();
     const hash = require('crypto').createHash('sha256').update(input).digest();
     const mockAddress = new MockPublicKey(hash.slice(0, 32).toString('hex'));
     return [mockAddress, 0];
@@ -98,7 +98,11 @@ class MockTransaction extends Transaction {
   compileMessage() {
     return {
       accountKeys: [],
-      header: { numRequiredSignatures: 1, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 0 },
+      header: {
+        numRequiredSignatures: 1,
+        numReadonlySignedAccounts: 0,
+        numReadonlyUnsignedAccounts: 0,
+      },
       instructions: [],
       recentBlockhash: 'mock-blockhash',
       indexToProgramIds: new Map(),
@@ -150,10 +154,10 @@ export const mockWeb3: any = {
   },
 
   // Reset all mocks
-  resetAllMocks: function() {
-    Object.values(this).forEach(mock => {
+  resetAllMocks: function () {
+    Object.values(this).forEach((mock) => {
       if (typeof mock === 'object' && mock !== null) {
-        Object.values(mock).forEach(method => {
+        Object.values(mock).forEach((method) => {
           if (jest.isMockFunction(method)) {
             method.mockReset();
           }

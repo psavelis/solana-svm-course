@@ -5,8 +5,8 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
-} from "typeorm";
-import { DexPool } from "./dex-pool.entity";
+} from 'typeorm';
+import { DexPool } from './dex-pool.entity';
 
 /**
  * Swap Direction Enum
@@ -14,44 +14,44 @@ import { DexPool } from "./dex-pool.entity";
  * reference: https://docs.raydium.io/raydium/swap/swap
  */
 export enum SwapDirection {
-  A_TO_B = "a_to_b",
-  B_TO_A = "b_to_a",
+  A_TO_B = 'a_to_b',
+  B_TO_A = 'b_to_a',
 }
 
 /**
  * DEX Swap Entity
- * 
+ *
  * Represents a token swap execution on a Solana DEX. Swaps exchange one token
  * for another through a liquidity pool, with price determined by the pool's
  * mechanism (AMM curve, order book, etc.).
- * 
+ *
  * Key swap concepts:
  * - Price Impact: How much the trade moves the pool price
  * - Slippage: Difference between expected and executed price
  * - Minimum Amount Out: Slippage protection - transaction fails if not met
  * - Multi-hop: Routing through multiple pools for better prices
- * 
+ *
  * Swap Execution Flow:
  * 1. User specifies input token and amount
  * 2. DEX calculates output based on reserves and fees
  * 3. Slippage tolerance checked against minimum amount out
  * 4. Tokens transferred atomically via program instructions
- * 
+ *
  * Jupiter Aggregation:
  * For optimal prices, swaps often route through Jupiter aggregator which
  * finds the best path across multiple DEXs.
- * 
+ *
  * @example
  * const swap = new DexSwap();
  * swap.direction = SwapDirection.A_TO_B;
  * swap.amountIn = 1.5; // 1.5 SOL
  * swap.amountOut = 150.25; // ~150 USDC
  * swap.priceImpact = 0.05; // 0.05%
- * 
+ *
  * @see https://docs.raydium.io/raydium/swap
  * @see https://docs.jup.ag/
  */
-@Entity("dex_swaps")
+@Entity('dex_swaps')
 export class DexSwap {
   /**
    * unique identifier for the swap record
@@ -59,7 +59,7 @@ export class DexSwap {
    * example: "d4e5f6g7-h8i9-0j1k-2l3m-4n5o6p7q8r9s"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -86,8 +86,8 @@ export class DexSwap {
    * example: DexPool object
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
-  @ManyToOne(() => DexPool, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "poolId" })
+  @ManyToOne(() => DexPool, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'poolId' })
   pool: DexPool;
 
   /**
@@ -114,7 +114,7 @@ export class DexSwap {
    * example: 1.5
    * reference: none
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   amountIn: number;
 
   /**
@@ -123,7 +123,7 @@ export class DexSwap {
    * example: 150.25
    * reference: none
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   amountOut: number;
 
   /**
@@ -132,7 +132,7 @@ export class DexSwap {
    * example: 0.45
    * reference: https://docs.orca.so/orca-whirlpools/overview#fee-tiers
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   feeAmount: number;
 
   /**
@@ -141,7 +141,7 @@ export class DexSwap {
    * example: 0.05 (0.05%)
    * reference: https://docs.jup.ag/notes/price-impact-and-route-selection
    */
-  @Column("decimal", { precision: 18, scale: 9 })
+  @Column('decimal', { precision: 18, scale: 9 })
   priceImpact: number; // Price impact percentage
 
   /**
@@ -150,7 +150,7 @@ export class DexSwap {
    * example: 0.5 (0.5%)
    * reference: https://docs.jup.ag/notes/price-impact-and-route-selection
    */
-  @Column("decimal", { precision: 18, scale: 9 })
+  @Column('decimal', { precision: 18, scale: 9 })
   slippage: number; // Applied slippage tolerance
 
   /**
@@ -168,7 +168,7 @@ export class DexSwap {
    * example: { hops: ["SOL→USDC", "USDC→RAY"], protocols: ["Orca", "Raydium"] }
    * reference: https://docs.jup.ag/
    */
-  @Column("jsonb", { nullable: true })
+  @Column('jsonb', { nullable: true })
   route: {
     hops?: string[]; // For multi-hop swaps
     protocols?: string[]; // Protocols used in the route
@@ -180,7 +180,7 @@ export class DexSwap {
    * example: "confirmed"
    * reference: https://solana.com/docs/core/transactions#transaction-confirmation
    */
-  @Column({ default: "confirmed" })
+  @Column({ default: 'confirmed' })
   status: string;
 
   /**
@@ -189,7 +189,7 @@ export class DexSwap {
    * example: 245678901
    * reference: https://solana.com/docs/terminology#slot
    */
-  @Column("int", { nullable: true })
+  @Column('int', { nullable: true })
   slot: number;
 
   /**
@@ -198,7 +198,7 @@ export class DexSwap {
    * example: 1705324800
    * reference: https://solana.com/docs/core/transactions
    */
-  @Column("bigint", { nullable: true })
+  @Column('bigint', { nullable: true })
   blockTime: number;
 
   /**

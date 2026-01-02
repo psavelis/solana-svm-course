@@ -8,9 +8,7 @@ export interface CacheOptions {
 
 @Injectable()
 export class CacheService {
-  constructor(
-    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
-  ) {}
+  constructor(@Inject('REDIS_CLIENT') private readonly redisClient: Redis) {}
 
   private getKey(key: string, prefix?: string): string {
     return prefix ? `${prefix}:${key}` : key;
@@ -32,11 +30,7 @@ export class CacheService {
     }
   }
 
-  async set<T>(
-    key: string,
-    value: T,
-    options?: CacheOptions,
-  ): Promise<void> {
+  async set<T>(key: string, value: T, options?: CacheOptions): Promise<void> {
     try {
       const cacheKey = this.getKey(key, options?.keyPrefix);
       const serializedValue = JSON.stringify(value);
@@ -101,15 +95,12 @@ export class CacheService {
     }
   }
 
-  async getMultiple<T>(
-    keys: string[],
-    options?: CacheOptions,
-  ): Promise<(T | null)[]> {
+  async getMultiple<T>(keys: string[], options?: CacheOptions): Promise<(T | null)[]> {
     try {
-      const cacheKeys = keys.map(key => this.getKey(key, options?.keyPrefix));
+      const cacheKeys = keys.map((key) => this.getKey(key, options?.keyPrefix));
       const values = await this.redisClient.mget(...cacheKeys);
 
-      return values.map(value => {
+      return values.map((value) => {
         if (!value) return null;
         try {
           return JSON.parse(value) as T;

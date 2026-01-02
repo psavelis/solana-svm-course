@@ -1,11 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import {
-  Transaction,
-  TransactionStatus,
-  TransactionType,
-} from "./transaction.entity";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Transaction, TransactionStatus, TransactionType } from './transaction.entity';
 import {
   Connection,
   PublicKey,
@@ -15,14 +11,14 @@ import {
   Keypair,
   ComputeBudgetProgram,
   TransactionInstruction,
-} from "@solana/web3.js";
+} from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   createTransferInstruction,
   getOrCreateAssociatedTokenAccount,
-} from "@solana/spl-token";
-import { MessagePublisherService } from "./message-publisher.service";
+} from '@solana/spl-token';
+import { MessagePublisherService } from './message-publisher.service';
 
 @Injectable()
 /**
@@ -38,14 +34,13 @@ export class TransactionsService {
     private messagePublisher: MessagePublisherService,
   ) {
     this.connection = new Connection(
-      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+      process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
     );
   }
 
   async create(transactionData: Partial<Transaction>): Promise<Transaction> {
     const transaction = this.transactionsRepository.create(transactionData);
-    const savedTransaction =
-      await this.transactionsRepository.save(transaction);
+    const savedTransaction = await this.transactionsRepository.save(transaction);
 
     // Publish transaction created event
     await this.messagePublisher.publishTransactionCreated(savedTransaction);
@@ -54,7 +49,7 @@ export class TransactionsService {
   }
 
   async findAll(): Promise<Transaction[]> {
-    return this.transactionsRepository.find({ order: { createdAt: "DESC" } });
+    return this.transactionsRepository.find({ order: { createdAt: 'DESC' } });
   }
 
   async findOne(id: string): Promise<Transaction> {
@@ -65,10 +60,7 @@ export class TransactionsService {
     return this.transactionsRepository.findOne({ where: { signature } });
   }
 
-  async update(
-    id: string,
-    updateData: Partial<Transaction>,
-  ): Promise<Transaction> {
+  async update(id: string, updateData: Partial<Transaction>): Promise<Transaction> {
     const existingTransaction = await this.findOne(id);
     const previousStatus = existingTransaction.status;
 
@@ -94,29 +86,22 @@ export class TransactionsService {
     try {
       const transaction = await this.connection.getTransaction(signature);
       if (!transaction) {
-        throw new Error("Transaction not found");
+        throw new Error('Transaction not found');
       }
 
       return {
         signature,
         slot: transaction.slot,
-        blockTime: transaction.blockTime
-          ? new Date(transaction.blockTime * 1000)
-          : null,
+        blockTime: transaction.blockTime ? new Date(transaction.blockTime * 1000) : null,
         fee: transaction.meta?.fee,
-        status: transaction.meta?.err ? "failed" : "confirmed",
-        instructions: transaction.transaction.message.instructions.map(
-          (inst, index) => ({
-            programId:
-              transaction.transaction.message.accountKeys[
-                inst.programIdIndex
-              ].toString(),
-            accounts: inst.accounts.map((accIndex) =>
-              transaction.transaction.message.accountKeys[accIndex].toString(),
-            ),
-            data: inst.data.toString(),
-          }),
-        ),
+        status: transaction.meta?.err ? 'failed' : 'confirmed',
+        instructions: transaction.transaction.message.instructions.map((inst, index) => ({
+          programId: transaction.transaction.message.accountKeys[inst.programIdIndex].toString(),
+          accounts: inst.accounts.map((accIndex) =>
+            transaction.transaction.message.accountKeys[accIndex].toString(),
+          ),
+          data: inst.data.toString(),
+        })),
         logs: transaction.meta?.logMessages || [],
       };
     } catch (error) {
@@ -124,16 +109,10 @@ export class TransactionsService {
     }
   }
 
-  async sendTransfer(
-    fromPrivateKey: string,
-    toAddress: string,
-    amount: number,
-  ): Promise<string> {
+  async sendTransfer(fromPrivateKey: string, toAddress: string, amount: number): Promise<string> {
     let fromKeypair: Keypair;
     try {
-      fromKeypair = Keypair.fromSecretKey(
-        new Uint8Array(JSON.parse(fromPrivateKey)),
-      );
+      fromKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fromPrivateKey)));
       const toPublicKey = new PublicKey(toAddress);
 
       const transaction = new SolanaTransaction().add(
@@ -144,11 +123,9 @@ export class TransactionsService {
         }),
       );
 
-      const signature = await sendAndConfirmTransaction(
-        this.connection,
-        transaction,
-        [fromKeypair],
-      );
+      const signature = await sendAndConfirmTransaction(this.connection, transaction, [
+        fromKeypair,
+      ]);
 
       // Save to database
       const savedTransaction = await this.create({
@@ -167,20 +144,17 @@ export class TransactionsService {
     } catch (error) {
       // Create failed transaction record
       const failedTransaction = await this.create({
-        signature: "failed-" + Date.now(),
+        signature: 'failed-' + Date.now(),
         type: TransactionType.TRANSFER,
         status: TransactionStatus.FAILED,
-        fromAddress: fromKeypair ? fromKeypair.publicKey.toString() : "unknown",
+        fromAddress: fromKeypair ? fromKeypair.publicKey.toString() : 'unknown',
         toAddress,
         amount,
         metadata: { error: error.message },
       });
 
       // Publish failure event
-      await this.messagePublisher.publishTransactionFailed(
-        failedTransaction,
-        error.message,
-      );
+      await this.messagePublisher.publishTransactionFailed(failedTransaction, error.message);
 
       throw new Error(`Failed to send transfer: ${error.message}`);
     }
@@ -197,9 +171,7 @@ export class TransactionsService {
   ): Promise<string> {
     let fromKeypair: Keypair;
     try {
-      fromKeypair = Keypair.fromSecretKey(
-        new Uint8Array(JSON.parse(fromPrivateKey)),
-      );
+      fromKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fromPrivateKey)));
 
       const toPublicKey = new PublicKey(toAddress);
       const mintPublicKey = new PublicKey(mintAddress);
@@ -231,11 +203,9 @@ export class TransactionsService {
 
       const transaction = new SolanaTransaction().add(transferInstruction);
 
-      const signature = await sendAndConfirmTransaction(
-        this.connection,
-        transaction,
-        [fromKeypair],
-      );
+      const signature = await sendAndConfirmTransaction(this.connection, transaction, [
+        fromKeypair,
+      ]);
 
       // Save to database
       const savedTransaction = await this.create({
@@ -255,20 +225,17 @@ export class TransactionsService {
     } catch (error) {
       // Create failed transaction record
       const failedTransaction = await this.create({
-        signature: "failed-" + Date.now(),
+        signature: 'failed-' + Date.now(),
         type: TransactionType.TOKEN_TRANSFER,
         status: TransactionStatus.FAILED,
-        fromAddress: fromKeypair ? fromKeypair.publicKey.toString() : "unknown",
+        fromAddress: fromKeypair ? fromKeypair.publicKey.toString() : 'unknown',
         toAddress,
         amount,
         metadata: { mintAddress, error: error.message },
       });
 
       // Publish failure event
-      await this.messagePublisher.publishTransactionFailed(
-        failedTransaction,
-        error.message,
-      );
+      await this.messagePublisher.publishTransactionFailed(failedTransaction, error.message);
 
       throw new Error(`Failed to send token transfer: ${error.message}`);
     }
@@ -290,15 +257,13 @@ export class TransactionsService {
     }>,
   ): Promise<string> {
     try {
-      const keypair = Keypair.fromSecretKey(
-        new Uint8Array(JSON.parse(privateKey)),
-      );
+      const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKey)));
 
       const transaction = new SolanaTransaction();
 
       for (const instruction of instructions) {
         const programId = new PublicKey(instruction.programId);
-        const accounts = instruction.accounts.map(acc => ({
+        const accounts = instruction.accounts.map((acc) => ({
           pubkey: new PublicKey(acc.pubkey),
           isSigner: acc.isSigner,
           isWritable: acc.isWritable,
@@ -312,11 +277,7 @@ export class TransactionsService {
         });
       }
 
-      const signature = await sendAndConfirmTransaction(
-        this.connection,
-        transaction,
-        [keypair],
-      );
+      const signature = await sendAndConfirmTransaction(this.connection, transaction, [keypair]);
 
       // Save to database
       const savedTransaction = await this.create({
@@ -333,17 +294,14 @@ export class TransactionsService {
     } catch (error) {
       // Create failed transaction record
       const failedTransaction = await this.create({
-        signature: "failed-" + Date.now(),
+        signature: 'failed-' + Date.now(),
         type: TransactionType.PROGRAM_INTERACTION,
         status: TransactionStatus.FAILED,
         metadata: { error: error.message, instructionCount: instructions.length },
       });
 
       // Publish failure event
-      await this.messagePublisher.publishTransactionFailed(
-        failedTransaction,
-        error.message,
-      );
+      await this.messagePublisher.publishTransactionFailed(failedTransaction, error.message);
 
       throw new Error(`Failed to create multi-instruction transaction: ${error.message}`);
     }
@@ -360,15 +318,13 @@ export class TransactionsService {
     }>,
   ): Promise<string> {
     try {
-      const keypair = Keypair.fromSecretKey(
-        new Uint8Array(JSON.parse(privateKey)),
-      );
+      const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKey)));
 
       const transaction = new SolanaTransaction();
 
       for (const operation of operations) {
         switch (operation.type) {
-          case 'transfer':
+          case 'transfer': {
             const transferInstruction = SystemProgram.transfer({
               fromPubkey: keypair.publicKey,
               toPubkey: new PublicKey(operation.params.toAddress),
@@ -376,8 +332,9 @@ export class TransactionsService {
             });
             transaction.add(transferInstruction);
             break;
+          }
 
-          case 'token_transfer':
+          case 'token_transfer': {
             // Add token transfer logic here
             const tokenTransferInstruction = await this.createTokenTransferInstruction(
               keypair,
@@ -387,8 +344,9 @@ export class TransactionsService {
             );
             transaction.add(tokenTransferInstruction);
             break;
+          }
 
-          case 'token_mint':
+          case 'token_mint': {
             // Add token minting logic here
             const mintInstruction = await this.createMintInstruction(
               keypair,
@@ -398,17 +356,14 @@ export class TransactionsService {
             );
             transaction.add(mintInstruction);
             break;
+          }
 
           default:
             throw new Error(`Unsupported operation type: ${operation.type}`);
         }
       }
 
-      const signature = await sendAndConfirmTransaction(
-        this.connection,
-        transaction,
-        [keypair],
-      );
+      const signature = await sendAndConfirmTransaction(this.connection, transaction, [keypair]);
 
       // Save to database
       const savedTransaction = await this.create({
@@ -425,17 +380,14 @@ export class TransactionsService {
     } catch (error) {
       // Create failed transaction record
       const failedTransaction = await this.create({
-        signature: "failed-" + Date.now(),
+        signature: 'failed-' + Date.now(),
         type: TransactionType.TRANSFER,
         status: TransactionStatus.FAILED,
         metadata: { error: error.message, operationCount: operations.length, batch: true },
       });
 
       // Publish failure event
-      await this.messagePublisher.publishTransactionFailed(
-        failedTransaction,
-        error.message,
-      );
+      await this.messagePublisher.publishTransactionFailed(failedTransaction, error.message);
 
       throw new Error(`Failed to create batched transaction: ${error.message}`);
     }
@@ -453,15 +405,9 @@ export class TransactionsService {
     const mintPublicKey = new PublicKey(mintAddress);
     const toPublicKey = new PublicKey(toAddress);
 
-    const fromTokenAccount = await getAssociatedTokenAddress(
-      mintPublicKey,
-      keypair.publicKey,
-    );
+    const fromTokenAccount = await getAssociatedTokenAddress(mintPublicKey, keypair.publicKey);
 
-    const toTokenAccount = await getAssociatedTokenAddress(
-      mintPublicKey,
-      toPublicKey,
-    );
+    const toTokenAccount = await getAssociatedTokenAddress(mintPublicKey, toPublicKey);
 
     return createTransferInstruction(
       fromTokenAccount,
@@ -489,11 +435,10 @@ export class TransactionsService {
 
   async getRecentTransactions(limit: number = 10) {
     try {
-      const confirmedSignatures =
-        await this.connection.getConfirmedSignaturesForAddress2(
-          new PublicKey("11111111111111111111111111111112"), // System Program
-          { limit },
-        );
+      const confirmedSignatures = await this.connection.getConfirmedSignaturesForAddress2(
+        new PublicKey('11111111111111111111111111111112'), // System Program
+        { limit },
+      );
 
       return confirmedSignatures.map((sig) => ({
         signature: sig.signature,
@@ -525,7 +470,7 @@ export class TransactionsService {
     try {
       const transaction = await this.findBySignature(signature);
       if (!transaction) {
-        throw new Error("Transaction not found in database");
+        throw new Error('Transaction not found in database');
       }
 
       // Check confirmation status on blockchain
@@ -541,7 +486,10 @@ export class TransactionsService {
 
       if (blockchainStatus.err) {
         newStatus = TransactionStatus.FAILED;
-      } else if (blockchainStatus.confirmationStatus === 'confirmed' || blockchainStatus.confirmationStatus === 'finalized') {
+      } else if (
+        blockchainStatus.confirmationStatus === 'confirmed' ||
+        blockchainStatus.confirmationStatus === 'finalized'
+      ) {
         newStatus = TransactionStatus.CONFIRMED;
       } else {
         newStatus = TransactionStatus.PENDING;
@@ -558,7 +506,10 @@ export class TransactionsService {
         if (newStatus === TransactionStatus.CONFIRMED) {
           await this.messagePublisher.publishTransactionConfirmed(updatedTransaction);
         } else if (newStatus === TransactionStatus.FAILED) {
-          await this.messagePublisher.publishTransactionFailed(updatedTransaction, 'Blockchain confirmation failed');
+          await this.messagePublisher.publishTransactionFailed(
+            updatedTransaction,
+            'Blockchain confirmation failed',
+          );
         }
 
         return updatedTransaction;
@@ -586,9 +537,7 @@ export class TransactionsService {
   ): Promise<string> {
     let keypair: Keypair;
     try {
-      keypair = Keypair.fromSecretKey(
-        new Uint8Array(JSON.parse(privateKey)),
-      );
+      keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKey)));
 
       const transaction = new SolanaTransaction();
 
@@ -607,16 +556,12 @@ export class TransactionsService {
           isSigner: acc.isSigner,
           isWritable: acc.isWritable,
         })),
-        data: Buffer.from(data, "base64"),
+        data: Buffer.from(data, 'base64'),
       });
 
       transaction.add(instruction);
 
-      const signature = await sendAndConfirmTransaction(
-        this.connection,
-        transaction,
-        [keypair],
-      );
+      const signature = await sendAndConfirmTransaction(this.connection, transaction, [keypair]);
 
       // Save to database
       const savedTransaction = await this.create({
@@ -638,7 +583,7 @@ export class TransactionsService {
     } catch (error) {
       // Create failed transaction record
       const failedTransaction = await this.create({
-        signature: "failed-" + Date.now(),
+        signature: 'failed-' + Date.now(),
         type: TransactionType.PROGRAM_INTERACTION,
         status: TransactionStatus.FAILED,
         metadata: {
@@ -651,10 +596,7 @@ export class TransactionsService {
       });
 
       // Publish failure event
-      await this.messagePublisher.publishTransactionFailed(
-        failedTransaction,
-        error.message,
-      );
+      await this.messagePublisher.publishTransactionFailed(failedTransaction, error.message);
 
       throw new Error(`Failed to send program invocation: ${error.message}`);
     }
@@ -663,18 +605,14 @@ export class TransactionsService {
   /**
    * Get transaction history for an address
    */
-  async getTransactionHistory(
-    address: string,
-    limit: number = 20,
-  ): Promise<Transaction[]> {
+  async getTransactionHistory(address: string, limit: number = 20): Promise<Transaction[]> {
     try {
       const publicKey = new PublicKey(address);
 
       // Get confirmed signatures for the address
-      const signatures = await this.connection.getConfirmedSignaturesForAddress2(
-        publicKey,
-        { limit },
-      );
+      const signatures = await this.connection.getConfirmedSignaturesForAddress2(publicKey, {
+        limit,
+      });
 
       // Get transaction details and update database
       const transactions: Transaction[] = [];

@@ -6,8 +6,8 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-} from "typeorm";
-import { DexPool } from "./dex-pool.entity";
+} from 'typeorm';
+import { DexPool } from './dex-pool.entity';
 
 /**
  * Position Type Enum
@@ -15,28 +15,28 @@ import { DexPool } from "./dex-pool.entity";
  * reference: https://docs.orca.so/orca-whirlpools/overview
  */
 export enum PositionType {
-  STANDARD = "standard",
-  CONCENTRATED = "concentrated",
+  STANDARD = 'standard',
+  CONCENTRATED = 'concentrated',
 }
 
 /**
  * DEX Liquidity Position Entity
- * 
+ *
  * Represents a liquidity provider (LP) position in a DEX pool on Solana. Liquidity
  * providers deposit token pairs into pools and earn fees from swaps.
- * 
+ *
  * Key LP concepts:
  * - Standard LP: Full-range liquidity following xy=k curve
  * - Concentrated LP: Liquidity within specific price ranges (Whirlpools, etc.)
  * - LP Tokens: Represent share of pool, received when providing liquidity
  * - Impermanent Loss: Value difference vs holding, occurs when prices diverge
- * 
+ *
  * Concentrated Liquidity (CLAMM):
  * - Liquidity providers choose price ranges [lowerPrice, upperPrice]
  * - Higher capital efficiency within range
  * - Position represented as NFT in some protocols
  * - Fees only earned when price is within range
- * 
+ *
  * @example
  * const position = new DexLiquidityPosition();
  * position.positionType = PositionType.CONCENTRATED;
@@ -44,11 +44,11 @@ export enum PositionType {
  * position.tokenBAmount = 1050.0; // USDC
  * position.lowerPrice = 95.0;
  * position.upperPrice = 105.0;
- * 
+ *
  * @see https://docs.orca.so/orca-whirlpools/overview
  * @see https://docs.raydium.io/raydium/concentrated-liquidity
  */
-@Entity("dex_liquidity_positions")
+@Entity('dex_liquidity_positions')
 export class DexLiquidityPosition {
   /**
    * unique identifier for the position record
@@ -56,7 +56,7 @@ export class DexLiquidityPosition {
    * example: "e5f6g7h8-i9j0-1k2l-3m4n-5o6p7q8r9s0t"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -74,8 +74,8 @@ export class DexLiquidityPosition {
    * example: DexPool object
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
-  @ManyToOne(() => DexPool, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "poolId" })
+  @ManyToOne(() => DexPool, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'poolId' })
   pool: DexPool;
 
   /**
@@ -102,7 +102,7 @@ export class DexLiquidityPosition {
    * example: 10.5
    * reference: https://docs.raydium.io/raydium/pool/amm
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   tokenAAmount: number;
 
   /**
@@ -111,7 +111,7 @@ export class DexLiquidityPosition {
    * example: 1050.0
    * reference: https://docs.raydium.io/raydium/pool/amm
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   tokenBAmount: number;
 
   /**
@@ -120,7 +120,7 @@ export class DexLiquidityPosition {
    * example: 100.5
    * reference: https://docs.raydium.io/raydium/pool/amm#lp-tokens
    */
-  @Column("decimal", { precision: 36, scale: 9 })
+  @Column('decimal', { precision: 36, scale: 9 })
   liquidityShares: number; // LP tokens or shares
 
   /**
@@ -129,7 +129,7 @@ export class DexLiquidityPosition {
    * example: 95.0
    * reference: https://docs.orca.so/orca-whirlpools/overview#tick-ranges
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   lowerPrice: number; // For concentrated liquidity
 
   /**
@@ -138,7 +138,7 @@ export class DexLiquidityPosition {
    * example: 105.0
    * reference: https://docs.orca.so/orca-whirlpools/overview#tick-ranges
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   upperPrice: number; // For concentrated liquidity
 
   /**
@@ -147,7 +147,7 @@ export class DexLiquidityPosition {
    * example: 0.5
    * reference: https://docs.orca.so/orca-whirlpools/liquidity-provision#collecting-fees
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   feeEarnedA: number;
 
   /**
@@ -156,7 +156,7 @@ export class DexLiquidityPosition {
    * example: 50.0
    * reference: https://docs.orca.so/orca-whirlpools/liquidity-provision#collecting-fees
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   feeEarnedB: number;
 
   /**

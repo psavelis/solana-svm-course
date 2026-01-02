@@ -36,10 +36,38 @@ export class NetworkService {
     [SolanaNetwork.MAINNET]: {
       name: SolanaNetwork.MAINNET,
       rpcEndpoints: [
-        { url: 'https://api.mainnet-beta.solana.com', name: 'Official Mainnet', priority: 1, isHealthy: true, lastHealthCheck: new Date(), consecutiveFailures: 0 },
-        { url: 'https://solana-api.projectserum.com', name: 'Project Serum', priority: 2, isHealthy: true, lastHealthCheck: new Date(), consecutiveFailures: 0 },
-        { url: 'https://rpc.ankr.com/solana', name: 'Ankr', priority: 3, isHealthy: true, lastHealthCheck: new Date(), consecutiveFailures: 0 },
-        { url: 'https://ssc-dao.genesysgo.net', name: 'GenesysGo', priority: 4, isHealthy: true, lastHealthCheck: new Date(), consecutiveFailures: 0 },
+        {
+          url: 'https://api.mainnet-beta.solana.com',
+          name: 'Official Mainnet',
+          priority: 1,
+          isHealthy: true,
+          lastHealthCheck: new Date(),
+          consecutiveFailures: 0,
+        },
+        {
+          url: 'https://solana-api.projectserum.com',
+          name: 'Project Serum',
+          priority: 2,
+          isHealthy: true,
+          lastHealthCheck: new Date(),
+          consecutiveFailures: 0,
+        },
+        {
+          url: 'https://rpc.ankr.com/solana',
+          name: 'Ankr',
+          priority: 3,
+          isHealthy: true,
+          lastHealthCheck: new Date(),
+          consecutiveFailures: 0,
+        },
+        {
+          url: 'https://ssc-dao.genesysgo.net',
+          name: 'GenesysGo',
+          priority: 4,
+          isHealthy: true,
+          lastHealthCheck: new Date(),
+          consecutiveFailures: 0,
+        },
       ],
       commitment: 'confirmed',
       timeout: 30000,
@@ -49,8 +77,22 @@ export class NetworkService {
     [SolanaNetwork.DEVNET]: {
       name: SolanaNetwork.DEVNET,
       rpcEndpoints: [
-        { url: clusterApiUrl('devnet'), name: 'Official Devnet', priority: 1, isHealthy: true, lastHealthCheck: new Date(), consecutiveFailures: 0 },
-        { url: 'https://devnet.solana.com', name: 'Devnet Fallback', priority: 2, isHealthy: true, lastHealthCheck: new Date(), consecutiveFailures: 0 },
+        {
+          url: clusterApiUrl('devnet'),
+          name: 'Official Devnet',
+          priority: 1,
+          isHealthy: true,
+          lastHealthCheck: new Date(),
+          consecutiveFailures: 0,
+        },
+        {
+          url: 'https://devnet.solana.com',
+          name: 'Devnet Fallback',
+          priority: 2,
+          isHealthy: true,
+          lastHealthCheck: new Date(),
+          consecutiveFailures: 0,
+        },
       ],
       commitment: 'confirmed',
       timeout: 30000,
@@ -60,7 +102,14 @@ export class NetworkService {
     [SolanaNetwork.TESTNET]: {
       name: SolanaNetwork.TESTNET,
       rpcEndpoints: [
-        { url: clusterApiUrl('testnet'), name: 'Official Testnet', priority: 1, isHealthy: true, lastHealthCheck: new Date(), consecutiveFailures: 0 },
+        {
+          url: clusterApiUrl('testnet'),
+          name: 'Official Testnet',
+          priority: 1,
+          isHealthy: true,
+          lastHealthCheck: new Date(),
+          consecutiveFailures: 0,
+        },
       ],
       commitment: 'confirmed',
       timeout: 30000,
@@ -71,7 +120,7 @@ export class NetworkService {
 
   constructor() {
     // Initialize connections and health checks for all networks
-    Object.values(SolanaNetwork).forEach(network => {
+    Object.values(SolanaNetwork).forEach((network) => {
       this.initializeNetwork(network);
     });
   }
@@ -80,7 +129,7 @@ export class NetworkService {
     const config = this.networkConfigs[network];
 
     // Create connections for all endpoints
-    config.rpcEndpoints.forEach(endpoint => {
+    config.rpcEndpoints.forEach((endpoint) => {
       this.createConnection(network, endpoint);
     });
 
@@ -132,7 +181,9 @@ export class NetworkService {
 
         if (endpoint.consecutiveFailures >= config.maxConsecutiveFailures) {
           endpoint.isHealthy = false;
-          this.logger.warn(`Endpoint ${endpoint.name} marked as unhealthy after ${endpoint.consecutiveFailures} failures`);
+          this.logger.warn(
+            `Endpoint ${endpoint.name} marked as unhealthy after ${endpoint.consecutiveFailures} failures`,
+          );
         }
 
         this.logger.debug(`Health check failed for ${endpoint.name}: ${error.message}`);
@@ -147,7 +198,7 @@ export class NetworkService {
     }
 
     const healthyEndpoints = config.rpcEndpoints
-      .filter(endpoint => endpoint.isHealthy)
+      .filter((endpoint) => endpoint.isHealthy)
       .sort((a, b) => a.priority - b.priority);
 
     return healthyEndpoints[0] || null;
@@ -165,7 +216,9 @@ export class NetworkService {
     const connection = this.connections.get(connectionKey);
 
     if (!connection) {
-      throw new Error(`No connection available for network: ${targetNetwork}, endpoint: ${healthyEndpoint.name}`);
+      throw new Error(
+        `No connection available for network: ${targetNetwork}, endpoint: ${healthyEndpoint.name}`,
+      );
     }
 
     return connection;
@@ -225,7 +278,7 @@ export class NetworkService {
       return {
         network: targetNetwork,
         isHealthy: false,
-        endpoints: config.rpcEndpoints.map(endpoint => ({
+        endpoints: config.rpcEndpoints.map((endpoint) => ({
           name: endpoint.name,
           url: endpoint.url,
           isHealthy: endpoint.isHealthy,
@@ -248,7 +301,7 @@ export class NetworkService {
         activeEndpoint: healthyEndpoint.name,
         slot,
         ping,
-        endpoints: config.rpcEndpoints.map(endpoint => ({
+        endpoints: config.rpcEndpoints.map((endpoint) => ({
           name: endpoint.name,
           url: endpoint.url,
           isHealthy: endpoint.isHealthy,
@@ -260,7 +313,7 @@ export class NetworkService {
       return {
         network: targetNetwork,
         isHealthy: false,
-        endpoints: config.rpcEndpoints.map(endpoint => ({
+        endpoints: config.rpcEndpoints.map((endpoint) => ({
           name: endpoint.name,
           url: endpoint.url,
           isHealthy: endpoint.isHealthy,
@@ -271,22 +324,24 @@ export class NetworkService {
     }
   }
 
-  async getAllNetworkHealth(): Promise<Array<{
-    network: SolanaNetwork;
-    isHealthy: boolean;
-    activeEndpoint?: string;
-    slot?: number;
-    ping?: number;
-    endpoints: Array<{
-      name: string;
-      url: string;
+  async getAllNetworkHealth(): Promise<
+    Array<{
+      network: SolanaNetwork;
       isHealthy: boolean;
-      consecutiveFailures: number;
-      lastHealthCheck: Date;
-    }>;
-  }>> {
-    const healthChecks = Object.values(SolanaNetwork).map(network =>
-      this.getNetworkHealth(network)
+      activeEndpoint?: string;
+      slot?: number;
+      ping?: number;
+      endpoints: Array<{
+        name: string;
+        url: string;
+        isHealthy: boolean;
+        consecutiveFailures: number;
+        lastHealthCheck: Date;
+      }>;
+    }>
+  > {
+    const healthChecks = Object.values(SolanaNetwork).map((network) =>
+      this.getNetworkHealth(network),
     );
 
     return Promise.all(healthChecks);
@@ -294,7 +349,7 @@ export class NetworkService {
 
   // Gracefully shut down health check intervals
   onModuleDestroy() {
-    this.healthCheckIntervals.forEach(interval => {
+    this.healthCheckIntervals.forEach((interval) => {
       clearInterval(interval);
     });
     this.healthCheckIntervals.clear();

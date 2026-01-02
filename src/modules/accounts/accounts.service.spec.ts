@@ -1,12 +1,12 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { getRepositoryToken } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { AccountsService } from "./accounts.service";
-import { Account } from "./account.entity";
-import { QueryCacheService } from "../../common/cache/query-cache.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AccountsService } from './accounts.service';
+import { Account } from './account.entity';
+import { QueryCacheService } from '../../common/cache/query-cache.service';
 
 // Mock Solana web3.js
-jest.mock("@solana/web3.js", () => ({
+jest.mock('@solana/web3.js', () => ({
   Connection: jest.fn().mockImplementation(() => ({
     getAccountInfo: jest.fn(),
     getBalance: jest.fn(),
@@ -14,15 +14,15 @@ jest.mock("@solana/web3.js", () => ({
   PublicKey: jest.fn(),
 }));
 
-describe("AccountsService", () => {
+describe('AccountsService', () => {
   let service: AccountsService;
   let mockRepository: Partial<Repository<Account>>;
 
   const mockAccount: Account = {
-    id: "test-id",
-    address: "11111111111111111111111111111112",
+    id: 'test-id',
+    address: '11111111111111111111111111111112',
     balance: 1000000,
-    owner: "test-owner",
+    owner: 'test-owner',
     isPda: false,
     programId: null,
     metadata: { test: true },
@@ -61,14 +61,14 @@ describe("AccountsService", () => {
     service = module.get<AccountsService>(AccountsService);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe("create", () => {
-    it("should create and save an account", async () => {
+  describe('create', () => {
+    it('should create and save an account', async () => {
       const createData = {
-        address: "11111111111111111111111111111112",
+        address: '11111111111111111111111111111112',
         balance: 1000000,
       };
 
@@ -80,8 +80,8 @@ describe("AccountsService", () => {
     });
   });
 
-  describe("findAll", () => {
-    it("should return all accounts", async () => {
+  describe('findAll', () => {
+    it('should return all accounts', async () => {
       const result = await service.findAll();
 
       expect(mockRepository.find).toHaveBeenCalled();
@@ -89,58 +89,56 @@ describe("AccountsService", () => {
     });
   });
 
-  describe("findOne", () => {
-    it("should return account by id", async () => {
-      const result = await service.findOne("test-id");
+  describe('findOne', () => {
+    it('should return account by id', async () => {
+      const result = await service.findOne('test-id');
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { id: "test-id" },
+        where: { id: 'test-id' },
       });
       expect(result).toEqual(mockAccount);
     });
   });
 
-  describe("findByAddress", () => {
-    it("should return account by address", async () => {
-      const result = await service.findByAddress(
-        "11111111111111111111111111111112",
-      );
+  describe('findByAddress', () => {
+    it('should return account by address', async () => {
+      const result = await service.findByAddress('11111111111111111111111111111112');
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { address: "11111111111111111111111111111112" },
+        where: { address: '11111111111111111111111111111112' },
       });
       expect(result).toEqual(mockAccount);
     });
   });
 
-  describe("update", () => {
-    it("should update account and return updated account", async () => {
+  describe('update', () => {
+    it('should update account and return updated account', async () => {
       const updateData = { balance: 2000000 };
 
-      const result = await service.update("test-id", updateData);
+      const result = await service.update('test-id', updateData);
 
-      expect(mockRepository.update).toHaveBeenCalledWith("test-id", updateData);
+      expect(mockRepository.update).toHaveBeenCalledWith('test-id', updateData);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { id: "test-id" },
+        where: { id: 'test-id' },
       });
       expect(result).toEqual(mockAccount);
     });
   });
 
-  describe("remove", () => {
-    it("should delete account", async () => {
-      await service.remove("test-id");
+  describe('remove', () => {
+    it('should delete account', async () => {
+      await service.remove('test-id');
 
-      expect(mockRepository.delete).toHaveBeenCalledWith("test-id");
+      expect(mockRepository.delete).toHaveBeenCalledWith('test-id');
     });
   });
 
-  describe("getAccountInfo", () => {
-    it("should get account info from blockchain", async () => {
+  describe('getAccountInfo', () => {
+    it('should get account info from blockchain', async () => {
       const mockAccountInfo = {
         lamports: 1000000,
-        data: Buffer.from("test-data"),
-        owner: { toString: () => "test-owner" },
+        data: Buffer.from('test-data'),
+        owner: { toString: () => 'test-owner' },
         executable: false,
         rentEpoch: 0,
       };
@@ -151,33 +149,29 @@ describe("AccountsService", () => {
       };
       (service as any).connection = mockConnection;
 
-      const result = await service.getAccountInfo(
-        "11111111111111111111111111111112",
-      );
+      const result = await service.getAccountInfo('11111111111111111111111111111112');
 
       expect(mockConnection.getAccountInfo).toHaveBeenCalled();
       expect(result).toEqual({
-        address: "11111111111111111111111111111112",
+        address: '11111111111111111111111111111112',
         exists: true,
         lamports: 1000000,
-        owner: "test-owner",
+        owner: 'test-owner',
         executable: false,
-        data: "dGVzdC1kYXRh", // base64 encoded 'test-data'
+        data: 'dGVzdC1kYXRh', // base64 encoded 'test-data'
       });
     });
 
-    it("should handle account not found", async () => {
+    it('should handle account not found', async () => {
       const mockConnection = {
         getAccountInfo: jest.fn().mockResolvedValue(null),
       };
       (service as any).connection = mockConnection;
 
-      const result = await service.getAccountInfo(
-        "11111111111111111111111111111112",
-      );
+      const result = await service.getAccountInfo('11111111111111111111111111111112');
 
       expect(result).toEqual({
-        address: "11111111111111111111111111111112",
+        address: '11111111111111111111111111111112',
         exists: false,
         lamports: 0,
         owner: undefined,
@@ -186,43 +180,39 @@ describe("AccountsService", () => {
       });
     });
 
-    it("should handle errors", async () => {
+    it('should handle errors', async () => {
       const mockConnection = {
-        getAccountInfo: jest
-          .fn()
-          .mockRejectedValue(new Error("Connection failed")),
+        getAccountInfo: jest.fn().mockRejectedValue(new Error('Connection failed')),
       };
       (service as any).connection = mockConnection;
 
-      await expect(service.getAccountInfo("invalid-address")).rejects.toThrow(
-        "Failed to get account info: Connection failed",
+      await expect(service.getAccountInfo('invalid-address')).rejects.toThrow(
+        'Failed to get account info: Connection failed',
       );
     });
   });
 
-  describe("getBalance", () => {
-    it("should get account balance", async () => {
+  describe('getBalance', () => {
+    it('should get account balance', async () => {
       const mockConnection = {
         getBalance: jest.fn().mockResolvedValue(1000000),
       };
       (service as any).connection = mockConnection;
 
-      const result = await service.getBalance(
-        "11111111111111111111111111111112",
-      );
+      const result = await service.getBalance('11111111111111111111111111111112');
 
       expect(mockConnection.getBalance).toHaveBeenCalled();
       expect(result).toBe(1000000);
     });
 
-    it("should handle errors", async () => {
+    it('should handle errors', async () => {
       const mockConnection = {
-        getBalance: jest.fn().mockRejectedValue(new Error("Connection failed")),
+        getBalance: jest.fn().mockRejectedValue(new Error('Connection failed')),
       };
       (service as any).connection = mockConnection;
 
-      await expect(service.getBalance("invalid-address")).rejects.toThrow(
-        "Failed to get balance: Connection failed",
+      await expect(service.getBalance('invalid-address')).rejects.toThrow(
+        'Failed to get balance: Connection failed',
       );
     });
   });

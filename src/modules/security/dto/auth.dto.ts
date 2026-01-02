@@ -1,11 +1,5 @@
-import {
-  IsEmail,
-  IsString,
-  IsOptional,
-  MinLength,
-  IsEnum,
-} from "class-validator";
-import { UserRole } from "../entities/user.entity";
+import { IsEmail, IsString, IsOptional, MinLength, IsEnum } from 'class-validator';
+import { UserRole } from '../entities/user.entity';
 
 export class RegisterUserDto {
   @IsEmail()
@@ -43,7 +37,7 @@ export class CreateApiKeyDto {
   description?: string;
 
   @IsOptional()
-  @IsEnum(["read", "write", "admin"])
+  @IsEnum(['read', 'write', 'admin'])
   permission?: string;
 
   @IsOptional()
@@ -61,10 +55,10 @@ export class UpdateApiKeyDto {
   description?: string;
 
   @IsOptional()
-  @IsEnum(["active", "inactive", "revoked"])
+  @IsEnum(['active', 'inactive', 'revoked'])
   status?: string;
 
   @IsOptional()
-  @IsEnum(["read", "write", "admin"])
+  @IsEnum(['read', 'write', 'admin'])
   permission?: string;
 }

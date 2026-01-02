@@ -5,18 +5,18 @@ import { TestUtils } from '../../test-utils';
 
 /**
  * Kafka Integration Tests
- * 
+ *
  * These tests require a running Kafka broker to function properly.
  * They test actual message publishing and consumption capabilities.
- * 
+ *
  * To run these tests:
  * 1. Start Kafka: docker-compose up -d kafka zookeeper
  * 2. Run: npm run test:e2e
- * 
+ *
  * Environment requirements:
  * - Kafka on localhost:9092
  * - Zookeeper on localhost:2181
- * 
+ *
  * @see https://kafka.apache.org/documentation/
  */
 describe.skip('Kafka Integration Tests', () => {
@@ -112,19 +112,22 @@ describe.skip('Kafka Integration Tests', () => {
     });
 
     it('should handle batch message publishing', async () => {
-      const batchMessages = Array(5).fill(null).map((_, index) => ({
-        id: `batch-message-${index}`,
-        type: 'batch-test',
-        data: { index, timestamp: Date.now() },
-      }));
+      const batchMessages = Array(5)
+        .fill(null)
+        .map((_, index) => ({
+          id: `batch-message-${index}`,
+          type: 'batch-test',
+          data: { index, timestamp: Date.now() },
+        }));
 
-      const promises = batchMessages.map(message =>
-        new Promise<void>((resolve, reject) => {
-          kafkaClient.emit('batch-test-topic', message).subscribe({
-            next: () => resolve(),
-            error: (err) => reject(err),
-          });
-        })
+      const promises = batchMessages.map(
+        (message) =>
+          new Promise<void>((resolve, reject) => {
+            kafkaClient.emit('batch-test-topic', message).subscribe({
+              next: () => resolve(),
+              error: (err) => reject(err),
+            });
+          }),
       );
 
       await Promise.all(promises);

@@ -4,9 +4,9 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-} from "typeorm";
+} from 'typeorm';
 
-@Entity("tokens")
+@Entity('tokens')
 export class Token {
   /**
    * unique identifier for the token record in the database
@@ -14,7 +14,7 @@ export class Token {
    * example: "550e8400-e29b-41d4-a716-446655440000"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -50,7 +50,7 @@ export class Token {
    * example: 6 (for usdc), 9 (for sol)
    * reference: https://spl.solana.com/token#creating-a-new-token-type
    */
-  @Column({ type: "int" })
+  @Column({ type: 'int' })
   decimals: number;
 
   /**
@@ -86,7 +86,7 @@ export class Token {
    * example: { "uri": "https://example.com/metadata.json", "seller_fee_basis_points": 500 }
    * reference: https://docs.metaplex.com/programs/token-metadata/accounts
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   metadata: any;
 
   /**

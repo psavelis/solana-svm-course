@@ -1,10 +1,10 @@
-import { Injectable, Inject } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import Redis from "ioredis";
-import { SmartAccount, SmartAccountStatus } from "./smart-account.entity";
-import { SessionKey, SessionKeyStatus } from "./session-key.entity";
-import { ClientKafka } from "@nestjs/microservices";
+import { Injectable, Inject } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import Redis from 'ioredis';
+import { SmartAccount, SmartAccountStatus } from './smart-account.entity';
+import { SessionKey, SessionKeyStatus } from './session-key.entity';
+import { ClientKafka } from '@nestjs/microservices';
 
 @Injectable()
 /**
@@ -17,14 +17,11 @@ export class SmartAccountsService {
     private readonly smartAccountRepository: Repository<SmartAccount>,
     @InjectRepository(SessionKey)
     private readonly sessionKeyRepository: Repository<SessionKey>,
-    @Inject("REDIS_CLIENT") private readonly redisClient: Redis,
-    @Inject("KAFKA_SERVICE") private readonly kafkaClient: ClientKafka,
+    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
+    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
   ) {}
 
-  async createSmartAccount(
-    ownerAddress: string,
-    rules: any,
-  ): Promise<SmartAccount> {
+  async createSmartAccount(ownerAddress: string, rules: any): Promise<SmartAccount> {
     // Logic to derive a PDA would go here (mocked for now)
     // In a real Solana app, we'd use PublicKey.findProgramAddress
     const smartAccountAddress = `smart-${ownerAddress.slice(0, 8)}-${Date.now().toString().slice(-4)}`;
@@ -42,12 +39,12 @@ export class SmartAccountsService {
     await this.redisClient.set(
       `smart-account:${saved.smartAccountAddress}:rules`,
       JSON.stringify(rules),
-      "EX",
+      'EX',
       3600, // 1 hour TTL
     );
 
     // Publish event
-    this.kafkaClient.emit("smart-account.created", {
+    this.kafkaClient.emit('smart-account.created', {
       smartAccountAddress: saved.smartAccountAddress,
       ownerAddress,
       timestamp: new Date().toISOString(),
@@ -62,25 +59,23 @@ export class SmartAccountsService {
     programId: string,
   ): Promise<{ valid: boolean; reason?: string }> {
     // Try to get rules from Redis first
-    const rulesStr = await this.redisClient.get(
-      `smart-account:${smartAccountAddress}:rules`,
-    );
+    const rulesStr = await this.redisClient.get(`smart-account:${smartAccountAddress}:rules`);
     let rules;
 
     if (!rulesStr) {
       const account = await this.smartAccountRepository.findOne({
         where: { smartAccountAddress },
       });
-      if (!account) return { valid: false, reason: "Account not found" };
+      if (!account) return { valid: false, reason: 'Account not found' };
       if (account.status !== SmartAccountStatus.ACTIVE)
-        return { valid: false, reason: "Account not active" };
+        return { valid: false, reason: 'Account not active' };
 
       rules = account.rules;
       // Cache it
       await this.redisClient.set(
         `smart-account:${smartAccountAddress}:rules`,
         JSON.stringify(rules),
-        "EX",
+        'EX',
         3600,
       );
     } else {
@@ -89,10 +84,10 @@ export class SmartAccountsService {
 
     // Check Max Daily Spend
     if (rules.maxDailySpend) {
-      const today = new Date().toISOString().split("T")[0];
+      const today = new Date().toISOString().split('T')[0];
       const spentKey = `smart-account:${smartAccountAddress}:spent:${today}`;
       const currentSpent = await this.redisClient.get(spentKey);
-      const newTotal = parseInt(currentSpent || "0", 10) + amount;
+      const newTotal = parseInt(currentSpent || '0', 10) + amount;
 
       if (newTotal > rules.maxDailySpend) {
         return {
@@ -111,7 +106,7 @@ export class SmartAccountsService {
   }
 
   async recordTransaction(smartAccountAddress: string, amount: number) {
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split('T')[0];
     const spentKey = `smart-account:${smartAccountAddress}:spent:${today}`;
     await this.redisClient.incrby(spentKey, amount);
     await this.redisClient.expire(spentKey, 86400); // 24h
@@ -139,7 +134,7 @@ export class SmartAccountsService {
     });
 
     if (!smartAccount || smartAccount.status !== SmartAccountStatus.ACTIVE) {
-      throw new Error("Smart account not found or not active");
+      throw new Error('Smart account not found or not active');
     }
 
     // Calculate expiration time
@@ -160,12 +155,12 @@ export class SmartAccountsService {
     await this.redisClient.set(
       `session-key:${sessionKeyAddress}:permissions`,
       JSON.stringify(permissions),
-      "EX",
+      'EX',
       permissions.timeLimit || 3600,
     );
 
     // Publish event
-    this.kafkaClient.emit("session-key.created", {
+    this.kafkaClient.emit('session-key.created', {
       sessionKeyId: saved.id,
       smartAccountAddress,
       sessionKeyAddress,
@@ -193,11 +188,11 @@ export class SmartAccountsService {
     if (!permissionsStr) {
       sessionKey = await this.sessionKeyRepository.findOne({
         where: { sessionKeyAddress },
-        relations: ["smartAccount"],
+        relations: ['smartAccount'],
       });
 
       if (!sessionKey) {
-        return { valid: false, reason: "Session key not found" };
+        return { valid: false, reason: 'Session key not found' };
       }
 
       if (sessionKey.status !== SessionKeyStatus.ACTIVE) {
@@ -209,19 +204,17 @@ export class SmartAccountsService {
         await this.sessionKeyRepository.update(sessionKey.id, {
           status: SessionKeyStatus.EXPIRED,
         });
-        return { valid: false, reason: "Session key expired" };
+        return { valid: false, reason: 'Session key expired' };
       }
 
       permissions = sessionKey.permissions;
 
       // Cache permissions
-      const ttl = Math.floor(
-        (sessionKey.expiresAt.getTime() - Date.now()) / 1000,
-      );
+      const ttl = Math.floor((sessionKey.expiresAt.getTime() - Date.now()) / 1000);
       await this.redisClient.set(
         `session-key:${sessionKeyAddress}:permissions`,
         JSON.stringify(permissions),
-        "EX",
+        'EX',
         ttl,
       );
     } else {
@@ -269,7 +262,7 @@ export class SmartAccountsService {
     });
 
     if (!sessionKey) {
-      throw new Error("Session key not found");
+      throw new Error('Session key not found');
     }
 
     await this.sessionKeyRepository.update(sessionKey.id, {
@@ -280,7 +273,7 @@ export class SmartAccountsService {
     await this.redisClient.del(`session-key:${sessionKeyAddress}:permissions`);
 
     // Publish event
-    this.kafkaClient.emit("session-key.revoked", {
+    this.kafkaClient.emit('session-key.revoked', {
       sessionKeyId: sessionKey.id,
       sessionKeyAddress,
       timestamp: new Date().toISOString(),
@@ -293,7 +286,7 @@ export class SmartAccountsService {
         smartAccountAddress,
         status: SessionKeyStatus.ACTIVE,
       },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
   }
 }

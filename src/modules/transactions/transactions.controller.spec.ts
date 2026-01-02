@@ -1,14 +1,14 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { getRepositoryToken } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { TransactionsController } from "./transactions.controller";
-import { TransactionsService } from "./transactions.service";
-import { MessagePublisherService } from "./message-publisher.service";
-import { Transaction } from "./transaction.entity";
-import { ClientKafka } from "@nestjs/microservices";
-import { of } from "rxjs";
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TransactionsController } from './transactions.controller';
+import { TransactionsService } from './transactions.service';
+import { MessagePublisherService } from './message-publisher.service';
+import { Transaction } from './transaction.entity';
+import { ClientKafka } from '@nestjs/microservices';
+import { of } from 'rxjs';
 
-describe("TransactionsController", () => {
+describe('TransactionsController', () => {
   let controller: TransactionsController;
   let mockRepository: Partial<Repository<Transaction>>;
   let kafkaClientMock: jest.Mocked<ClientKafka>;
@@ -37,7 +37,7 @@ describe("TransactionsController", () => {
           useValue: mockRepository,
         },
         {
-          provide: "KAFKA_SERVICE",
+          provide: 'KAFKA_SERVICE',
           useValue: kafkaClientMock,
         },
       ],
@@ -46,7 +46,7 @@ describe("TransactionsController", () => {
     controller = module.get<TransactionsController>(TransactionsController);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 });

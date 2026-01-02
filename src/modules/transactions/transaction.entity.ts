@@ -4,7 +4,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-} from "typeorm";
+} from 'typeorm';
 
 /**
  * Transaction Status Enum
@@ -12,9 +12,9 @@ import {
  * reference: https://solana.com/docs/core/transactions#transaction-confirmation
  */
 export enum TransactionStatus {
-  PENDING = "pending",
-  CONFIRMED = "confirmed",
-  FAILED = "failed",
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  FAILED = 'failed',
 }
 
 /**
@@ -23,36 +23,36 @@ export enum TransactionStatus {
  * reference: https://solana.com/docs/core/transactions
  */
 export enum TransactionType {
-  TRANSFER = "transfer",
-  TOKEN_TRANSFER = "token_transfer",
-  PROGRAM_INTERACTION = "program_interaction",
-  ACCOUNT_CREATION = "account_creation",
+  TRANSFER = 'transfer',
+  TOKEN_TRANSFER = 'token_transfer',
+  PROGRAM_INTERACTION = 'program_interaction',
+  ACCOUNT_CREATION = 'account_creation',
 }
 
 /**
  * Transaction Entity
- * 
+ *
  * Represents a Solana blockchain transaction. Transactions in Solana are atomic units
  * of execution that contain one or more instructions. Each transaction must be signed
  * by the fee payer and any accounts whose data is modified.
- * 
+ *
  * Key Solana transaction concepts:
  * - Transactions are atomic: all instructions succeed or all fail
  * - Each transaction has a unique 64-byte signature
  * - Transactions reference recent blockhashes for expiration (typically ~2 minutes)
  * - Fee is calculated based on compute units used and priority fee
- * 
+ *
  * @example
  * const tx = new Transaction();
  * tx.signature = "4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZAMdL4VZHirW...";
  * tx.type = TransactionType.TRANSFER;
  * tx.fromAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
  * tx.amount = 1000000000; // 1 SOL in lamports
- * 
+ *
  * @see https://solana.com/docs/core/transactions
  * @see https://solana.com/docs/core/fees
  */
-@Entity("transactions")
+@Entity('transactions')
 export class Transaction {
   /**
    * unique identifier for the transaction record
@@ -60,7 +60,7 @@ export class Transaction {
    * example: "550e8400-e29b-41d4-a716-446655440000"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -78,7 +78,7 @@ export class Transaction {
    * example: "transfer"
    * reference: https://solana.com/docs/core/transactions
    */
-  @Column({ type: "enum", enum: TransactionType })
+  @Column({ type: 'enum', enum: TransactionType })
   type: TransactionType;
 
   /**
@@ -88,7 +88,7 @@ export class Transaction {
    * reference: https://solana.com/docs/core/transactions#transaction-confirmation
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: TransactionStatus,
     default: TransactionStatus.PENDING,
   })
@@ -118,7 +118,7 @@ export class Transaction {
    * example: 1000000000 (1 SOL)
    * reference: https://solana.com/docs/terminology#lamport
    */
-  @Column({ type: "bigint", default: 0 })
+  @Column({ type: 'bigint', default: 0 })
   amount: number;
 
   /**
@@ -127,7 +127,7 @@ export class Transaction {
    * example: 5000 (0.000005 SOL base fee)
    * reference: https://solana.com/docs/core/fees
    */
-  @Column({ type: "bigint", nullable: true })
+  @Column({ type: 'bigint', nullable: true })
   fee: number;
 
   /**
@@ -136,7 +136,7 @@ export class Transaction {
    * example: 245678901
    * reference: https://solana.com/docs/terminology#slot
    */
-  @Column({ type: "int", nullable: true })
+  @Column({ type: 'int', nullable: true })
   slot: number;
 
   /**
@@ -145,7 +145,7 @@ export class Transaction {
    * example: "2024-01-15T10:30:00Z"
    * reference: https://solana.com/docs/core/transactions
    */
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   blockTime: Date;
 
   /**
@@ -154,7 +154,7 @@ export class Transaction {
    * example: [{ programId: "11111111111111111111111111111111", data: "...", accounts: [...] }]
    * reference: https://solana.com/docs/core/transactions#instructions
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   instructions: any[];
 
   /**
@@ -163,7 +163,7 @@ export class Transaction {
    * example: { "memo": "Payment for services", "orderId": "12345" }
    * reference: none
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   metadata: any;
 
   /**

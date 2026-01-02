@@ -4,9 +4,9 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-} from "typeorm";
+} from 'typeorm';
 
-@Entity("accounts")
+@Entity('accounts')
 export class Account {
   /**
    * unique identifier for the account record in the local database
@@ -14,7 +14,7 @@ export class Account {
    * example: "123e4567-e89b-12d3-a456-426614174000"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -41,7 +41,7 @@ export class Account {
    * example: 1000000000
    * reference: https://solana.com/docs/core/tokens#lamports
    */
-  @Column({ type: "bigint", default: 0 })
+  @Column({ type: 'bigint', default: 0 })
   balance: number;
 
   /**
@@ -68,7 +68,7 @@ export class Account {
    * example: { "name": "my wallet", "tags": ["defi", "staking"] }
    * reference: https://solana.com/docs/core/accounts
    */
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   metadata: any;
 
   /**

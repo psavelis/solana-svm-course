@@ -1,21 +1,14 @@
-import {
-  Injectable,
-  ExecutionContext,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { AuthGuard } from "@nestjs/passport";
+import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class ApiKeyAuthGuard extends AuthGuard("api-key") {
+export class ApiKeyAuthGuard extends AuthGuard('api-key') {
   canActivate(context: ExecutionContext) {
     // Allow access to auth endpoints without API key
     const request = context.switchToHttp().getRequest();
     const path = request.route?.path;
 
-    if (
-      path &&
-      (path.includes("/auth/login") || path.includes("/auth/register"))
-    ) {
+    if (path && (path.includes('/auth/login') || path.includes('/auth/register'))) {
       return true;
     }
 
@@ -24,7 +17,7 @@ export class ApiKeyAuthGuard extends AuthGuard("api-key") {
 
   handleRequest(err: any, user: any, info: any) {
     if (err || !user) {
-      throw err || new UnauthorizedException("Invalid or missing API key");
+      throw err || new UnauthorizedException('Invalid or missing API key');
     }
     return user;
   }

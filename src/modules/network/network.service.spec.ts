@@ -112,7 +112,7 @@ describe('NetworkService', () => {
     it('should return health status for all networks', async () => {
       const healthStatuses = await service.getAllNetworkHealth();
       expect(healthStatuses).toHaveLength(3);
-      healthStatuses.forEach(health => {
+      healthStatuses.forEach((health) => {
         expect(Object.values(SolanaNetwork)).toContain(health.network);
         expect(typeof health.isHealthy).toBe('boolean');
       });

@@ -5,8 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from "typeorm";
-import { LendingPosition } from "./lending-position.entity";
+} from 'typeorm';
+import { LendingPosition } from './lending-position.entity';
 
 /**
  * Lending Pool Type Enum
@@ -14,39 +14,39 @@ import { LendingPosition } from "./lending-position.entity";
  * reference: https://docs.solend.fi/protocol/core-concepts
  */
 export enum LendingPoolType {
-  STANDARD = "standard",
-  ISOLATED = "isolated",
+  STANDARD = 'standard',
+  ISOLATED = 'isolated',
 }
 
 /**
  * Lending Pool Entity
- * 
+ *
  * Represents a DeFi lending pool on Solana. Lending protocols like Solend, MarginFi,
  * and Kamino allow users to supply assets to earn interest or borrow against collateral.
  * This entity models the pool's state and configuration.
- * 
+ *
  * Key lending pool concepts:
  * - Reserves: Individual asset markets within the pool
  * - Supply APY: Interest rate earned by lenders
- * - Borrow APY: Interest rate paid by borrowers  
+ * - Borrow APY: Interest rate paid by borrowers
  * - Utilization Rate: Percentage of deposited assets currently borrowed
  * - LTV Ratio: Maximum loan-to-value for borrowing
  * - Liquidation Threshold: Collateral ratio that triggers liquidation
- * 
+ *
  * CPI Integration:
  * Lending protocols are commonly invoked via Cross-Program Invocation (CPI)
  * to enable composable DeFi strategies like leveraged yield farming.
- * 
+ *
  * @example
  * const pool = new LendingPool();
  * pool.poolAddress = "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo";
  * pool.poolType = LendingPoolType.STANDARD;
  * pool.lendingProgramId = "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo";
- * 
+ *
  * @see https://docs.solend.fi/
  * @see https://solana.com/docs/core/cpi
  */
-@Entity("lending_pools")
+@Entity('lending_pools')
 export class LendingPool {
   /**
    * unique identifier for the lending pool record
@@ -54,7 +54,7 @@ export class LendingPool {
    * example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -99,7 +99,7 @@ export class LendingPool {
    * example: [{ assetMint: "EPjFWdd5...", supplyAPY: 5.2, borrowAPY: 8.1, ltvRatio: 0.75 }]
    * reference: https://docs.solend.fi/protocol/core-concepts#reserves
    */
-  @Column("jsonb")
+  @Column('jsonb')
   reserves: {
     assetMint: string;
     reserveAddress: string;
@@ -118,7 +118,7 @@ export class LendingPool {
    * example: 150000000.50
    * reference: https://defillama.com/
    */
-  @Column("decimal", { precision: 18, scale: 9, nullable: true })
+  @Column('decimal', { precision: 18, scale: 9, nullable: true })
   totalValueLocked: number;
 
   /**
@@ -136,7 +136,7 @@ export class LendingPool {
    * example: { "name": "Main Pool", "protocolName": "Solend" }
    * reference: none
    */
-  @Column("jsonb", { nullable: true })
+  @Column('jsonb', { nullable: true })
   metadata: {
     name?: string;
     description?: string;

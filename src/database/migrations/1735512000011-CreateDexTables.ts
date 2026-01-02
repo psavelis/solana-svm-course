@@ -1,89 +1,89 @@
-import { MigrationInterface, QueryRunner, Table, TableIndex } from "typeorm";
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateDexTables1735512000011 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create dex_pools table
     await queryRunner.createTable(
       new Table({
-        name: "dex_pools",
+        name: 'dex_pools',
         columns: [
           {
-            name: "id",
-            type: "uuid",
+            name: 'id',
+            type: 'uuid',
             isPrimary: true,
-            generationStrategy: "uuid",
-            default: "uuid_generate_v4()",
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
           },
           {
-            name: "poolAddress",
-            type: "varchar",
+            name: 'poolAddress',
+            type: 'varchar',
             isUnique: true,
           },
           {
-            name: "dexType",
-            type: "enum",
-            enum: ["amm", "order_book", "clamm"],
+            name: 'dexType',
+            type: 'enum',
+            enum: ['amm', 'order_book', 'clamm'],
           },
           {
-            name: "dexProgramId",
-            type: "varchar",
+            name: 'dexProgramId',
+            type: 'varchar',
           },
           {
-            name: "tokenAMint",
-            type: "varchar",
+            name: 'tokenAMint',
+            type: 'varchar',
           },
           {
-            name: "tokenBMint",
-            type: "varchar",
+            name: 'tokenBMint',
+            type: 'varchar',
           },
           {
-            name: "tokenABalance",
-            type: "decimal",
+            name: 'tokenABalance',
+            type: 'decimal',
             precision: 36,
             scale: 9,
           },
           {
-            name: "tokenBBalance",
-            type: "decimal",
+            name: 'tokenBBalance',
+            type: 'decimal',
             precision: 36,
             scale: 9,
           },
           {
-            name: "feeRate",
-            type: "decimal",
+            name: 'feeRate',
+            type: 'decimal',
             precision: 18,
             scale: 9,
             isNullable: true,
           },
           {
-            name: "ammAuthority",
-            type: "varchar",
+            name: 'ammAuthority',
+            type: 'varchar',
             isNullable: true,
           },
           {
-            name: "poolTokenMint",
-            type: "varchar",
+            name: 'poolTokenMint',
+            type: 'varchar',
             isNullable: true,
           },
           {
-            name: "metadata",
-            type: "jsonb",
+            name: 'metadata',
+            type: 'jsonb',
             isNullable: true,
           },
           {
-            name: "isActive",
-            type: "boolean",
+            name: 'isActive',
+            type: 'boolean',
             default: true,
           },
           {
-            name: "createdAt",
-            type: "timestamp",
-            default: "now()",
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'now()',
           },
           {
-            name: "updatedAt",
-            type: "timestamp",
-            default: "now()",
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'now()',
           },
         ],
       }),
@@ -92,102 +92,102 @@ export class CreateDexTables1735512000011 implements MigrationInterface {
     // Create dex_swaps table
     await queryRunner.createTable(
       new Table({
-        name: "dex_swaps",
+        name: 'dex_swaps',
         columns: [
           {
-            name: "id",
-            type: "uuid",
+            name: 'id',
+            type: 'uuid',
             isPrimary: true,
-            generationStrategy: "uuid",
-            default: "uuid_generate_v4()",
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
           },
           {
-            name: "transactionSignature",
-            type: "varchar",
+            name: 'transactionSignature',
+            type: 'varchar',
             isUnique: true,
           },
           {
-            name: "poolId",
-            type: "uuid",
+            name: 'poolId',
+            type: 'uuid',
           },
           {
-            name: "userAddress",
-            type: "varchar",
+            name: 'userAddress',
+            type: 'varchar',
           },
           {
-            name: "direction",
-            type: "enum",
-            enum: ["a_to_b", "b_to_a"],
+            name: 'direction',
+            type: 'enum',
+            enum: ['a_to_b', 'b_to_a'],
           },
           {
-            name: "amountIn",
-            type: "decimal",
+            name: 'amountIn',
+            type: 'decimal',
             precision: 36,
             scale: 9,
           },
           {
-            name: "amountOut",
-            type: "decimal",
+            name: 'amountOut',
+            type: 'decimal',
             precision: 36,
             scale: 9,
           },
           {
-            name: "feeAmount",
-            type: "decimal",
+            name: 'feeAmount',
+            type: 'decimal',
             precision: 36,
             scale: 9,
           },
           {
-            name: "priceImpact",
-            type: "decimal",
+            name: 'priceImpact',
+            type: 'decimal',
             precision: 18,
             scale: 9,
           },
           {
-            name: "slippage",
-            type: "decimal",
+            name: 'slippage',
+            type: 'decimal',
             precision: 18,
             scale: 9,
           },
           {
-            name: "minimumAmountOut",
-            type: "decimal",
+            name: 'minimumAmountOut',
+            type: 'decimal',
             precision: 36,
             scale: 9,
             isNullable: true,
           },
           {
-            name: "route",
-            type: "jsonb",
+            name: 'route',
+            type: 'jsonb',
             isNullable: true,
           },
           {
-            name: "status",
-            type: "varchar",
+            name: 'status',
+            type: 'varchar',
             default: "'confirmed'",
           },
           {
-            name: "slot",
-            type: "int",
+            name: 'slot',
+            type: 'int',
             isNullable: true,
           },
           {
-            name: "blockTime",
-            type: "bigint",
+            name: 'blockTime',
+            type: 'bigint',
             isNullable: true,
           },
           {
-            name: "createdAt",
-            type: "timestamp",
-            default: "now()",
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'now()',
           },
         ],
         foreignKeys: [
           {
-            columnNames: ["poolId"],
-            referencedTableName: "dex_pools",
-            referencedColumnNames: ["id"],
-            onDelete: "CASCADE",
+            columnNames: ['poolId'],
+            referencedTableName: 'dex_pools',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
           },
         ],
       }),
@@ -196,101 +196,101 @@ export class CreateDexTables1735512000011 implements MigrationInterface {
     // Create dex_liquidity_positions table
     await queryRunner.createTable(
       new Table({
-        name: "dex_liquidity_positions",
+        name: 'dex_liquidity_positions',
         columns: [
           {
-            name: "id",
-            type: "uuid",
+            name: 'id',
+            type: 'uuid',
             isPrimary: true,
-            generationStrategy: "uuid",
-            default: "uuid_generate_v4()",
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
           },
           {
-            name: "poolId",
-            type: "uuid",
+            name: 'poolId',
+            type: 'uuid',
           },
           {
-            name: "ownerAddress",
-            type: "varchar",
+            name: 'ownerAddress',
+            type: 'varchar',
           },
           {
-            name: "positionType",
-            type: "enum",
-            enum: ["standard", "concentrated"],
+            name: 'positionType',
+            type: 'enum',
+            enum: ['standard', 'concentrated'],
           },
           {
-            name: "tokenAAmount",
-            type: "decimal",
+            name: 'tokenAAmount',
+            type: 'decimal',
             precision: 36,
             scale: 9,
           },
           {
-            name: "tokenBAmount",
-            type: "decimal",
+            name: 'tokenBAmount',
+            type: 'decimal',
             precision: 36,
             scale: 9,
           },
           {
-            name: "liquidityShares",
-            type: "decimal",
+            name: 'liquidityShares',
+            type: 'decimal',
             precision: 36,
             scale: 9,
           },
           {
-            name: "lowerPrice",
-            type: "decimal",
+            name: 'lowerPrice',
+            type: 'decimal',
             precision: 18,
             scale: 9,
             isNullable: true,
           },
           {
-            name: "upperPrice",
-            type: "decimal",
+            name: 'upperPrice',
+            type: 'decimal',
             precision: 18,
             scale: 9,
             isNullable: true,
           },
           {
-            name: "feeEarnedA",
-            type: "decimal",
+            name: 'feeEarnedA',
+            type: 'decimal',
             precision: 18,
             scale: 9,
             isNullable: true,
           },
           {
-            name: "feeEarnedB",
-            type: "decimal",
+            name: 'feeEarnedB',
+            type: 'decimal',
             precision: 18,
             scale: 9,
             isNullable: true,
           },
           {
-            name: "positionNftMint",
-            type: "varchar",
+            name: 'positionNftMint',
+            type: 'varchar',
             isNullable: true,
           },
           {
-            name: "isActive",
-            type: "boolean",
+            name: 'isActive',
+            type: 'boolean',
             default: true,
           },
           {
-            name: "createdAt",
-            type: "timestamp",
-            default: "now()",
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'now()',
           },
           {
-            name: "updatedAt",
-            type: "timestamp",
-            default: "now()",
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'now()',
           },
         ],
         foreignKeys: [
           {
-            columnNames: ["poolId"],
-            referencedTableName: "dex_pools",
-            referencedColumnNames: ["id"],
-            onDelete: "CASCADE",
+            columnNames: ['poolId'],
+            referencedTableName: 'dex_pools',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
           },
         ],
       }),
@@ -298,65 +298,65 @@ export class CreateDexTables1735512000011 implements MigrationInterface {
 
     // Create indexes
     await queryRunner.createIndex(
-      "dex_pools",
+      'dex_pools',
       new TableIndex({
-        name: "IDX_DEX_POOLS_ADDRESS",
-        columnNames: ["poolAddress"],
+        name: 'IDX_DEX_POOLS_ADDRESS',
+        columnNames: ['poolAddress'],
       }),
     );
 
     await queryRunner.createIndex(
-      "dex_pools",
+      'dex_pools',
       new TableIndex({
-        name: "IDX_DEX_POOLS_TOKENS",
-        columnNames: ["tokenAMint", "tokenBMint"],
+        name: 'IDX_DEX_POOLS_TOKENS',
+        columnNames: ['tokenAMint', 'tokenBMint'],
       }),
     );
 
     await queryRunner.createIndex(
-      "dex_swaps",
+      'dex_swaps',
       new TableIndex({
-        name: "IDX_DEX_SWAPS_SIGNATURE",
-        columnNames: ["transactionSignature"],
+        name: 'IDX_DEX_SWAPS_SIGNATURE',
+        columnNames: ['transactionSignature'],
       }),
     );
 
     await queryRunner.createIndex(
-      "dex_swaps",
+      'dex_swaps',
       new TableIndex({
-        name: "IDX_DEX_SWAPS_POOL_USER",
-        columnNames: ["poolId", "userAddress"],
+        name: 'IDX_DEX_SWAPS_POOL_USER',
+        columnNames: ['poolId', 'userAddress'],
       }),
     );
 
     await queryRunner.createIndex(
-      "dex_swaps",
+      'dex_swaps',
       new TableIndex({
-        name: "IDX_DEX_SWAPS_CREATED_AT",
-        columnNames: ["createdAt"],
+        name: 'IDX_DEX_SWAPS_CREATED_AT',
+        columnNames: ['createdAt'],
       }),
     );
 
     await queryRunner.createIndex(
-      "dex_liquidity_positions",
+      'dex_liquidity_positions',
       new TableIndex({
-        name: "IDX_DEX_POSITIONS_POOL_OWNER",
-        columnNames: ["poolId", "ownerAddress"],
+        name: 'IDX_DEX_POSITIONS_POOL_OWNER',
+        columnNames: ['poolId', 'ownerAddress'],
       }),
     );
 
     await queryRunner.createIndex(
-      "dex_liquidity_positions",
+      'dex_liquidity_positions',
       new TableIndex({
-        name: "IDX_DEX_POSITIONS_OWNER",
-        columnNames: ["ownerAddress"],
+        name: 'IDX_DEX_POSITIONS_OWNER',
+        columnNames: ['ownerAddress'],
       }),
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable("dex_liquidity_positions");
-    await queryRunner.dropTable("dex_swaps");
-    await queryRunner.dropTable("dex_pools");
+    await queryRunner.dropTable('dex_liquidity_positions');
+    await queryRunner.dropTable('dex_swaps');
+    await queryRunner.dropTable('dex_pools');
   }
 }

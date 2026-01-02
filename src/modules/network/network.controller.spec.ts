@@ -78,7 +78,7 @@ describe('NetworkController', () => {
     it('should return all networks health', async () => {
       const result = await controller.getAllNetworkHealth();
       expect(result).toHaveLength(3);
-      result.forEach(health => {
+      result.forEach((health) => {
         expect(Object.values(SolanaNetwork)).toContain(health.network);
         expect(typeof health.isHealthy).toBe('boolean');
       });

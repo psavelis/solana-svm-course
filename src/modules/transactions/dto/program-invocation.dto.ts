@@ -1,37 +1,37 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsArray, IsOptional, IsNumber } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsArray, IsOptional, IsNumber } from 'class-validator';
 
 export class ProgramInvocationDto {
   @ApiProperty({
-    description: "Private key of the signer in JSON array format",
-    example: "[174,47,154,16,...]",
+    description: 'Private key of the signer in JSON array format',
+    example: '[174,47,154,16,...]',
   })
   @IsString()
   privateKey: string;
 
   @ApiProperty({
-    description: "Program ID to invoke",
-    example: "11111111111111111111111111111112",
+    description: 'Program ID to invoke',
+    example: '11111111111111111111111111111112',
   })
   @IsString()
   programId: string;
 
   @ApiProperty({
-    description: "Instruction data as base64 encoded string",
-    example: "AQAAAA==",
+    description: 'Instruction data as base64 encoded string',
+    example: 'AQAAAA==',
   })
   @IsString()
   data: string;
 
   @ApiProperty({
-    description: "Accounts required by the instruction",
-    type: "array",
+    description: 'Accounts required by the instruction',
+    type: 'array',
     items: {
-      type: "object",
+      type: 'object',
       properties: {
-        pubkey: { type: "string" },
-        isSigner: { type: "boolean" },
-        isWritable: { type: "boolean" },
+        pubkey: { type: 'string' },
+        isSigner: { type: 'boolean' },
+        isWritable: { type: 'boolean' },
       },
     },
   })
@@ -43,7 +43,7 @@ export class ProgramInvocationDto {
   }>;
 
   @ApiProperty({
-    description: "Maximum compute units to allocate",
+    description: 'Maximum compute units to allocate',
     example: 200000,
     required: false,
   })

@@ -1,11 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { EventFilter, FilterStatus, FilterType } from "./event-filter.entity";
-import {
-  CreateEventFilterDto,
-  UpdateEventFilterDto,
-} from "./dto/event-filter.dto";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { EventFilter, FilterStatus, FilterType } from './event-filter.entity';
+import { CreateEventFilterDto, UpdateEventFilterDto } from './dto/event-filter.dto';
 
 @Injectable()
 export class EventFilterService {
@@ -20,9 +17,7 @@ export class EventFilterService {
    * Create a new event filter
    */
   async createFilter(dto: CreateEventFilterDto): Promise<EventFilter> {
-    this.logger.log(
-      `Creating filter for owner ${dto.ownerId}: ${dto.filterType}`,
-    );
+    this.logger.log(`Creating filter for owner ${dto.ownerId}: ${dto.filterType}`);
 
     const filter = this.filterRepository.create({
       ...dto,
@@ -35,10 +30,7 @@ export class EventFilterService {
   /**
    * Update a filter
    */
-  async updateFilter(
-    id: string,
-    dto: UpdateEventFilterDto,
-  ): Promise<EventFilter> {
+  async updateFilter(id: string, dto: UpdateEventFilterDto): Promise<EventFilter> {
     await this.filterRepository.update(id, dto);
     return await this.filterRepository.findOne({ where: { id } });
   }
@@ -49,7 +41,7 @@ export class EventFilterService {
   async getFiltersByOwner(ownerId: string): Promise<EventFilter[]> {
     return await this.filterRepository.find({
       where: { ownerId, status: FilterStatus.ACTIVE },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -59,7 +51,7 @@ export class EventFilterService {
   async getPublicFilters(): Promise<EventFilter[]> {
     return await this.filterRepository.find({
       where: { isPublic: true, status: FilterStatus.ACTIVE },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -69,7 +61,7 @@ export class EventFilterService {
   async getFiltersByType(filterType: FilterType): Promise<EventFilter[]> {
     return await this.filterRepository.find({
       where: { filterType, status: FilterStatus.ACTIVE },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -88,19 +80,19 @@ export class EventFilterService {
       const criteria = filter.criteria;
 
       switch (filter.filterType) {
-        case "account":
+        case 'account':
           if (filter.accountId && eventData.accountId !== filter.accountId) {
             return false;
           }
           break;
 
-        case "program":
+        case 'program':
           if (filter.programId && eventData.programId !== filter.programId) {
             return false;
           }
           break;
 
-        case "transaction":
+        case 'transaction':
           // Apply transaction-specific filters
           if (criteria.minAmount && eventData.amount < criteria.minAmount) {
             return false;
@@ -108,15 +100,12 @@ export class EventFilterService {
           if (criteria.maxAmount && eventData.amount > criteria.maxAmount) {
             return false;
           }
-          if (
-            criteria.tokenMint &&
-            eventData.tokenMint !== criteria.tokenMint
-          ) {
+          if (criteria.tokenMint && eventData.tokenMint !== criteria.tokenMint) {
             return false;
           }
           break;
 
-        case "slot":
+        case 'slot':
           if (criteria.minSlot && eventData.slot < criteria.minSlot) {
             return false;
           }
@@ -139,10 +128,7 @@ export class EventFilterService {
   /**
    * Find matching filters for event data
    */
-  async findMatchingFilters(
-    eventData: any,
-    filterType: FilterType,
-  ): Promise<EventFilter[]> {
+  async findMatchingFilters(eventData: any, filterType: FilterType): Promise<EventFilter[]> {
     const filters = await this.getFiltersByType(filterType);
     return filters.filter((filter) => this.matchesFilter(eventData, filter));
   }
@@ -160,11 +146,11 @@ export class EventFilterService {
     });
 
     const filtersByType = await this.filterRepository
-      .createQueryBuilder("filter")
-      .select("filter.filterType", "type")
-      .addSelect("COUNT(*)", "count")
-      .where("filter.status = :status", { status: FilterStatus.ACTIVE })
-      .groupBy("filter.filterType")
+      .createQueryBuilder('filter')
+      .select('filter.filterType', 'type')
+      .addSelect('COUNT(*)', 'count')
+      .where('filter.status = :status', { status: FilterStatus.ACTIVE })
+      .groupBy('filter.filterType')
       .getRawMany();
 
     return {

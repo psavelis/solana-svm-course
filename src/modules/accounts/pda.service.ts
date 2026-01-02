@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { Injectable } from '@nestjs/common';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 
 @Injectable()
 /**
@@ -18,10 +18,10 @@ export class PdaService {
    */
   async derivePDA(
     programId: PublicKey,
-    seeds: (Uint8Array | Buffer | PublicKey | string | number)[]
+    seeds: (Uint8Array | Buffer | PublicKey | string | number)[],
   ): Promise<{ address: PublicKey; bump: number }> {
     // Convert seeds to proper format
-    const seedBuffers = seeds.map(seed => {
+    const seedBuffers = seeds.map((seed) => {
       if (typeof seed === 'string') {
         return Buffer.from(seed);
       } else if (typeof seed === 'number') {
@@ -36,10 +36,7 @@ export class PdaService {
     });
 
     try {
-      const [address, bump] = await PublicKey.findProgramAddress(
-        seedBuffers,
-        programId
-      );
+      const [address, bump] = await PublicKey.findProgramAddress(seedBuffers, programId);
 
       return { address, bump };
     } catch (error) {
@@ -58,13 +55,9 @@ export class PdaService {
   async deriveAccountPDA(
     programId: PublicKey,
     ownerAddress: PublicKey,
-    accountType: string
+    accountType: string,
   ): Promise<{ address: PublicKey; bump: number }> {
-    const seeds = [
-      Buffer.from('account'),
-      ownerAddress.toBuffer(),
-      Buffer.from(accountType),
-    ];
+    const seeds = [Buffer.from('account'), ownerAddress.toBuffer(), Buffer.from(accountType)];
 
     return this.derivePDA(programId, seeds);
   }
@@ -80,22 +73,15 @@ export class PdaService {
   async deriveAssociatedTokenAccount(
     tokenProgramId: PublicKey,
     mintAddress: PublicKey,
-    ownerAddress: PublicKey
+    ownerAddress: PublicKey,
   ): Promise<PublicKey> {
     // Use the standard ATA derivation
     // ATA address = findProgramAddress([owner, tokenProgramId, mint], associatedTokenProgramId)
     const associatedTokenProgramId = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
-    const seeds = [
-      ownerAddress.toBuffer(),
-      tokenProgramId.toBuffer(),
-      mintAddress.toBuffer(),
-    ];
+    const seeds = [ownerAddress.toBuffer(), tokenProgramId.toBuffer(), mintAddress.toBuffer()];
 
-    const [address] = await PublicKey.findProgramAddress(
-      seeds,
-      associatedTokenProgramId
-    );
+    const [address] = await PublicKey.findProgramAddress(seeds, associatedTokenProgramId);
 
     return address;
   }
@@ -111,7 +97,7 @@ export class PdaService {
   async validatePDA(
     address: PublicKey,
     programId: PublicKey,
-    seeds: (Uint8Array | Buffer | PublicKey | string | number)[]
+    seeds: (Uint8Array | Buffer | PublicKey | string | number)[],
   ): Promise<boolean> {
     try {
       const { address: derivedAddress } = await this.derivePDA(programId, seeds);
@@ -130,16 +116,16 @@ export class PdaService {
    */
   async deriveMultiplePDAs(
     programId: PublicKey,
-    seedMatrix: (Uint8Array | Buffer | PublicKey | string | number)[][]
+    seedMatrix: (Uint8Array | Buffer | PublicKey | string | number)[][],
   ): Promise<Array<{ address: PublicKey; bump: number; seeds: any[] }>> {
     const results = await Promise.all(
       seedMatrix.map(async (seeds) => {
         const result = await this.derivePDA(programId, seeds);
         return {
           ...result,
-          seeds
+          seeds,
         };
-      })
+      }),
     );
 
     return results;
@@ -156,7 +142,7 @@ export class PdaService {
   async deriveEscrowPDA(
     programId: PublicKey,
     escrowId: string | Buffer,
-    authority: PublicKey
+    authority: PublicKey,
   ): Promise<{ address: PublicKey; bump: number }> {
     const seeds = [
       Buffer.from('escrow'),
@@ -176,18 +162,11 @@ export class PdaService {
    */
   async deriveMetadataPDA(
     metadataProgramId: PublicKey,
-    mintAddress: PublicKey
+    mintAddress: PublicKey,
   ): Promise<PublicKey> {
-    const seeds = [
-      Buffer.from('metadata'),
-      metadataProgramId.toBuffer(),
-      mintAddress.toBuffer(),
-    ];
+    const seeds = [Buffer.from('metadata'), metadataProgramId.toBuffer(), mintAddress.toBuffer()];
 
-    const [address] = await PublicKey.findProgramAddress(
-      seeds,
-      metadataProgramId
-    );
+    const [address] = await PublicKey.findProgramAddress(seeds, metadataProgramId);
 
     return address;
   }
@@ -201,7 +180,7 @@ export class PdaService {
    */
   async deriveMasterEditionPDA(
     metadataProgramId: PublicKey,
-    mintAddress: PublicKey
+    mintAddress: PublicKey,
   ): Promise<PublicKey> {
     const seeds = [
       Buffer.from('metadata'),
@@ -210,10 +189,7 @@ export class PdaService {
       Buffer.from('edition'),
     ];
 
-    const [address] = await PublicKey.findProgramAddress(
-      seeds,
-      metadataProgramId
-    );
+    const [address] = await PublicKey.findProgramAddress(seeds, metadataProgramId);
 
     return address;
   }

@@ -5,22 +5,22 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from "typeorm";
-import { ApiKey } from "./api-key.entity";
+} from 'typeorm';
+import { ApiKey } from './api-key.entity';
 
 export enum UserRole {
-  ADMIN = "admin",
-  USER = "user",
-  READONLY = "readonly",
+  ADMIN = 'admin',
+  USER = 'user',
+  READONLY = 'readonly',
 }
 
 export enum UserStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  SUSPENDED = "suspended",
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
 }
 
-@Entity("users")
+@Entity('users')
 export class User {
   /**
    * unique identifier for the user
@@ -28,7 +28,7 @@ export class User {
    * example: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -37,7 +37,7 @@ export class User {
    * example: "user@example.com"
    * reference: https://en.wikipedia.org/wiki/Email_address
    */
-  @Column({ type: "varchar", length: 255, unique: true })
+  @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
   /**
@@ -46,7 +46,7 @@ export class User {
    * example: "$2b$10$EpIxT98hGw..."
    * reference: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
    */
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   passwordHash: string;
 
   /**
@@ -55,7 +55,7 @@ export class User {
    * example: "john"
    * reference: none
    */
-  @Column({ type: "varchar", length: 100 })
+  @Column({ type: 'varchar', length: 100 })
   firstName: string;
 
   /**
@@ -64,7 +64,7 @@ export class User {
    * example: "doe"
    * reference: none
    */
-  @Column({ type: "varchar", length: 100 })
+  @Column({ type: 'varchar', length: 100 })
   lastName: string;
 
   /**
@@ -74,7 +74,7 @@ export class User {
    * reference: https://en.wikipedia.org/wiki/Role-based_access_control
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: UserRole,
     default: UserRole.USER,
   })
@@ -87,7 +87,7 @@ export class User {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: UserStatus,
     default: UserStatus.ACTIVE,
   })
@@ -99,7 +99,7 @@ export class User {
    * example: true
    * reference: https://en.wikipedia.org/wiki/Email_authentication
    */
-  @Column({ type: "boolean", default: false })
+  @Column({ type: 'boolean', default: false })
   emailVerified: boolean;
 
   /**
@@ -108,7 +108,7 @@ export class User {
    * example: "2024-03-10T08:00:00Z"
    * reference: none
    */
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lastLoginAt: Date;
 
   /**
@@ -117,7 +117,7 @@ export class User {
    * example: 3
    * reference: https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
    */
-  @Column({ type: "int", default: 0 })
+  @Column({ type: 'int', default: 0 })
   loginAttempts: number;
 
   /**
@@ -126,7 +126,7 @@ export class User {
    * example: "2024-03-10T08:15:00Z"
    * reference: https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
    */
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lockedUntil: Date;
 
   /**

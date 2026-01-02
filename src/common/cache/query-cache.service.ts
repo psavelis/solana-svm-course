@@ -8,9 +8,7 @@ export interface QueryCacheOptions {
 
 @Injectable()
 export class QueryCacheService {
-  constructor(
-    private readonly cacheService: CacheService,
-  ) {}
+  constructor(private readonly cacheService: CacheService) {}
 
   /**
    * Execute a query with caching

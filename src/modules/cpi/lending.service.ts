@@ -1,17 +1,17 @@
-import { Injectable, Logger, BadRequestException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { LendingPool, LendingPoolType } from "./lending-pool.entity";
-import { LendingPosition, PositionType, PositionStatus } from "./lending-position.entity";
-import { TransactionsService } from "../transactions/transactions.service";
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { LendingPool, LendingPoolType } from './lending-pool.entity';
+import { LendingPosition, PositionType, PositionStatus } from './lending-position.entity';
+import { TransactionsService } from '../transactions/transactions.service';
 
 @Injectable()
 export class LendingService {
   private readonly logger = new Logger(LendingService.name);
 
   // Known lending program IDs
-  private readonly SOLEND_PROGRAM_ID = "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo";
-  private readonly PORT_FINANCE_PROGRAM_ID = "Port7uDYB3wk6GJAw4KT1WpTeMtSu9bTcChBHkX2LfR";
+  private readonly SOLEND_PROGRAM_ID = 'So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo';
+  private readonly PORT_FINANCE_PROGRAM_ID = 'Port7uDYB3wk6GJAw4KT1WpTeMtSu9bTcChBHkX2LfR';
 
   constructor(
     @InjectRepository(LendingPool)
@@ -62,11 +62,11 @@ export class LendingService {
   async getPool(poolAddress: string): Promise<LendingPool> {
     const pool = await this.lendingPoolRepository.findOne({
       where: { poolAddress },
-      relations: ["positions"],
+      relations: ['positions'],
     });
 
     if (!pool) {
-      throw new BadRequestException("Lending pool not found");
+      throw new BadRequestException('Lending pool not found');
     }
 
     return pool;
@@ -93,15 +93,15 @@ export class LendingService {
     const pool = await this.getPool(poolAddress);
 
     // Find the reserve for the asset
-    const reserve = pool.reserves.find(r => r.assetMint === assetMint);
+    const reserve = pool.reserves.find((r) => r.assetMint === assetMint);
     if (!reserve) {
-      throw new BadRequestException("Asset not supported in this pool");
+      throw new BadRequestException('Asset not supported in this pool');
     }
 
     // Create supply position
     const position = this.lendingPositionRepository.create({
       poolId: pool.id,
-      userAddress: "", // Will be set after keypair creation
+      userAddress: '', // Will be set after keypair creation
       positionType: PositionType.SUPPLY,
       assetMint,
       amount,
@@ -112,11 +112,7 @@ export class LendingService {
 
     try {
       // Build supply instruction
-      const supplyInstruction = await this.buildSupplyInstruction(
-        pool,
-        assetMint,
-        amount,
-      );
+      const supplyInstruction = await this.buildSupplyInstruction(pool, assetMint, amount);
 
       // Execute transaction
       const signature = await this.transactionsService.sendProgramInvocation(
@@ -158,9 +154,9 @@ export class LendingService {
     const pool = await this.getPool(poolAddress);
 
     // Find the reserve for the asset
-    const reserve = pool.reserves.find(r => r.assetMint === assetMint);
+    const reserve = pool.reserves.find((r) => r.assetMint === assetMint);
     if (!reserve) {
-      throw new BadRequestException("Asset not supported in this pool");
+      throw new BadRequestException('Asset not supported in this pool');
     }
 
     // Check if borrowing is allowed (simplified health factor check)
@@ -173,24 +169,27 @@ export class LendingService {
       collateralAmount,
     );
 
-    if (healthFactor < 1.2) { // Minimum health factor
-      throw new BadRequestException("Insufficient collateral for borrow");
+    if (healthFactor < 1.2) {
+      // Minimum health factor
+      throw new BadRequestException('Insufficient collateral for borrow');
     }
 
     // Create borrow position
     const position = this.lendingPositionRepository.create({
       poolId: pool.id,
-      userAddress: "", // Will be set after keypair creation
+      userAddress: '', // Will be set after keypair creation
       positionType: PositionType.BORROW,
       assetMint,
       amount,
       healthFactor,
       status: PositionStatus.ACTIVE,
-      collateralInfo: [{
-        collateralMint,
-        collateralAmount,
-        collateralValue: collateralAmount, // Simplified
-      }],
+      collateralInfo: [
+        {
+          collateralMint,
+          collateralAmount,
+          collateralValue: collateralAmount, // Simplified
+        },
+      ],
     });
 
     const savedPosition = await this.lendingPositionRepository.save(position);
@@ -241,56 +240,52 @@ export class LendingService {
   ): Promise<LendingPosition> {
     const position = await this.lendingPositionRepository.findOne({
       where: { id: positionId },
-      relations: ["pool"],
+      relations: ['pool'],
     });
 
     if (!position) {
-      throw new BadRequestException("Position not found");
+      throw new BadRequestException('Position not found');
     }
 
     if (position.positionType !== PositionType.BORROW) {
-      throw new BadRequestException("Position is not a borrow position");
+      throw new BadRequestException('Position is not a borrow position');
     }
 
     const userKeypair = await this.getKeypairFromPrivateKey(userPrivateKey);
     if (position.userAddress !== userKeypair.publicKey.toString()) {
-      throw new BadRequestException("Unauthorized");
+      throw new BadRequestException('Unauthorized');
     }
 
-    try {
-      // Build repay instruction
-      const repayInstruction = await this.buildRepayInstruction(
-        position.pool,
-        position.assetMint,
-        repayAmount,
-      );
+    // Build repay instruction
+    const repayInstruction = await this.buildRepayInstruction(
+      position.pool,
+      position.assetMint,
+      repayAmount,
+    );
 
-      // Execute transaction
-      const signature = await this.transactionsService.sendProgramInvocation(
-        userPrivateKey,
-        position.pool.lendingProgramId,
-        repayInstruction.data,
-        repayInstruction.accounts,
-        200000,
-      );
+    // Execute transaction
+    const signature = await this.transactionsService.sendProgramInvocation(
+      userPrivateKey,
+      position.pool.lendingProgramId,
+      repayInstruction.data,
+      repayInstruction.accounts,
+      200000,
+    );
 
-      // Update position
-      position.amount -= repayAmount;
-      if (position.amount <= 0) {
-        position.status = PositionStatus.CLOSED;
-      }
-
-      // Update pool reserve
-      const reserve = position.pool.reserves.find(r => r.assetMint === position.assetMint);
-      if (reserve) {
-        reserve.liquidityBorrowed -= repayAmount;
-        await this.lendingPoolRepository.save(position.pool);
-      }
-
-      return await this.lendingPositionRepository.save(position);
-    } catch (error) {
-      throw error;
+    // Update position
+    position.amount -= repayAmount;
+    if (position.amount <= 0) {
+      position.status = PositionStatus.CLOSED;
     }
+
+    // Update pool reserve
+    const reserve = position.pool.reserves.find((r) => r.assetMint === position.assetMint);
+    if (reserve) {
+      reserve.liquidityBorrowed -= repayAmount;
+      await this.lendingPoolRepository.save(position.pool);
+    }
+
+    return await this.lendingPositionRepository.save(position);
   }
 
   /**
@@ -303,56 +298,52 @@ export class LendingService {
   ): Promise<LendingPosition> {
     const position = await this.lendingPositionRepository.findOne({
       where: { id: positionId },
-      relations: ["pool"],
+      relations: ['pool'],
     });
 
     if (!position) {
-      throw new BadRequestException("Position not found");
+      throw new BadRequestException('Position not found');
     }
 
     if (position.positionType !== PositionType.SUPPLY) {
-      throw new BadRequestException("Position is not a supply position");
+      throw new BadRequestException('Position is not a supply position');
     }
 
     const userKeypair = await this.getKeypairFromPrivateKey(userPrivateKey);
     if (position.userAddress !== userKeypair.publicKey.toString()) {
-      throw new BadRequestException("Unauthorized");
+      throw new BadRequestException('Unauthorized');
     }
 
-    try {
-      // Build withdraw instruction
-      const withdrawInstruction = await this.buildWithdrawInstruction(
-        position.pool,
-        position.assetMint,
-        withdrawAmount,
-      );
+    // Build withdraw instruction
+    const withdrawInstruction = await this.buildWithdrawInstruction(
+      position.pool,
+      position.assetMint,
+      withdrawAmount,
+    );
 
-      // Execute transaction
-      const signature = await this.transactionsService.sendProgramInvocation(
-        userPrivateKey,
-        position.pool.lendingProgramId,
-        withdrawInstruction.data,
-        withdrawInstruction.accounts,
-        200000,
-      );
+    // Execute transaction
+    const signature = await this.transactionsService.sendProgramInvocation(
+      userPrivateKey,
+      position.pool.lendingProgramId,
+      withdrawInstruction.data,
+      withdrawInstruction.accounts,
+      200000,
+    );
 
-      // Update position
-      position.amount -= withdrawAmount;
-      if (position.amount <= 0) {
-        position.status = PositionStatus.CLOSED;
-      }
-
-      // Update pool reserve
-      const reserve = position.pool.reserves.find(r => r.assetMint === position.assetMint);
-      if (reserve) {
-        reserve.liquiditySupply -= withdrawAmount;
-        await this.lendingPoolRepository.save(position.pool);
-      }
-
-      return await this.lendingPositionRepository.save(position);
-    } catch (error) {
-      throw error;
+    // Update position
+    position.amount -= withdrawAmount;
+    if (position.amount <= 0) {
+      position.status = PositionStatus.CLOSED;
     }
+
+    // Update pool reserve
+    const reserve = position.pool.reserves.find((r) => r.assetMint === position.assetMint);
+    if (reserve) {
+      reserve.liquiditySupply -= withdrawAmount;
+      await this.lendingPoolRepository.save(position.pool);
+    }
+
+    return await this.lendingPositionRepository.save(position);
   }
 
   /**
@@ -377,7 +368,7 @@ export class LendingService {
 
     // Get LTV ratio from pool
     const pool = await this.getPool(poolAddress);
-    const reserve = pool.reserves.find(r => r.assetMint === borrowMint);
+    const reserve = pool.reserves.find((r) => r.assetMint === borrowMint);
     const ltvRatio = reserve?.ltvRatio || 0.75; // Default 75%
 
     // Health factor = (collateral value * LTV) / borrow value
@@ -394,7 +385,7 @@ export class LendingService {
   ): Promise<{ data: string; accounts: any[] }> {
     // Simplified instruction data
     const instructionData = {
-      instruction: "supply",
+      instruction: 'supply',
       assetMint,
       amount,
     };
@@ -413,7 +404,7 @@ export class LendingService {
     ];
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -430,7 +421,7 @@ export class LendingService {
   ): Promise<{ data: string; accounts: any[] }> {
     // Simplified instruction data
     const instructionData = {
-      instruction: "borrow",
+      instruction: 'borrow',
       assetMint,
       amount,
       collateralMint,
@@ -456,7 +447,7 @@ export class LendingService {
     ];
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -471,7 +462,7 @@ export class LendingService {
   ): Promise<{ data: string; accounts: any[] }> {
     // Simplified instruction data
     const instructionData = {
-      instruction: "repay",
+      instruction: 'repay',
       assetMint,
       amount,
     };
@@ -490,7 +481,7 @@ export class LendingService {
     ];
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -505,7 +496,7 @@ export class LendingService {
   ): Promise<{ data: string; accounts: any[] }> {
     // Simplified instruction data
     const instructionData = {
-      instruction: "withdraw",
+      instruction: 'withdraw',
       assetMint,
       amount,
     };
@@ -524,7 +515,7 @@ export class LendingService {
     ];
 
     return {
-      data: Buffer.from(JSON.stringify(instructionData)).toString("base64"),
+      data: Buffer.from(JSON.stringify(instructionData)).toString('base64'),
       accounts,
     };
   }
@@ -535,7 +526,7 @@ export class LendingService {
   async getUserPositions(userAddress: string): Promise<LendingPosition[]> {
     return await this.lendingPositionRepository.find({
       where: { userAddress, status: PositionStatus.ACTIVE },
-      relations: ["pool"],
+      relations: ['pool'],
     });
   }
 
@@ -549,8 +540,8 @@ export class LendingService {
       where: { poolId: pool.id },
     });
 
-    const supplyPositions = positions.filter(p => p.positionType === PositionType.SUPPLY);
-    const borrowPositions = positions.filter(p => p.positionType === PositionType.BORROW);
+    const supplyPositions = positions.filter((p) => p.positionType === PositionType.SUPPLY);
+    const borrowPositions = positions.filter((p) => p.positionType === PositionType.BORROW);
 
     const totalSupplied = supplyPositions.reduce((sum, p) => sum + Number(p.amount), 0);
     const totalBorrowed = borrowPositions.reduce((sum, p) => sum + Number(p.amount), 0);
@@ -569,7 +560,7 @@ export class LendingService {
    * Get keypair from private key (helper method)
    */
   private async getKeypairFromPrivateKey(privateKey: string) {
-    const { Keypair } = await import("@solana/web3.js");
+    const { Keypair } = await import('@solana/web3.js');
     return Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKey)));
   }
 }

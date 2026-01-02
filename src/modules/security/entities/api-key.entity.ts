@@ -7,24 +7,24 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
-} from "typeorm";
-import { User } from "./user.entity";
+} from 'typeorm';
+import { User } from './user.entity';
 
 export enum ApiKeyStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  REVOKED = "revoked",
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  REVOKED = 'revoked',
 }
 
 export enum ApiKeyPermission {
-  READ = "read",
-  WRITE = "write",
-  ADMIN = "admin",
+  READ = 'read',
+  WRITE = 'write',
+  ADMIN = 'admin',
 }
 
-@Entity("api_keys")
-@Index(["keyHash"])
-@Index(["userId"])
+@Entity('api_keys')
+@Index(['keyHash'])
+@Index(['userId'])
 export class ApiKey {
   /**
    * unique identifier for the api key
@@ -32,7 +32,7 @@ export class ApiKey {
    * example: "b2c3d4e5-f6g7-8h9i-0j1k-2l3m4n5o6p7q"
    * reference: https://typeorm.io/entities#primary-columns
    */
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -41,7 +41,7 @@ export class ApiKey {
    * example: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
    * reference: https://typeorm.io/relations
    */
-  @Column({ type: "uuid" })
+  @Column({ type: 'uuid' })
   userId: string;
 
   /**
@@ -50,8 +50,8 @@ export class ApiKey {
    * example: User object
    * reference: https://typeorm.io/many-to-one-one-to-many-relations
    */
-  @ManyToOne(() => User, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "userId" })
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   /**
@@ -60,7 +60,7 @@ export class ApiKey {
    * example: "production backend key"
    * reference: none
    */
-  @Column({ type: "varchar", length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true })
   name: string;
 
   /**
@@ -69,7 +69,7 @@ export class ApiKey {
    * example: "used by the payment service for processing transactions"
    * reference: none
    */
-  @Column({ type: "text" })
+  @Column({ type: 'text' })
   description: string;
 
   /**
@@ -78,7 +78,7 @@ export class ApiKey {
    * example: "sha256 hash string..."
    * reference: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
    */
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   keyHash: string; // Hashed version of the API key
 
   /**
@@ -87,7 +87,7 @@ export class ApiKey {
    * example: "sk_live_..."
    * reference: https://stripe.com/docs/keys
    */
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   keyPrefix: string; // First 8 characters for identification
 
   /**
@@ -97,7 +97,7 @@ export class ApiKey {
    * reference: none
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: ApiKeyStatus,
     default: ApiKeyStatus.ACTIVE,
   })
@@ -110,7 +110,7 @@ export class ApiKey {
    * reference: https://en.wikipedia.org/wiki/Principle_of_least_privilege
    */
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: ApiKeyPermission,
     default: ApiKeyPermission.READ,
   })
@@ -122,7 +122,7 @@ export class ApiKey {
    * example: "2025-01-01T00:00:00Z"
    * reference: https://cheatsheetseries.owasp.org/cheatsheets/Key_Management_Cheat_Sheet.html
    */
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   expiresAt: Date;
 
   /**
@@ -131,7 +131,7 @@ export class ApiKey {
    * example: "2024-03-15T10:30:00Z"
    * reference: none
    */
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lastUsedAt: Date;
 
   /**
@@ -140,7 +140,7 @@ export class ApiKey {
    * example: "192.168.1.1"
    * reference: none
    */
-  @Column({ type: "varchar", length: 45, nullable: true })
+  @Column({ type: 'varchar', length: 45, nullable: true })
   lastUsedIp: string;
 
   /**
@@ -149,7 +149,7 @@ export class ApiKey {
    * example: 1500
    * reference: none
    */
-  @Column({ type: "int", default: 0 })
+  @Column({ type: 'int', default: 0 })
   usageCount: number;
 
   /**
@@ -158,7 +158,7 @@ export class ApiKey {
    * example: 60
    * reference: https://en.wikipedia.org/wiki/Rate_limiting
    */
-  @Column({ type: "int", nullable: true })
+  @Column({ type: 'int', nullable: true })
   rateLimit: number; // Requests per minute
 
   /**
@@ -197,8 +197,6 @@ export class ApiKey {
       [ApiKeyPermission.ADMIN]: 3,
     };
 
-    return (
-      permissionLevels[this.permission] >= permissionLevels[requiredPermission]
-    );
+    return permissionLevels[this.permission] >= permissionLevels[requiredPermission];
   }
 }

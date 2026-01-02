@@ -1,10 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Account } from "./account.entity";
-import { Connection, PublicKey } from "@solana/web3.js";
-import { QueryCacheService } from "../../common/cache/query-cache.service";
-import { QueryCache } from "../../common/cache/query-cache.decorator";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Account } from './account.entity';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { QueryCacheService } from '../../common/cache/query-cache.service';
+import { QueryCache } from '../../common/cache/query-cache.decorator';
 
 @Injectable()
 /**
@@ -20,7 +20,7 @@ export class AccountsService {
     private readonly queryCacheService: QueryCacheService,
   ) {
     this.connection = new Connection(
-      process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com",
+      process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
     );
   }
 
@@ -63,7 +63,7 @@ export class AccountsService {
         lamports: accountInfo?.lamports || 0,
         owner: accountInfo?.owner?.toString(),
         executable: accountInfo?.executable || false,
-        data: accountInfo?.data?.toString("base64"),
+        data: accountInfo?.data?.toString('base64'),
       };
     } catch (error) {
       throw new Error(`Failed to get account info: ${error.message}`);

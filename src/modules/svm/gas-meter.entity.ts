@@ -5,8 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-} from "typeorm";
-import { ApiProperty } from "@nestjs/swagger";
+} from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * Gas Meter Type Enum
@@ -14,10 +14,10 @@ import { ApiProperty } from "@nestjs/swagger";
  * reference: https://solana.com/docs/core/runtime#compute-budget
  */
 export enum GasMeterType {
-  INSTRUCTION = "instruction",
-  PROGRAM = "program",
-  TRANSACTION = "transaction",
-  BLOCK = "block",
+  INSTRUCTION = 'instruction',
+  PROGRAM = 'program',
+  TRANSACTION = 'transaction',
+  BLOCK = 'block',
 }
 
 /**
@@ -26,44 +26,44 @@ export enum GasMeterType {
  * reference: none
  */
 export enum GasMeterStatus {
-  ACTIVE = "active",
-  PAUSED = "paused",
-  EXCEEDED = "exceeded",
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  EXCEEDED = 'exceeded',
 }
 
 /**
  * Gas Meter Entity
- * 
+ *
  * Tracks compute unit (CU) usage in Solana. While Solana uses "compute units" rather
  * than "gas" (Ethereum terminology), this entity provides metering and budgeting
  * capabilities for monitoring resource consumption.
- * 
+ *
  * Key Solana compute concepts:
  * - Default compute budget: 200,000 CU per instruction
  * - Maximum transaction budget: 1,400,000 CU
  * - Compute unit price: Determines priority fee for faster inclusion
  * - Programs can request more CU using ComputeBudgetProgram
- * 
+ *
  * Compute-intensive operations:
  * - BPF program execution
  * - Signature verification
  * - Account data reads/writes
  * - Cross-program invocations (CPIs)
- * 
+ *
  * @example
  * const meter = new GasMeter();
  * meter.programId = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
  * meter.gasAllocated = 1400000;
  * meter.meterType = GasMeterType.PROGRAM;
- * 
+ *
  * @see https://solana.com/docs/core/runtime#compute-budget
  * @see https://solana.com/docs/core/fees#prioritization-fees
  */
-@Entity("gas_meters")
-@Index(["programId"])
-@Index(["accountId"])
-@Index(["meterType"])
-@Index(["status"])
+@Entity('gas_meters')
+@Index(['programId'])
+@Index(['accountId'])
+@Index(['meterType'])
+@Index(['status'])
 export class GasMeter {
   /**
    * unique identifier for the gas meter
@@ -72,10 +72,10 @@ export class GasMeter {
    * reference: https://typeorm.io/entities#primary-columns
    */
   @ApiProperty({
-    description: "Unique identifier for the gas meter",
-    example: "123e4567-e89b-12d3-a456-426614174000",
+    description: 'Unique identifier for the gas meter',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   /**
@@ -85,10 +85,10 @@ export class GasMeter {
    * reference: https://solana.com/docs/core/programs
    */
   @ApiProperty({
-    description: "Associated program ID",
-    example: "11111111111111111111111111111112",
+    description: 'Associated program ID',
+    example: '11111111111111111111111111111112',
   })
-  @Column({ name: "program_id", nullable: true })
+  @Column({ name: 'program_id', nullable: true })
   @Index()
   programId?: string;
 
@@ -99,10 +99,10 @@ export class GasMeter {
    * reference: https://solana.com/docs/core/accounts
    */
   @ApiProperty({
-    description: "Associated account ID",
-    example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    description: 'Associated account ID',
+    example: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
   })
-  @Column({ name: "account_id", nullable: true })
+  @Column({ name: 'account_id', nullable: true })
   @Index()
   accountId?: string;
 
@@ -113,13 +113,13 @@ export class GasMeter {
    * reference: https://solana.com/docs/core/runtime#compute-budget
    */
   @ApiProperty({
-    description: "Gas meter type",
+    description: 'Gas meter type',
     enum: GasMeterType,
     example: GasMeterType.PROGRAM,
   })
   @Column({
-    name: "meter_type",
-    type: "enum",
+    name: 'meter_type',
+    type: 'enum',
     enum: GasMeterType,
     default: GasMeterType.PROGRAM,
   })
@@ -132,13 +132,13 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Current meter status",
+    description: 'Current meter status',
     enum: GasMeterStatus,
     example: GasMeterStatus.ACTIVE,
   })
   @Column({
-    name: "status",
-    type: "enum",
+    name: 'status',
+    type: 'enum',
     enum: GasMeterStatus,
     default: GasMeterStatus.ACTIVE,
   })
@@ -151,10 +151,10 @@ export class GasMeter {
    * reference: https://solana.com/docs/core/runtime#compute-budget
    */
   @ApiProperty({
-    description: "Total gas allocated",
+    description: 'Total gas allocated',
     example: 1000000,
   })
-  @Column({ name: "gas_allocated", type: "bigint", default: 1000000 })
+  @Column({ name: 'gas_allocated', type: 'bigint', default: 1000000 })
   gasAllocated: number;
 
   /**
@@ -164,10 +164,10 @@ export class GasMeter {
    * reference: https://solana.com/docs/core/runtime#compute-budget
    */
   @ApiProperty({
-    description: "Gas used so far",
+    description: 'Gas used so far',
     example: 250000,
   })
-  @Column({ name: "gas_used", type: "bigint", default: 0 })
+  @Column({ name: 'gas_used', type: 'bigint', default: 0 })
   gasUsed: number;
 
   /**
@@ -177,10 +177,10 @@ export class GasMeter {
    * reference: https://solana.com/docs/core/runtime#compute-budget
    */
   @ApiProperty({
-    description: "Gas remaining",
+    description: 'Gas remaining',
     example: 750000,
   })
-  @Column({ name: "gas_remaining", type: "bigint", default: 1000000 })
+  @Column({ name: 'gas_remaining', type: 'bigint', default: 1000000 })
   gasRemaining: number;
 
   /**
@@ -190,10 +190,10 @@ export class GasMeter {
    * reference: https://solana.com/docs/core/runtime#compute-budget
    */
   @ApiProperty({
-    description: "Gas limit per operation",
+    description: 'Gas limit per operation',
     example: 200000,
   })
-  @Column({ name: "gas_limit_per_operation", type: "bigint", default: 200000 })
+  @Column({ name: 'gas_limit_per_operation', type: 'bigint', default: 200000 })
   gasLimitPerOperation: number;
 
   /**
@@ -203,10 +203,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Reset period in seconds (0 = no reset)",
+    description: 'Reset period in seconds (0 = no reset)',
     example: 86400,
   })
-  @Column({ name: "reset_period_seconds", type: "bigint", default: 0 })
+  @Column({ name: 'reset_period_seconds', type: 'bigint', default: 0 })
   resetPeriodSeconds: number;
 
   /**
@@ -216,10 +216,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Last reset timestamp",
-    example: "2024-01-01T00:00:00Z",
+    description: 'Last reset timestamp',
+    example: '2024-01-01T00:00:00Z',
   })
-  @Column({ name: "last_reset_at", nullable: true })
+  @Column({ name: 'last_reset_at', nullable: true })
   lastResetAt?: Date;
 
   /**
@@ -229,10 +229,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Next reset timestamp",
-    example: "2024-01-02T00:00:00Z",
+    description: 'Next reset timestamp',
+    example: '2024-01-02T00:00:00Z',
   })
-  @Column({ name: "next_reset_at", nullable: true })
+  @Column({ name: 'next_reset_at', nullable: true })
   nextResetAt?: Date;
 
   /**
@@ -242,10 +242,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Number of operations performed",
+    description: 'Number of operations performed',
     example: 42,
   })
-  @Column({ name: "operation_count", type: "bigint", default: 0 })
+  @Column({ name: 'operation_count', type: 'bigint', default: 0 })
   operationCount: number;
 
   /**
@@ -255,10 +255,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Average gas per operation",
+    description: 'Average gas per operation',
     example: 5952,
   })
-  @Column({ name: "average_gas_per_operation", type: "bigint", default: 0 })
+  @Column({ name: 'average_gas_per_operation', type: 'bigint', default: 0 })
   averageGasPerOperation: number;
 
   /**
@@ -268,10 +268,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Peak gas usage",
+    description: 'Peak gas usage',
     example: 150000,
   })
-  @Column({ name: "peak_gas_usage", type: "bigint", default: 0 })
+  @Column({ name: 'peak_gas_usage', type: 'bigint', default: 0 })
   peakGasUsage: number;
 
   /**
@@ -281,10 +281,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Gas efficiency rating (0-100)",
+    description: 'Gas efficiency rating (0-100)',
     example: 85,
   })
-  @Column({ name: "efficiency_rating", type: "int", default: 100 })
+  @Column({ name: 'efficiency_rating', type: 'int', default: 100 })
   efficiencyRating: number;
 
   /**
@@ -294,10 +294,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Alert threshold percentage",
+    description: 'Alert threshold percentage',
     example: 80,
   })
-  @Column({ name: "alert_threshold_percent", type: "int", default: 80 })
+  @Column({ name: 'alert_threshold_percent', type: 'int', default: 80 })
   alertThresholdPercent: number;
 
   /**
@@ -307,10 +307,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Auto-pause when threshold exceeded",
+    description: 'Auto-pause when threshold exceeded',
     example: true,
   })
-  @Column({ name: "auto_pause_on_threshold", default: false })
+  @Column({ name: 'auto_pause_on_threshold', default: false })
   autoPauseOnThreshold: boolean;
 
   /**
@@ -320,10 +320,10 @@ export class GasMeter {
    * reference: none
    */
   @ApiProperty({
-    description: "Meter configuration",
+    description: 'Meter configuration',
     example: '{"priority": "high", "billing": "monthly"}',
   })
-  @Column({ name: "configuration", type: "jsonb", nullable: true })
+  @Column({ name: 'configuration', type: 'jsonb', nullable: true })
   configuration?: Record<string, any>;
 
   /**
@@ -333,9 +333,9 @@ export class GasMeter {
    * reference: https://typeorm.io/entities#createdatecolumn
    */
   @ApiProperty({
-    description: "Creation timestamp",
+    description: 'Creation timestamp',
   })
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   /**
@@ -345,8 +345,8 @@ export class GasMeter {
    * reference: https://typeorm.io/entities#updatedatecolumn
    */
   @ApiProperty({
-    description: "Last update timestamp",
+    description: 'Last update timestamp',
   })
-  @UpdateDateColumn({ name: "updated_at" })
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
