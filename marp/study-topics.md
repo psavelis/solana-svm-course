@@ -24,7 +24,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ## Core Concepts
 
 ### 1. Accounts and Programs
-📊 [View Diagram](./diagrams/01-accounts-programs.md)
 
 - **Solana Equivalent**: Accounts (data storage) and Programs (smart contracts)
 - **EVM Comparison**: Similar to contracts and storage, but accounts hold both code and data
@@ -41,7 +40,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 2. Transactions and Instructions
-📊 [View Diagram](./diagrams/02-transactions-instructions.md)
 
 - **Solana Equivalent**: Transactions containing Instructions
 - **EVM Comparison**: Transactions calling contract functions
@@ -59,7 +57,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 3. Token Standards (SPL Tokens)
-📊 [View Diagram](./diagrams/03-token-standards.md)
 
 - **Solana Equivalent**: SPL (Solana Program Library) Tokens
 - **EVM Comparison**: ERC-20, ERC-721, ERC-1155
@@ -77,7 +74,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 4. Account Abstraction
-📊 [View Diagram](./diagrams/04-account-abstraction.md)
 
 - **Solana Equivalent**: Program-controlled accounts and PDAs
 - **EVM Comparison**: EIP-4337 Account Abstraction
@@ -94,7 +90,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 5. Fee Mechanism
-📊 [View Diagram](./diagrams/05-fee-mechanism.md)
 
 - **Solana Equivalent**: Base fees + Priority fees
 - **EVM Comparison**: EIP-1559 (base fee + priority fee)
@@ -111,7 +106,7 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 6. Consensus and Validation
-📊 [View Diagram](./diagrams/06-consensus-validation.md)
+
 
 - **Solana Equivalent**: Proof of Stake with Tower BFT
 - **EVM Comparison**: Proof of Work (legacy) / Proof of Stake (post-Merge)
@@ -128,7 +123,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 7. Signing and Cryptography
-📊 [View Diagram](./diagrams/07-signing-cryptography.md)
 
 - **Solana Equivalent**: Ed25519 keypairs and signatures
 - **EVM Comparison**: ECDSA secp256k1
@@ -146,7 +140,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 8. Multi-Party Computation (MPC)
-📊 [View Diagram](./diagrams/08-mpc.md)
 
 - **Solana Equivalent**: Threshold signatures and distributed key generation
 - **EVM Comparison**: Multi-sig wallets and threshold schemes
@@ -163,7 +156,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 9. Solana Virtual Machine (SVM)
-📊 [View Diagram](./diagrams/09-svm.md)
 
 - **Solana Equivalent**: Sealevel runtime and SVM
 - **EVM Comparison**: EVM execution environment
@@ -191,7 +183,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 10. Cross-Program Invocations (CPIs)
-📊 [View Diagram](./diagrams/10-cpis.md)
 
 - **Solana Equivalent**: Programs calling other programs
 - **EVM Comparison**: Contract calls and DELEGATECALL
@@ -208,7 +199,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 11. Events and Logging
-📊 [View Diagram](./diagrams/11-events-logging.md)
 
 - **Solana Equivalent**: Program logs and events
 - **EVM Comparison**: Contract events and logs
@@ -225,7 +215,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 12. Security and Best Practices
-📊 [View Diagram](./diagrams/12-security-practices.md)
 
 #### Key Topics - Security
 - Common vulnerabilities and mitigations
@@ -238,7 +227,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 13. Development Tools and Frameworks
-📊 [View Diagram](./diagrams/13-development-tools.md)
 
 #### Key Topics - Development Tools
 - Anchor framework for Rust programs
@@ -251,7 +239,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 14. Network Architecture
-📊 [View Diagram](./diagrams/14-network-architecture.md)
 
 #### Key Topics - Network Architecture
 - Cluster types (mainnet, devnet, testnet)
@@ -264,7 +251,6 @@ Each topic includes key learning objectives and implementation considerations fo
 ---
 
 ### 15. Advanced Features
-📊 [View Diagram](./diagrams/15-advanced-features.md)
 
 #### Key Topics - Advanced Features
 - State compression and accounts database
