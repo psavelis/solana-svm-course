@@ -37,5 +37,5 @@ These diagrams are created using Mermaid syntax and can be:
 ## Related Documentation
 
 - [Main Study Document](../STUDY.md) - Complete study topics and learning objectives
-- [Task Tracking](../TASKS.md) - Implementation progress and milestones
-- [Master Iteration](../MASTER-ITERATION.md) - High-level project overview
+- [Task Tracking](../TASKS.md) - Implementation tasks and completion status
+- [Project Overview](../PROJECT.md) - High-level project overview

@@ -44,7 +44,7 @@ solana-svm-study/
 │   ├── COURSE.md                 # This course curriculum
 │   ├── STUDY.md                  # Detailed study topics
 │   ├── TASKS.md                  # Implementation tasks
-│   ├── MASTER-ITERATION.md       # Project philosophy
+│   ├── PROJECT.md                # Project overview
 │   └── diagrams/                 # Architecture diagrams
 ├── src/                          # Application source code
 │   ├── modules/                  # Feature modules

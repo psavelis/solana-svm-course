@@ -17,7 +17,7 @@ This repository implements a NestJS-based API service that demonstrates Solana i
 
 📖 **[Study Guide](docs/STUDY.md)** - Breakdown of Solana concepts with EVM comparisons
 
-📋 **[Master Iteration Plan](docs/MASTER-ITERATION.md)** - Project objectives, design patterns, and development roadmap
+📋 **[Project Overview](docs/PROJECT.md)** - Project objectives, design patterns, and architecture
 
 📝 **[Implementation Tasks](docs/TASKS.md)** - Detailed task breakdown for all features
 
