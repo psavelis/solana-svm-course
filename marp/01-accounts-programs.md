@@ -233,8 +233,8 @@ if (accountInfo) {
 ### Module 1 Implementation Tasks
 - ✅ Basic account CRUD operations
 - ✅ Solana RPC integration
-- ⏳ PDA generation service
-- ⏳ Account abstraction features
+- ✅ PDA generation service
+- ✅ Account abstraction features
 
 ### Related Modules
 - **Module 2**: Transactions & Instructions

@@ -310,9 +310,9 @@ const signature = await sendAndConfirmTransaction(connection, transaction, signe
 ### Module 2 Implementation Tasks
 - ✅ Basic transaction CRUD
 - ✅ SOL transfer functionality
-- ⏳ Multi-instruction transactions
-- ⏳ Advanced fee management
-- ⏳ Token transfer transactions
+- ✅ Multi-instruction transactions
+- ✅ Advanced fee management
+- ✅ Token transfer transactions
 
 ### Related Modules
 - **Module 1**: Accounts & Programs

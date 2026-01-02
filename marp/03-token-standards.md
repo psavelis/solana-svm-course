@@ -339,10 +339,10 @@ const transaction = new Transaction().add(...instructions);
 ### Module 3 Implementation Tasks
 - ✅ Basic token CRUD operations
 - ✅ Token balance queries
-- ⏳ Token creation/minting
-- ⏳ Token transfer operations
-- ⏳ NFT support
-- ⏳ Token metadata management
+- ✅ Token creation/minting
+- ✅ Token transfer operations
+- ✅ NFT support
+- ✅ Token metadata management
 
 ### Related Modules
 - **Module 2**: Transactions & Instructions
