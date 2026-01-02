@@ -4,6 +4,7 @@ const { execSync } = require('child_process');
 
 const docsDir = path.join(__dirname, '../docs/diagrams');
 const tempDir = path.join(__dirname, '../temp_mermaid_validation');
+const puppeteerConfig = path.join(__dirname, '../puppeteer.config.json');
 
 if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir, { recursive: true });
@@ -28,12 +29,9 @@ for (const file of files) {
 
   console.log(`Validating ${file}...`);
   try {
-    // Run mmdc with --puppeteerConfigFile for CI sandbox compatibility
-    // Add PUPPETEER_CHROMIUM_ARGS for CI environments
-    const puppeteerArgs = process.env.CI
-      ? '-p.args.0=--no-sandbox -p.args.1=--disable-setuid-sandbox'
-      : '';
-    execSync(`"./node_modules/.bin/mmdc" -i "${inputPath}" -o "${outputPath}" ${puppeteerArgs}`, {
+    // Run mmdc with puppeteerConfigFile for CI sandbox compatibility
+    const configArg = process.env.CI ? `--puppeteerConfigFile "${puppeteerConfig}"` : '';
+    execSync(`"./node_modules/.bin/mmdc" -i "${inputPath}" -o "${outputPath}" ${configArg}`, {
       stdio: 'pipe',
     });
   } catch (e) {
