@@ -25,7 +25,7 @@ solana-svm-study/
 │   ├── COURSE.md                 # This course curriculum
 │   ├── STUDY.md                  # Detailed study topics
 │   ├── TASKS.md                  # Implementation tasks
-│   ├── MASTER-ITERATION.md       # Project philosophy
+│   ├── PROJECT.md                # Project overview
 │   └── diagrams/                 # Architecture diagrams
 │       ├── 01-accounts-programs.md
 │       ├── 02-transactions-instructions.md
@@ -126,7 +126,7 @@ solana-svm-study/
 4. **Code Examples**: `src/modules/` for working implementations
 5. **Architecture**: `docs/diagrams/` for visual learning
 6. **Deployment**: `infra/` for production setup
-7. **Philosophy**: [MASTER-ITERATION.md](./MASTER-ITERATION.md) for project approach
+7. **Overview**: [PROJECT.md](./PROJECT.md) for project approach
 
 ### 📚 **Week 1-2: Foundations & Setup**
 **Topics**: Project setup, architecture, basic concepts
@@ -1249,7 +1249,7 @@ Upon successful completion, participants receive:
 ### 📚 **Course Documentation**
 - **[STUDY.md](./STUDY.md)**: Detailed study topics with EVM comparisons
 - **[TASKS.md](./TASKS.md)**: Implementation tasks with complexity assessment
-- **[MASTER-ITERATION.md](./MASTER-ITERATION.md)**: Project philosophy and approach
+- **[PROJECT.md](./PROJECT.md)**: Project overview and approach
 - **[Diagrams README](./diagrams/README.md)**: Visual architecture documentation
 
 ### 📊 **Architecture Diagrams**
