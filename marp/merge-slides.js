@@ -35,7 +35,8 @@ async function mergeAllSlides() {
     '12-security-practices.pdf',
     '13-development-tools.pdf',
     '14-network-architecture.pdf',
-    '15-advanced-features.pdf'
+    '15-advanced-features.pdf',
+    '16-esports-matchmaking.pdf',
   ];
 
   let totalSlides = 0;
