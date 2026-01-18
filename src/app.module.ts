@@ -17,6 +17,7 @@ import { EventsModule } from './modules/events/events.module';
 import { SecurityModule } from './modules/security/security.module';
 import { NetworkModule } from './modules/network/network.module';
 import { TracingModule } from './common/tracing/tracing.module';
+import { EsportsModule } from './modules/esports/esports.module';
 import { TracingInterceptor } from './common/interceptors/tracing.interceptor';
 
 @Module({
@@ -76,6 +77,7 @@ import { TracingInterceptor } from './common/interceptors/tracing.interceptor';
     SecurityModule,
     NetworkModule,
     TracingModule,
+    EsportsModule,
   ],
   providers: [],
 })
