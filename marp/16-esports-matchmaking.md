@@ -1488,7 +1488,846 @@ Matchmaking Service
 
 ---
 
-# 📚 Resources
+# � Business Rules: Entry Fee Validation
+
+## Configurable Fee Boundaries
+
+```typescript
+// Environment-based fee limits (lamports)
+const MIN_ENTRY_FEE = BigInt(process.env.MIN_ENTRY_FEE || '1000000');     // 0.001 SOL
+const MAX_ENTRY_FEE = BigInt(process.env.MAX_ENTRY_FEE || '100000000000'); // 100 SOL
+
+// Validation rules applied at match creation
+async validateEntryFee(entryFee: string, gameType: string): Promise<void> {
+  const fee = BigInt(entryFee);
+  
+  // Rule 1: Minimum threshold (prevent spam)
+  if (fee < MIN_ENTRY_FEE) {
+    throw new BadRequestException(`Entry fee below minimum: ${MIN_ENTRY_FEE}`);
+  }
+  
+  // Rule 2: Maximum cap (risk management)
+  if (fee > MAX_ENTRY_FEE) {
+    throw new BadRequestException(`Entry fee exceeds maximum: ${MAX_ENTRY_FEE}`);
+  }
+  
+  // Rule 3: Game-specific limits
+  const gameLimit = await this.getGameFeeLimit(gameType);
+  if (fee > gameLimit) {
+    throw new BadRequestException(`Fee exceeds game limit for ${gameType}`);
+  }
+}
+```
+
+| Game Type | Min Fee | Max Fee | Rationale |
+|-----------|---------|---------|-----------|
+| Casual 1v1 | 0.001 SOL | 1 SOL | Low stakes |
+| Ranked 1v1 | 0.01 SOL | 10 SOL | Competitive |
+| Tournament | 0.1 SOL | 100 SOL | High stakes |
+
+---
+
+# 📜 Business Rules: Player Eligibility
+
+## Multi-Factor Verification
+
+```typescript
+async verifyPlayerEligibility(playerId: string, matchId: string): Promise<void> {
+  const player = await this.playerService.getPlayer(playerId);
+  const wallet = await this.walletService.getWallet(playerId);
+  const match = await this.matchService.getMatch(matchId);
+
+  // Rule 1: Account status
+  if (player.status !== PlayerStatus.ACTIVE) {
+    throw new ForbiddenException('Account suspended or inactive');
+  }
+
+  // Rule 2: KYC verification (for high-value matches)
+  if (BigInt(match.entryFee) > KYC_THRESHOLD && !player.kycVerified) {
+    throw new ForbiddenException('KYC required for high-value matches');
+  }
+
+  // Rule 3: Region restrictions
+  if (match.allowedRegions && !match.allowedRegions.includes(player.region)) {
+    throw new ForbiddenException('Match restricted to specific regions');
+  }
+
+  // Rule 4: Skill rating bounds (prevent smurfing)
+  if (match.minRating && player.skillRating < match.minRating) {
+    throw new ForbiddenException(`Minimum rating required: ${match.minRating}`);
+  }
+
+  // Rule 5: Concurrent match limit
+  const activeMatches = await this.matchService.getActiveMatches(playerId);
+  if (activeMatches.length >= MAX_CONCURRENT_MATCHES) {
+    throw new ForbiddenException('Maximum concurrent matches reached');
+  }
+}
+```
+
+---
+
+# 📜 Business Rules: Eligibility Criteria
+
+## Player Status Requirements
+
+| Criterion | Requirement | Enforcement |
+|-----------|-------------|-------------|
+| Account Age | > 24 hours | Prevent bot spam |
+| Email Verified | Required | Identity verification |
+| Phone Verified | High-stakes only | 2FA for withdrawals |
+| KYC Level 1 | Matches > 10 SOL | Regulatory compliance |
+| KYC Level 2 | Matches > 50 SOL | Enhanced due diligence |
+| Skill Rating | Within ±200 ELO | Fair matchmaking |
+| Active Bans | None | Anti-cheat compliance |
+| Pending Disputes | None | Dispute resolution first |
+
+```typescript
+// Eligibility flags stored on player entity
+interface PlayerEligibility {
+  canPlayCasual: boolean;      // Basic account status
+  canPlayRanked: boolean;      // Email + min games
+  canPlayHighStakes: boolean;  // KYC Level 1
+  canPlayTournaments: boolean; // KYC Level 2 + clean record
+  canWithdraw: boolean;        // Phone verification
+}
+```
+
+---
+
+# 📜 Business Rules: Refund Policies
+
+## Scenario-Based Refund Logic
+
+```typescript
+enum RefundReason {
+  MATCH_CANCELLED = 'MATCH_CANCELLED',           // Full refund
+  OPPONENT_NO_SHOW = 'OPPONENT_NO_SHOW',         // Full refund + bonus
+  TECHNICAL_FAILURE = 'TECHNICAL_FAILURE',       // Full refund
+  PLAYER_DISCONNECT = 'PLAYER_DISCONNECT',       // Partial (time-based)
+  DISPUTE_RESOLVED = 'DISPUTE_RESOLVED',         // Per arbitration
+  TOURNAMENT_CANCELLED = 'TOURNAMENT_CANCELLED', // Full refund
+}
+
+async processRefund(escrowId: string, reason: RefundReason): Promise<void> {
+  const escrow = await this.escrowService.getEscrow(escrowId);
+  
+  switch (reason) {
+    case RefundReason.MATCH_CANCELLED:
+      // Rule: 100% refund to all participants
+      await this.refundAllParticipants(escrow, 100);
+      break;
+      
+    case RefundReason.OPPONENT_NO_SHOW:
+      // Rule: 100% refund + 10% bonus from platform pool
+      await this.refundWithBonus(escrow, waitingPlayer, 10);
+      break;
+      
+    case RefundReason.PLAYER_DISCONNECT:
+      // Rule: Partial refund based on match progress
+      const refundPercent = this.calculateDisconnectRefund(escrow);
+      await this.partialRefund(escrow, refundPercent);
+      break;
+  }
+}
+```
+
+---
+
+# 📜 Business Rules: Refund Matrix
+
+## Refund Percentage by Scenario
+
+| Scenario | Refund % | Waiting Time | Platform Action |
+|----------|----------|--------------|-----------------|
+| Match cancelled (< 1 min) | 100% | Immediate | Auto-refund |
+| Match cancelled (> 1 min) | 100% | 5 min | Admin approval |
+| Opponent no-show | 100% + bonus | 10 min wait | Auto after timeout |
+| Technical failure | 100% | 24 hr review | Manual verification |
+| Disconnect (< 25% match) | 75% | 48 hr | Dispute period |
+| Disconnect (25-50% match) | 50% | 48 hr | Dispute period |
+| Disconnect (> 50% match) | 0% | N/A | Forfeit |
+| Rage quit | 0% | N/A | Forfeit + penalty |
+| Tournament cancelled | 100% | 24 hr | Batch refund |
+
+```typescript
+// Time-based disconnect refund calculation
+calculateDisconnectRefund(match: Match, disconnectTime: Date): number {
+  const matchDuration = match.estimatedDuration; // in seconds
+  const elapsed = (disconnectTime - match.startedAt) / 1000;
+  const progress = elapsed / matchDuration;
+  
+  if (progress < 0.25) return 75;  // Early disconnect
+  if (progress < 0.50) return 50;  // Mid disconnect
+  return 0;                         // Late disconnect = forfeit
+}
+```
+
+---
+
+# 📜 Business Rules: Match Cancellation
+
+## Cancellation Conditions & Consequences
+
+```typescript
+enum CancellationReason {
+  HOST_CANCELLED = 'HOST_CANCELLED',
+  INSUFFICIENT_PLAYERS = 'INSUFFICIENT_PLAYERS',
+  MATCH_TIMEOUT = 'MATCH_TIMEOUT',
+  ADMIN_CANCELLED = 'ADMIN_CANCELLED',
+  SERVER_UNAVAILABLE = 'SERVER_UNAVAILABLE',
+}
+
+async cancelMatch(matchId: string, reason: CancellationReason): Promise<void> {
+  const match = await this.matchService.getMatch(matchId);
+  
+  // Rule 1: Only cancel if not IN_PROGRESS or later
+  if (!match.isCancellable()) {
+    throw new BadRequestException('Match cannot be cancelled after start');
+  }
+  
+  // Rule 2: Host penalty for frequent cancellations
+  if (reason === CancellationReason.HOST_CANCELLED) {
+    const recentCancels = await this.getCancellationCount(match.hostId, 24);
+    if (recentCancels >= 3) {
+      await this.applyHostPenalty(match.hostId); // 24hr match creation ban
+    }
+  }
+  
+  // Rule 3: Auto-refund all participants
+  await this.escrowService.refundEscrow({
+    escrowId: match.escrowId,
+    reason,
+    distributions: match.participants.map(p => ({
+      playerId: p.playerId,
+      amount: match.entryFee,
+      refundType: 'FULL',
+    })),
+  });
+}
+```
+
+---
+
+# 📜 Business Rules: Cancellation Penalties
+
+## Host Accountability System
+
+| Cancellations (24hr) | Penalty | Duration |
+|---------------------|---------|----------|
+| 1-2 | Warning | N/A |
+| 3-4 | 24hr match creation ban | 24 hours |
+| 5+ | 7-day ban + rating penalty | 7 days |
+| Repeat offender | Account review | Indefinite |
+
+```typescript
+// Penalty escalation logic
+async applyHostPenalty(playerId: string): Promise<void> {
+  const cancelHistory = await this.getCancellationHistory(playerId);
+  const recent = cancelHistory.filter(c => c.age < 7 * 24 * 60 * 60 * 1000);
+  
+  if (recent.length >= 10) {
+    // Severe: Account review required
+    await this.flagForReview(playerId, 'EXCESSIVE_CANCELLATIONS');
+    await this.suspendMatchCreation(playerId, 'INDEFINITE');
+  } else if (recent.length >= 5) {
+    // Major: 7-day ban + rating penalty
+    await this.suspendMatchCreation(playerId, 7 * 24 * 60 * 60 * 1000);
+    await this.applyRatingPenalty(playerId, -50);
+  } else if (recent.length >= 3) {
+    // Minor: 24hr ban
+    await this.suspendMatchCreation(playerId, 24 * 60 * 60 * 1000);
+  }
+}
+```
+
+---
+
+# 📜 Business Rules: Dispute Resolution
+
+## Multi-Tier Dispute System
+
+```typescript
+enum DisputeStatus {
+  OPENED = 'OPENED',
+  EVIDENCE_COLLECTION = 'EVIDENCE_COLLECTION',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  ARBITRATION = 'ARBITRATION',
+  RESOLVED = 'RESOLVED',
+  APPEALED = 'APPEALED',
+}
+
+interface Dispute {
+  disputeId: string;
+  matchId: string;
+  claimantId: string;      // Player filing dispute
+  respondentId: string;    // Other player
+  category: DisputeCategory;
+  evidence: Evidence[];
+  status: DisputeStatus;
+  tier: DisputeTier;       // AUTO → SUPPORT → ARBITRATION
+  resolution?: DisputeResolution;
+}
+
+enum DisputeCategory {
+  CHEATING = 'CHEATING',
+  DISCONNECT = 'DISCONNECT',
+  WRONG_RESULT = 'WRONG_RESULT',
+  HARASSMENT = 'HARASSMENT',
+  COLLUSION = 'COLLUSION',
+}
+```
+
+---
+
+# 📜 Business Rules: Dispute Tiers
+
+## Escalation Ladder
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  DISPUTE RESOLUTION TIERS                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  TIER 1: AUTOMATED (< 1 SOL disputes)                      │
+│  ──────────────────────────────────────                    │
+│  • System analyzes game logs automatically                 │
+│  • Resolution within 5 minutes                             │
+│  • Based on objective metrics (disconnect time, etc.)      │
+│                     │                                       │
+│                     ▼ (if inconclusive)                    │
+│                                                             │
+│  TIER 2: SUPPORT REVIEW (1-10 SOL disputes)                │
+│  ──────────────────────────────────────────                │
+│  • Human support agent reviews evidence                    │
+│  • Resolution within 24-48 hours                           │
+│  • Both parties can submit additional evidence             │
+│                     │                                       │
+│                     ▼ (if appealed)                        │
+│                                                             │
+│  TIER 3: ARBITRATION (> 10 SOL or appeals)                 │
+│  ──────────────────────────────────────────                │
+│  • Panel of 3 community arbitrators                        │
+│  • Binding decision within 7 days                          │
+│  • Arbitration fee (refunded if claimant wins)             │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 📜 Business Rules: Dispute Evidence
+
+## Required Evidence Types
+
+```typescript
+interface Evidence {
+  type: EvidenceType;
+  url?: string;
+  hash?: string;        // IPFS/Arweave hash for immutability
+  submittedAt: Date;
+  verifiedAt?: Date;
+}
+
+enum EvidenceType {
+  GAME_LOGS = 'GAME_LOGS',           // Server-side logs
+  REPLAY_FILE = 'REPLAY_FILE',       // Match replay
+  SCREENSHOT = 'SCREENSHOT',         // In-game screenshot
+  VIDEO_CLIP = 'VIDEO_CLIP',         // Recording (< 5 min)
+  CHAT_LOGS = 'CHAT_LOGS',           // Communication history
+  TRANSACTION_PROOF = 'TRANSACTION_PROOF', // On-chain tx
+}
+
+// Evidence requirements by dispute category
+const EVIDENCE_REQUIREMENTS = {
+  CHEATING: ['GAME_LOGS', 'REPLAY_FILE', 'VIDEO_CLIP'],
+  DISCONNECT: ['GAME_LOGS', 'TRANSACTION_PROOF'],
+  WRONG_RESULT: ['GAME_LOGS', 'SCREENSHOT'],
+  HARASSMENT: ['CHAT_LOGS', 'SCREENSHOT'],
+  COLLUSION: ['GAME_LOGS', 'REPLAY_FILE', 'TRANSACTION_PROOF'],
+};
+```
+
+---
+
+# 📜 Business Rules: Timeout Handling
+
+## Match Lifecycle Timeouts
+
+```typescript
+// Configurable timeout values
+const TIMEOUTS = {
+  MATCH_FILL: 30 * 60 * 1000,        // 30 min to fill match
+  PLAYER_READY: 5 * 60 * 1000,       // 5 min ready check
+  MATCH_START: 10 * 60 * 1000,       // 10 min to connect to game
+  RESULT_SUBMIT: 30 * 60 * 1000,     // 30 min after match end
+  DISPUTE_WINDOW: 24 * 60 * 60 * 1000, // 24 hr dispute window
+  PRIZE_CLAIM: 30 * 24 * 60 * 60 * 1000, // 30 days to claim
+};
+
+@Cron('*/5 * * * *') // Every 5 minutes
+async handleMatchTimeouts(): Promise<void> {
+  // Rule 1: Cancel unfilled matches
+  const unfilledMatches = await this.matchRepository.find({
+    where: {
+      status: MatchStatus.WAITING_FOR_PLAYERS,
+      createdAt: LessThan(new Date(Date.now() - TIMEOUTS.MATCH_FILL)),
+    },
+  });
+  
+  for (const match of unfilledMatches) {
+    await this.cancelMatch(match.id, CancellationReason.MATCH_TIMEOUT);
+    // Auto-refund all deposited entry fees
+  }
+}
+```
+
+---
+
+# 📜 Business Rules: Timeout Actions
+
+## Automatic Timeout Handlers
+
+| Timeout | Trigger | Action | Notification |
+|---------|---------|--------|--------------|
+| Match Fill (30m) | No players join | Cancel + refund | Host notified |
+| Ready Check (5m) | Player not ready | Kick + refund | Warning sent |
+| Game Connect (10m) | No connection | Auto-forfeit | Opponent wins |
+| Result Submit (30m) | No result | Admin escalation | Both notified |
+| Dispute Window (24h) | No dispute | Distribute prizes | Final settlement |
+| Prize Claim (30d) | Unclaimed prize | Move to reserve | Last chance email |
+
+```typescript
+// Ready check timeout handling
+async handleReadyTimeout(matchId: string): Promise<void> {
+  const match = await this.matchService.getMatch(matchId);
+  const notReady = match.participants.filter(p => !p.isReady);
+  
+  for (const player of notReady) {
+    // Remove player and refund
+    await this.matchService.removeParticipant(matchId, player.id);
+    await this.walletService.unlockFunds(player.playerId, match.entryFee);
+    
+    // Apply minor penalty (rating -5)
+    await this.applyReadyPenalty(player.playerId);
+  }
+  
+  // Return match to WAITING status if host is ready
+  if (match.host.isReady) {
+    match.status = MatchStatus.WAITING_FOR_PLAYERS;
+  } else {
+    await this.cancelMatch(matchId, CancellationReason.HOST_CANCELLED);
+  }
+}
+```
+
+---
+
+# 📜 Business Rules: Tournament Registration
+
+## Registration Constraints
+
+```typescript
+async registerForTournament(
+  tournamentId: string,
+  playerId: string
+): Promise<TournamentRegistration> {
+  const tournament = await this.getTournament(tournamentId);
+  const player = await this.playerService.getPlayer(playerId);
+  
+  // Rule 1: Registration window
+  if (new Date() > tournament.registrationDeadline) {
+    throw new BadRequestException('Registration closed');
+  }
+  
+  // Rule 2: Capacity check
+  const registrations = await this.getRegistrationCount(tournamentId);
+  if (registrations >= tournament.maxParticipants) {
+    // Add to waitlist if enabled
+    if (tournament.waitlistEnabled) {
+      return this.addToWaitlist(tournamentId, playerId);
+    }
+    throw new BadRequestException('Tournament full');
+  }
+  
+  // Rule 3: Eligibility (skill bounds, KYC, etc.)
+  await this.verifyTournamentEligibility(player, tournament);
+  
+  // Rule 4: No duplicate registration
+  const existing = await this.findRegistration(tournamentId, playerId);
+  if (existing) {
+    throw new ConflictException('Already registered');
+  }
+  
+  // Rule 5: Lock entry fee
+  await this.walletService.lockFunds(playerId, tournament.entryFee);
+}
+```
+
+---
+
+# 📜 Business Rules: Tournament Constraints
+
+## Registration Requirements
+
+| Constraint | Rule | Exception |
+|------------|------|-----------|
+| Registration Window | Opens 7d before, closes 1hr before | Admin override |
+| Min Players | Tournament starts only if min reached | Cancel + refund |
+| Max Players | First-come-first-served | Waitlist fills drops |
+| Entry Fee Lock | Locked at registration | Refund if withdrawn early |
+| Withdrawal Deadline | 24hr before start | 100% refund |
+| Late Withdrawal | < 24hr before start | 50% refund |
+| No-Show | Not present at start | 0% refund + ban |
+
+```typescript
+// Withdrawal refund calculation
+calculateWithdrawalRefund(tournament: Tournament, requestTime: Date): number {
+  const hoursUntilStart = (tournament.startTime - requestTime) / (60 * 60 * 1000);
+  
+  if (hoursUntilStart > 24) return 100;  // Full refund
+  if (hoursUntilStart > 12) return 75;   // 75% refund
+  if (hoursUntilStart > 6) return 50;    // 50% refund
+  if (hoursUntilStart > 1) return 25;    // 25% refund
+  return 0;                               // No refund
+}
+```
+
+---
+
+# 📜 Business Rules: Prize Pool Guarantees
+
+## Guaranteed Prize Pools (GPP)
+
+```typescript
+interface GuaranteedPrizePool {
+  guaranteedAmount: string;   // Minimum prize pool
+  actualPool: string;         // Entry fees collected
+  overlayAmount: string;      // Platform covers shortfall
+  isGuaranteed: boolean;
+}
+
+async calculatePrizePool(tournament: Tournament): Promise<GuaranteedPrizePool> {
+  const registrations = await this.getRegistrationCount(tournament.id);
+  const actualPool = BigInt(tournament.entryFee) * BigInt(registrations);
+  const guaranteedAmount = BigInt(tournament.guaranteedPrizePool || '0');
+  
+  // Platform covers shortfall (overlay)
+  const overlayAmount = guaranteedAmount > actualPool
+    ? guaranteedAmount - actualPool
+    : BigInt(0);
+  
+  return {
+    guaranteedAmount: guaranteedAmount.toString(),
+    actualPool: actualPool.toString(),
+    overlayAmount: overlayAmount.toString(),
+    isGuaranteed: tournament.guaranteedPrizePool != null,
+  };
+}
+
+// Example: 1000 SOL GPP tournament
+// 80 players × 10 SOL = 800 SOL collected
+// Platform overlay: 200 SOL
+// Total prize pool: 1000 SOL (guaranteed)
+```
+
+---
+
+# 📜 Business Rules: GPP Economics
+
+## Guaranteed Pool Scenarios
+
+| Scenario | Entry Fee | Expected | Actual | Overlay | Result |
+|----------|-----------|----------|--------|---------|--------|
+| Under-filled | 10 SOL | 100 players | 80 | 200 SOL | GPP met |
+| Exactly met | 10 SOL | 100 players | 100 | 0 SOL | GPP met |
+| Over-filled | 10 SOL | 100 players | 120 | 0 SOL | +200 SOL |
+
+```typescript
+// Prize pool calculation with GPP
+async finalizePrizePool(tournament: Tournament): Promise<void> {
+  const { actualPool, guaranteedAmount, overlayAmount } = 
+    await this.calculatePrizePool(tournament);
+  
+  // If overlay required, transfer from platform reserve
+  if (BigInt(overlayAmount) > 0) {
+    await this.transferFromPlatformReserve(
+      tournament.escrowId,
+      overlayAmount
+    );
+    
+    // Log overlay for accounting
+    await this.logOverlay({
+      tournamentId: tournament.id,
+      amount: overlayAmount,
+      reason: 'GPP_SHORTFALL',
+    });
+  }
+  
+  // Final pool = max(actual, guaranteed)
+  tournament.finalPrizePool = (
+    BigInt(actualPool) > BigInt(guaranteedAmount)
+      ? actualPool
+      : guaranteedAmount
+  ).toString();
+}
+```
+
+---
+
+# 📜 Business Rules: Anti-Collusion
+
+## Collusion Detection Mechanisms
+
+```typescript
+interface CollusionIndicator {
+  type: CollusionType;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  confidence: number;  // 0-100
+  evidence: string[];
+}
+
+enum CollusionType {
+  CHIP_DUMPING = 'CHIP_DUMPING',       // Intentionally losing
+  WIN_TRADING = 'WIN_TRADING',         // Alternating wins
+  MULTI_ACCOUNTING = 'MULTI_ACCOUNTING', // Same person, multiple accounts
+  SOFT_PLAYING = 'SOFT_PLAYING',       // Not competing when matched
+  GHOSTING = 'GHOSTING',               // External assistance
+}
+
+async detectCollusion(matchId: string): Promise<CollusionIndicator[]> {
+  const indicators: CollusionIndicator[] = [];
+  const match = await this.matchService.getMatch(matchId);
+  
+  // Check 1: Win trading (same players, alternating wins)
+  const history = await this.getMatchHistory(match.participants);
+  if (this.detectWinTrading(history)) {
+    indicators.push({
+      type: CollusionType.WIN_TRADING,
+      severity: 'HIGH',
+      confidence: 85,
+      evidence: ['10 matches, 5-5 split, suspicious timing'],
+    });
+  }
+  
+  // Check 2: IP/Device fingerprint matching
+  // Check 3: Timing anomalies
+  // Check 4: Betting pattern analysis
+  
+  return indicators;
+}
+```
+
+---
+
+# 📜 Business Rules: Collusion Prevention
+
+## Detection Rules & Actions
+
+| Indicator | Detection Method | Action | Appeal |
+|-----------|-----------------|--------|--------|
+| Same IP | Network fingerprint | Block match | Proof of separate identity |
+| Device match | Hardware ID | Account link warning | Explain shared device |
+| Win trading | Win/loss pattern | Flag for review | Match history audit |
+| Chip dumping | Game log analysis | Suspend + investigate | Replay review |
+| Soft playing | Performance metrics | Warning | Prove competitive play |
+
+```typescript
+// Pre-match collusion check
+async validateMatchParticipants(matchId: string): Promise<void> {
+  const match = await this.matchService.getMatch(matchId);
+  const participants = match.participants;
+  
+  for (let i = 0; i < participants.length; i++) {
+    for (let j = i + 1; j < participants.length; j++) {
+      const p1 = participants[i];
+      const p2 = participants[j];
+      
+      // Rule 1: Block same household
+      if (await this.areSameHousehold(p1.playerId, p2.playerId)) {
+        throw new ForbiddenException('Players from same household');
+      }
+      
+      // Rule 2: Check recent suspicious history
+      const suspicionScore = await this.getCollusionScore(p1, p2);
+      if (suspicionScore > 70) {
+        await this.flagForReview(matchId, 'POTENTIAL_COLLUSION');
+        // Allow match but monitor closely
+      }
+    }
+  }
+}
+```
+
+---
+
+# 📜 Business Rules: Abandonment Handling
+
+## Match Abandonment Rules
+
+```typescript
+enum AbandonmentType {
+  DISCONNECT = 'DISCONNECT',       // Network issues
+  QUIT = 'QUIT',                   // Voluntary exit
+  AFK = 'AFK',                     // Away from keyboard
+  CRASH = 'CRASH',                 // Game/system crash
+}
+
+async handleAbandonment(
+  matchId: string,
+  playerId: string,
+  type: AbandonmentType
+): Promise<void> {
+  const match = await this.matchService.getMatch(matchId);
+  
+  // Rule 1: Grace period for reconnection
+  if (type === AbandonmentType.DISCONNECT || type === AbandonmentType.CRASH) {
+    const gracePeriod = match.reconnectGracePeriod || 3 * 60 * 1000; // 3 min
+    
+    await this.startReconnectTimer(matchId, playerId, gracePeriod);
+    return; // Wait for reconnect before forfeit
+  }
+  
+  // Rule 2: Immediate forfeit for quit/AFK
+  if (type === AbandonmentType.QUIT || type === AbandonmentType.AFK) {
+    await this.forfeitPlayer(matchId, playerId);
+    await this.applyAbandonmentPenalty(playerId, type);
+  }
+}
+
+// Reconnect timeout handler
+async onReconnectTimeout(matchId: string, playerId: string): Promise<void> {
+  // Player did not reconnect within grace period
+  await this.forfeitPlayer(matchId, playerId);
+  // Lighter penalty for disconnect vs quit
+  await this.applyAbandonmentPenalty(playerId, AbandonmentType.DISCONNECT);
+}
+```
+
+---
+
+# 📜 Business Rules: Abandonment Penalties
+
+## Progressive Penalty System
+
+| Abandonments (7d) | Type | Penalty | Cooldown |
+|-------------------|------|---------|----------|
+| 1st | Disconnect | Warning | None |
+| 1st | Quit | -10 rating | None |
+| 2nd | Any | -25 rating | 1hr queue ban |
+| 3rd | Any | -50 rating | 6hr queue ban |
+| 4th | Any | -100 rating | 24hr queue ban |
+| 5+ | Any | Account review | 7d ban |
+
+```typescript
+async applyAbandonmentPenalty(
+  playerId: string,
+  type: AbandonmentType
+): Promise<void> {
+  const recentAbandons = await this.getAbandonments(playerId, 7 * 24 * 60 * 60);
+  const count = recentAbandons.length + 1;
+  
+  // Quit is always penalized harder
+  const multiplier = type === AbandonmentType.QUIT ? 1.5 : 1.0;
+  
+  // Rating penalty
+  const ratingPenalty = Math.min(count * 10 * multiplier, 100);
+  await this.applyRatingPenalty(playerId, -ratingPenalty);
+  
+  // Queue ban escalation
+  const banDurations = [0, 0, 1, 6, 24, 168]; // hours
+  const banHours = banDurations[Math.min(count, 5)];
+  if (banHours > 0) {
+    await this.applyQueueBan(playerId, banHours * 60 * 60 * 1000);
+  }
+  
+  // Flag for review if excessive
+  if (count >= 5) {
+    await this.flagForReview(playerId, 'EXCESSIVE_ABANDONMENT');
+  }
+}
+```
+
+---
+
+# 📜 Business Rules: Platform Fee Structure
+
+## Dynamic Fee Configuration
+
+```typescript
+interface FeeStructure {
+  baseFeePercent: number;       // Default platform fee
+  volumeDiscounts: VolumeDiscount[];
+  promotionalRates: PromotionalRate[];
+  gameSpecificFees: Map<string, number>;
+}
+
+// Volume-based discounts for high-value tournaments
+const VOLUME_DISCOUNTS: VolumeDiscount[] = [
+  { minPool: '0', maxPool: '100000000000', feePercent: 5.0 },      // < 100 SOL: 5%
+  { minPool: '100000000000', maxPool: '1000000000000', feePercent: 4.0 }, // 100-1000: 4%
+  { minPool: '1000000000000', maxPool: null, feePercent: 3.0 },   // > 1000 SOL: 3%
+];
+
+async calculatePlatformFee(
+  prizePool: bigint,
+  gameType: string,
+  eventType: string
+): Promise<bigint> {
+  // Base fee from volume tier
+  let feePercent = this.getVolumeBasedFee(prizePool);
+  
+  // Game-specific adjustment
+  const gameAdjustment = this.gameSpecificFees.get(gameType) || 0;
+  feePercent += gameAdjustment;
+  
+  // Promotional override (e.g., launch discount)
+  const promo = await this.getActivePromotion(eventType);
+  if (promo) {
+    feePercent = Math.max(feePercent - promo.discountPercent, 1.0);
+  }
+  
+  // Calculate fee in basis points for precision
+  return (prizePool * BigInt(Math.round(feePercent * 100))) / BigInt(10000);
+}
+```
+
+---
+
+# 📜 Business Rules: Fee Examples
+
+## Platform Fee Calculation Table
+
+| Pool Size | Base Fee | Volume Discount | Promo | Final Fee | Platform Revenue |
+|-----------|----------|-----------------|-------|-----------|------------------|
+| 2 SOL | 5.0% | None | None | 5.0% | 0.10 SOL |
+| 50 SOL | 5.0% | None | -1% launch | 4.0% | 2.00 SOL |
+| 200 SOL | 4.0% | -1% (>100) | None | 4.0% | 8.00 SOL |
+| 500 SOL | 4.0% | -1% (>100) | -1% launch | 3.0% | 15.00 SOL |
+| 2000 SOL | 3.0% | -2% (>1000) | None | 3.0% | 60.00 SOL |
+
+```typescript
+// Fee breakdown for transparency
+interface FeeBreakdown {
+  totalPool: string;
+  baseFeePercent: number;
+  volumeDiscount: number;
+  promotionalDiscount: number;
+  finalFeePercent: number;
+  platformFee: string;
+  distributableAmount: string;
+}
+
+// Always show fee breakdown to users before joining
+async getFeeBreakdown(matchId: string): Promise<FeeBreakdown> {
+  const match = await this.matchService.getMatch(matchId);
+  // ... calculate and return transparent breakdown
+}
+```
+
+---
+
+# �📚 Resources
 
 ### Documentation
 - [Solana Web3.js Docs](https://solana-labs.github.io/solana-web3.js/)
