@@ -56,12 +56,13 @@ style: |
 # 📋 Agenda
 
 1. **System Overview** - Architecture & Components
-2. **MPC Wallet Integration** - Secure Player Wallets
-3. **Matchmaking System** - Entry Fees & Escrow
-4. **Prize Distribution** - Automated Payouts
-5. **Tournament Management** - Bracket Generation
-6. **Security Practices** - Production Considerations
-7. **Implementation Details** - Code Walkthrough
+2. **Service Layer Architecture** - Core Services Deep Dive
+3. **MPC Wallet Integration** - Secure Player Wallets
+4. **Matchmaking System** - Entry Fees & Escrow
+5. **Prize Distribution** - Calculations & Strategies
+6. **Tournament Management** - Bracket Generation
+7. **Security Practices** - Production Considerations
+8. **Implementation Details** - Code Walkthrough
 
 ---
 
@@ -102,7 +103,477 @@ style: |
 ```
 
 ---
+# 🏗️ Service Layer Architecture
 
+## Five Core Services
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SERVICE LAYER                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐                    │
+│  │ PlayerWallet    │    │ Escrow          │                    │
+│  │ Service         │    │ Service         │                    │
+│  │ ─────────────── │    │ ─────────────── │                    │
+│  │ • createWallet  │    │ • createEscrow  │                    │
+│  │ • deposit       │    │ • depositTo     │                    │
+│  │ • withdraw      │    │ • lockEscrow    │                    │
+│  │ • lockFunds     │    │ • releaseEscrow │                    │
+│  │ • creditPrize   │    │ • refundEscrow  │                    │
+│  └────────┬────────┘    └────────┬────────┘                    │
+│           │                      │                              │
+│           └──────────┬───────────┘                              │
+│                      │                                          │
+│  ┌─────────────────┐ │ ┌─────────────────┐                     │
+│  │ Matchmaking     │◄┴►│ Prize           │                     │
+│  │ Service         │   │ Distribution    │                     │
+│  │ ─────────────── │   │ Service         │                     │
+│  │ • createMatch   │   │ ─────────────── │                     │
+│  │ • joinMatch     │   │ • distributeMatch│                    │
+│  │ • startMatch    │   │ • distributeTour │                    │
+│  │ • submitResult  │   │ • getPrizeInfo  │                     │
+│  │ • settleMatch   │   │ • getPrizeHistory│                    │
+│  └─────────────────┘   └─────────────────┘                     │
+│                      │                                          │
+│           ┌──────────┴───────────┐                              │
+│           │                      │                              │
+│  ┌─────────────────┐                                           │
+│  │ Tournament      │                                           │
+│  │ Service         │                                           │
+│  │ ─────────────── │                                           │
+│  │ • createTourn   │                                           │
+│  │ • registerPlayer│                                           │
+│  │ • generateBrkt  │                                           │
+│  │ • advanceWinner │                                           │
+│  │ • finalize      │                                           │
+│  └─────────────────┘                                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 📦 PlayerWalletService
+
+## MPC-Secured Wallet Management
+
+```typescript
+@Injectable()
+export class PlayerWalletService {
+  // Creates MPC wallet with 2-of-3 threshold scheme
+  async createWallet(request: CreatePlayerWalletRequest) {
+    const mpcWallet = await this.mpcService.createMpcWallet({
+      name: `Player Wallet - ${playerId}`,
+      thresholdScheme: ThresholdScheme.TSS_2_3,
+      participants: [
+        { participantId: `player_${playerId}`, ... },  // Device key
+        { participantId: 'platform_signer', ... },     // Platform HSM
+        { participantId: 'recovery_service', ... },    // Cold storage
+      ],
+    });
+    // Store wallet with default limits
+    return this.walletRepository.create({
+      playerId,
+      mpcWalletId: mpcWallet.walletId,
+      dailyWithdrawalLimit: DEFAULT_DAILY_LIMIT, // 10 SOL
+      status: PlayerWalletStatus.ACTIVE,
+    });
+  }
+}
+```
+
+---
+
+# 📦 PlayerWalletService Methods
+
+| Method | Purpose | Key Logic |
+|--------|---------|-----------|
+| `createWallet` | Initialize MPC wallet | 2-of-3 threshold scheme |
+| `deposit` | Record external deposit | Verify on-chain signature |
+| `withdraw` | MPC-signed withdrawal | Rate limit + daily cap |
+| `lockFunds` | Reserve for escrow | Move to `lockedBalance` |
+| `unlockFunds` | Release from escrow | Restore to `availableBalance` |
+| `creditPrize` | Award winnings | Direct credit + audit log |
+
+### Balance Tracking
+```typescript
+interface WalletBalance {
+  availableBalance: string;  // Spendable
+  lockedBalance: string;     // In active matches
+  totalDeposited: string;    // Lifetime in
+  totalWithdrawn: string;    // Lifetime out
+  totalWinnings: string;     // Prize earnings
+}
+```
+
+---
+
+# 🔐 EscrowService
+
+## Trustless Fund Management
+
+```typescript
+@Injectable()
+export class EscrowService {
+  // Generate deterministic escrow address (PDA simulation)
+  private generateEscrowAddress(sourceType, sourceId): string {
+    const seed = `${sourceType}:${sourceId}`;
+    return createHash('sha256')
+      .update(seed)
+      .digest('hex')
+      .slice(0, 44);
+  }
+
+  async createEscrow(request: CreateEscrowRequest) {
+    const escrowAddress = this.generateEscrowAddress(
+      request.sourceType,
+      request.sourceId
+    );
+    return this.escrowRepository.create({
+      escrowId: `escrow_${randomBytes(8).toString('hex')}`,
+      escrowAddress,
+      sourceType,      // MATCH or TOURNAMENT
+      sourceId,        // match_xxx or tournament_xxx
+      platformFeePercent: 5.0,
+      status: EscrowStatus.CREATED,
+    });
+  }
+}
+```
+
+---
+
+# 🔐 EscrowService State Machine
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              ESCROW STATE TRANSITIONS                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   CREATED ──depositToEscrow()──► ACTIVE                         │
+│                                    │                            │
+│                              lockEscrow()                       │
+│                                    │                            │
+│                                    ▼                            │
+│                                 LOCKED                          │
+│                                    │                            │
+│                   ┌────────────────┼────────────────┐           │
+│                   │                │                │           │
+│            releaseEscrow()   refundEscrow()   expireEscrow()   │
+│                   │                │                │           │
+│                   ▼                ▼                ▼           │
+│               RELEASING        REFUNDING        EXPIRED         │
+│                   │                │                            │
+│                   ▼                ▼                            │
+│               RELEASED         REFUNDED                         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 🎯 MatchmakingService
+
+## Core Match Operations
+
+```typescript
+@Injectable()
+export class MatchmakingService {
+  async createMatch(request: CreateMatchRequest): Promise<Match> {
+    // 1. Validate entry fee bounds
+    const minFee = BigInt(process.env.MIN_ENTRY_FEE || '1000000');
+    const maxFee = BigInt(process.env.MAX_ENTRY_FEE || '100000000000');
+    
+    // 2. Create escrow account
+    const escrow = await this.escrowService.createEscrow({
+      sourceType: EscrowSourceType.MATCH,
+      sourceId: matchId,
+      platformFeePercent,
+    });
+    
+    // 3. Create match entity
+    return this.matchRepository.create({
+      matchId,
+      gameType,
+      entryFee,
+      status: MatchStatus.CREATED,
+      escrowAddress: escrow.escrowAddress,
+    });
+  }
+}
+```
+
+---
+
+# 🎯 MatchmakingService - Join Flow
+
+```typescript
+async joinMatch(request: JoinMatchRequest): Promise<MatchParticipant> {
+  const match = await this.getMatchById(matchId);
+  
+  // 1. Validate match is joinable
+  if (!match.isJoinable()) {
+    throw new BadRequestException('Match not accepting players');
+  }
+  
+  // 2. Get player wallet and verify balance
+  const wallet = await this.playerWalletService.getWallet(playerId);
+  if (BigInt(wallet.availableBalance) < BigInt(match.entryFee)) {
+    throw new BadRequestException('Insufficient balance');
+  }
+  
+  // 3. Lock entry fee in player wallet
+  await this.playerWalletService.lockFunds({
+    playerId,
+    amount: match.entryFee,
+    reference: matchId,
+  });
+  
+  // 4. Deposit to escrow
+  await this.escrowService.depositToEscrow({
+    escrowId,
+    walletId: wallet.id,
+    amount: match.entryFee,
+  });
+  
+  // 5. Update prize pool
+  match.prizePool = (BigInt(match.prizePool) + BigInt(entryFee)).toString();
+}
+```
+
+---
+
+# 💰 PrizeDistributionService
+
+## Prize Calculation Strategy
+
+```typescript
+@Injectable()
+export class PrizeDistributionService {
+  async distributeMatchPrizes(match, participants): Promise<PrizeDistribution> {
+    // 1. Get escrow balance
+    const escrowBalance = await this.escrowService.getEscrowBalance(escrowId);
+    const totalPrizePool = BigInt(escrowBalance.currentBalance);
+    
+    // 2. Calculate platform fee (basis points for precision)
+    const platformFee = (totalPrizePool * 
+      BigInt(Math.round(match.platformFeePercent * 100))) / 
+      BigInt(10000);
+    
+    // 3. Calculate distributable amount
+    const distributableAmount = totalPrizePool - platformFee;
+    
+    // 4. Calculate individual distributions
+    const distributions = this.calculateMatchDistributions(
+      match, participants, distributableAmount
+    );
+    
+    // 5. Release escrow and credit wallets
+    await this.escrowService.releaseEscrow({ escrowId, distributions });
+    
+    for (const dist of distributions) {
+      await this.playerWalletService.creditPrize(
+        dist.playerId, dist.amount, match.matchId
+      );
+    }
+  }
+}
+```
+
+---
+
+# 💰 Prize Calculation Methods
+
+## Match Distribution Strategies
+
+```typescript
+private calculateMatchDistributions(
+  match: Match,
+  participants: MatchParticipant[],
+  distributableAmount: bigint
+): PrizeCalculation[] {
+  const distributions: PrizeCalculation[] = [];
+
+  // Strategy 1: Duel (1v1) - Winner Takes All
+  if (match.gameType === 'duel' && match.result?.winnerIds?.length === 1) {
+    const winner = participants.find(p => p.playerId === winnerId);
+    distributions.push({
+      walletId: winner.walletId,
+      playerId: winner.playerId,
+      placement: 1,
+      amount: distributableAmount.toString(),
+      percentage: 100,
+    });
+  }
+  
+  // Strategy 2: Team/Multi-Winner - Equal Split
+  else if (match.result?.winnerIds?.length > 1) {
+    const winnerCount = match.result.winnerIds.length;
+    const prizePerWinner = distributableAmount / BigInt(winnerCount);
+    // ... distribute equally
+  }
+  
+  return distributions;
+}
+```
+
+---
+
+# 💰 Tournament Prize Structure
+
+## Configurable Payout Tiers
+
+```typescript
+private calculateTournamentDistributions(
+  tournament: Tournament,
+  registrations: TournamentRegistration[],
+  distributableAmount: bigint
+): PrizeCalculation[] {
+  const distributions: PrizeCalculation[] = [];
+
+  // Sort by final placement
+  const ranked = registrations
+    .filter(r => r.finalPlacement != null)
+    .sort((a, b) => a.finalPlacement - b.finalPlacement);
+
+  // Apply prize structure
+  for (const prizeEntry of tournament.prizeStructure) {
+    const registration = ranked.find(
+      r => r.finalPlacement === prizeEntry.place
+    );
+    
+    if (registration) {
+      // Support both percentage and fixed amounts
+      const amount = prizeEntry.fixedAmount
+        ? BigInt(prizeEntry.fixedAmount)
+        : (distributableAmount * BigInt(prizeEntry.percentage)) / 100n;
+      
+      distributions.push({
+        playerId: registration.playerId,
+        placement: prizeEntry.place,
+        amount: amount.toString(),
+        percentage: prizeEntry.percentage,
+      });
+    }
+  }
+  return distributions;
+}
+```
+
+---
+
+# 📊 Fee Calculation Deep Dive
+
+## Platform Fee with Basis Points
+
+```typescript
+// Why basis points? Precision without floating point errors
+
+// BAD: Floating point multiplication
+const fee = totalPool * 0.05; // May have rounding errors
+
+// GOOD: Basis points (100 basis points = 1%)
+const platformFee = (totalPrizePool * 
+  BigInt(Math.round(platformFeePercent * 100))) / 
+  BigInt(10000);
+
+// Example: 5% fee on 2 SOL (2,000,000,000 lamports)
+// platformFeePercent = 5.0
+// Math.round(5.0 * 100) = 500 (basis points)
+// (2,000,000,000 * 500) / 10000 = 100,000,000 lamports
+// = 0.1 SOL platform fee
+// Winner receives: 1.9 SOL
+```
+
+| Pool Size | Fee % | Platform Fee | Winner Prize |
+|-----------|-------|--------------|--------------|
+| 2 SOL | 5% | 0.1 SOL | 1.9 SOL |
+| 10 SOL | 5% | 0.5 SOL | 9.5 SOL |
+| 100 SOL | 3% | 3 SOL | 97 SOL |
+
+---
+
+# 🏆 TournamentService
+
+## Bracket Generation Algorithm
+
+```typescript
+@Injectable()
+export class TournamentService {
+  async generateBracket(tournamentId: string): Promise<Tournament> {
+    const tournament = await this.getTournamentById(tournamentId);
+    const registrations = await this.registrationRepository.find({
+      where: { tournamentId: tournament.id },
+    });
+
+    // Seed players (by skill rating or random)
+    const seededPlayers = this.seedPlayers(registrations);
+    
+    // Generate bracket based on type
+    let bracket: BracketNode[];
+    switch (tournament.bracketType) {
+      case BracketType.SINGLE_ELIMINATION:
+        bracket = this.generateSingleElimination(seededPlayers);
+        break;
+      case BracketType.DOUBLE_ELIMINATION:
+        bracket = this.generateDoubleElimination(seededPlayers);
+        break;
+      case BracketType.ROUND_ROBIN:
+        bracket = this.generateRoundRobin(seededPlayers);
+        break;
+    }
+
+    // Create match entities for each bracket slot
+    await this.createBracketMatches(tournament, bracket);
+    
+    return tournament;
+  }
+}
+```
+
+---
+
+# 🏆 Single Elimination Bracket
+
+## Seeded Matchups (Standard 1v8, 2v7, etc.)
+
+```typescript
+private generateSingleElimination(
+  players: TournamentRegistration[]
+): BracketMatch[] {
+  const n = players.length;
+  const rounds = Math.ceil(Math.log2(n));
+  const bracket: BracketMatch[] = [];
+  
+  // First round matchups (seeded)
+  // Seed 1 vs Seed 8, Seed 2 vs Seed 7, etc.
+  for (let i = 0; i < n / 2; i++) {
+    const highSeed = players[i];
+    const lowSeed = players[n - 1 - i];
+    
+    bracket.push({
+      round: 1,
+      position: i,
+      player1Id: highSeed?.playerId,
+      player2Id: lowSeed?.playerId,
+      nextMatchPosition: Math.floor(i / 2),
+    });
+  }
+  
+  // Generate placeholder matches for subsequent rounds
+  for (let round = 2; round <= rounds; round++) {
+    const matchesInRound = Math.pow(2, rounds - round);
+    for (let i = 0; i < matchesInRound; i++) {
+      bracket.push({ round, position: i, player1Id: null, player2Id: null });
+    }
+  }
+  
+  return bracket;
+}
+```
+
+---
 # 🔐 MPC Wallet Architecture
 
 ## Multi-Party Computation (2-of-3 Threshold)
@@ -850,6 +1321,143 @@ export class PrizeDistributionService {
 5. **Liquidity Pools**
    - Yield on idle balances
    - DeFi integration for escrow
+
+---
+
+# 🧮 Advanced Calculation Patterns
+
+## BigInt Safety for Financial Operations
+
+```typescript
+// CRITICAL: Always use BigInt for lamport calculations
+// JavaScript Number.MAX_SAFE_INTEGER = 9,007,199,254,740,991
+// 1 SOL = 1,000,000,000 lamports
+// Max safe: ~9,007 SOL with regular Number
+
+// BAD: Number overflow risk
+const pool = 10000000000 * 2; // Potential precision loss
+
+// GOOD: BigInt for all financial math
+const pool = BigInt('10000000000') * BigInt(2);
+
+// Division truncates (floor), handle remainder
+const prizePerWinner = distributableAmount / BigInt(winnerCount);
+const remainder = distributableAmount % BigInt(winnerCount);
+// Option: Add remainder to 1st place winner
+```
+
+---
+
+# 🧮 Atomic Transaction Pattern
+
+## Database + Blockchain Consistency
+
+```typescript
+async distributeMatchPrizes(match: Match): Promise<PrizeDistribution> {
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  try {
+    // 1. Create prize distribution record (PROCESSING)
+    const prizeDistribution = await queryRunner.manager.save(
+      PrizeDistribution, { status: 'PROCESSING', ... }
+    );
+
+    // 2. Release escrow (on-chain operation)
+    await this.escrowService.releaseEscrow({ escrowId, distributions });
+
+    // 3. Credit each winner's wallet
+    for (const dist of distributions) {
+      await this.playerWalletService.creditPrize(dist.playerId, dist.amount);
+      
+      // 4. Update distribution status individually
+      dist.status = 'completed';
+      dist.processedAt = new Date();
+    }
+
+    // 5. Commit all database changes
+    prizeDistribution.status = 'COMPLETED';
+    await queryRunner.manager.save(prizeDistribution);
+    await queryRunner.commitTransaction();
+    
+    return prizeDistribution;
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    throw error;
+  } finally {
+    await queryRunner.release();
+  }
+}
+```
+
+---
+
+# 🛡️ Error Recovery Strategies
+
+## Partial Distribution Handling
+
+```typescript
+// Prize distribution supports partial success
+for (const dist of distributions) {
+  try {
+    await this.playerWalletService.creditPrize(
+      dist.playerId, dist.amount, sourceId
+    );
+    
+    distEntry.status = 'completed';
+    distEntry.processedAt = new Date();
+    totalDistributed += BigInt(dist.amount);
+    
+  } catch (error) {
+    // Log but continue to next recipient
+    this.logger.error(`Failed to credit ${dist.playerId}`, error);
+    
+    distEntry.status = 'failed';
+    distEntry.failureReason = error.message;
+    // Can be retried later via admin action
+  }
+}
+
+// Final status reflects actual outcome
+prizeDistribution.status = prizeDistribution.isFullyDistributed()
+  ? PrizeDistributionStatus.COMPLETED
+  : PrizeDistributionStatus.PARTIAL;
+```
+
+---
+
+# 📊 Service Interaction Diagram
+
+## Complete Prize Distribution Flow
+
+```
+Player A ───────────────────────────────────────────────────────►
+          │
+          │ 1. joinMatch(entryFee: 1 SOL)
+          ▼
+    ┌─────────────┐
+    │ Matchmaking │──── 2. lockFunds() ────►┌──────────────┐
+    │   Service   │                         │ PlayerWallet │
+    └─────────────┘                         │   Service    │
+          │                                 └──────────────┘
+          │ 3. depositToEscrow()                    ▲
+          ▼                                        │
+    ┌─────────────┐                                │
+    │   Escrow    │◄─── 5. releaseEscrow() ───┐   │
+    │   Service   │                            │   │
+    └─────────────┘                            │   │
+                                               │   │
+    ┌─────────────┐                            │   │
+    │    Prize    │── 6. creditPrize() ────────┼───┘
+    │Distribution │                            │
+    │   Service   │────────────────────────────┘
+    └─────────────┘
+          ▲
+          │ 4. settleMatch(winnerId)
+          │
+Matchmaking Service
+```
 
 ---
 
