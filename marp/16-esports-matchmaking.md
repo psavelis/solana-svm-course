@@ -21,15 +21,23 @@ style: |
     color: #14f195;
     padding: 2px 8px;
     border-radius: 4px;
+    font-size: 0.85em;
   }
   pre {
     background: #2d2d44;
     border-radius: 8px;
-    padding: 16px;
+    padding: 12px;
+    overflow-x: auto;
+    max-width: 100%;
+    font-size: 0.65em;
+    line-height: 1.4;
   }
   pre code {
     background: transparent;
     color: #e0e0e0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
   table {
     font-size: 0.8em;
