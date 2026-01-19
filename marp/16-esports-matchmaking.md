@@ -19,18 +19,18 @@ style: |
   code {
     background: #2d2d44;
     color: #14f195;
-    padding: 2px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
-    font-size: 0.85em;
+    font-size: 0.75em;
   }
   pre {
     background: #2d2d44;
     border-radius: 8px;
-    padding: 12px;
+    padding: 10px;
     overflow-x: auto;
     max-width: 100%;
-    font-size: 0.65em;
-    line-height: 1.4;
+    font-size: 0.55em;
+    line-height: 1.3;
   }
   pre code {
     background: transparent;
@@ -38,9 +38,10 @@ style: |
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    font-size: 1em;
   }
   table {
-    font-size: 0.8em;
+    font-size: 0.7em;
     width: 100%;
     border-collapse: collapse;
   }
