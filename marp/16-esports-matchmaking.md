@@ -27,11 +27,29 @@ style: |
     border-radius: 8px;
     padding: 16px;
   }
+  pre code {
+    background: transparent;
+    color: #e0e0e0;
+  }
   table {
     font-size: 0.8em;
+    width: 100%;
+    border-collapse: collapse;
   }
   th {
     background: #9945ff;
+    color: #ffffff;
+    padding: 8px 12px;
+    font-weight: 600;
+  }
+  td {
+    background: #2d2d44;
+    color: #e0e0e0;
+    padding: 8px 12px;
+    border: 1px solid #3d3d5c;
+  }
+  tr:nth-child(even) td {
+    background: #252540;
   }
   .highlight {
     color: #14f195;
