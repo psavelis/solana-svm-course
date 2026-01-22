@@ -5,6 +5,10 @@
   "author": "",
   "private": true,
   "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "build": "nest build",
     "prepare": "husky",

@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Install Solana CLI and dependencies
 RUN apk add --no-cache \

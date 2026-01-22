@@ -30,7 +30,7 @@ graph TB
     end
 
     subgraph "Infrastructure"
-        DOCKER["Docker<br/>- Multi-stage Dockerfile<br/>- node:18-alpine base<br/>- Production optimization"]
+        DOCKER["Docker<br/>- Multi-stage Dockerfile<br/>- node:22-alpine base<br/>- Production optimization"]
         COMPOSE["Docker Compose<br/>- postgres, kafka, redis<br/>- zookeeper service<br/>- Network isolation<br/>- Volume persistence"]
     end
 

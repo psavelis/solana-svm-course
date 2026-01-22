@@ -4,7 +4,7 @@ A learning and implementation platform for Solana and SVM (Solana Virtual Machin
 
 ## 📚 Complete Course PDF
 
-**📕 [Download Complete Course PDF](marp/solana-svm-study-course-complete-2026-01-22T12-02-18.pdf)** - Full slide deck covering all topics below (19 modules, 5.17 MB)
+**📕 [Download Complete Course PDF](marp/solana-svm-study-course-complete-2026-01-22T12-10-05.pdf)** - Full slide deck covering all topics below (19 modules, 5.17 MB)
 
 ## Course Topics
 
@@ -176,7 +176,7 @@ This repository implements a NestJS-based API service that demonstrates Solana i
 ## Quick Start
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 22+ (LTS)
 - Docker & Docker Compose
 - Git
 

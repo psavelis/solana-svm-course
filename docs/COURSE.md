@@ -721,7 +721,7 @@ Build a Solana SVM management platform that provides APIs for account management
   - Docker and containerization
 
 - **Development Environment**:
-  - Node.js 18+ (check with `node --version`)
+  - Node.js 22+ LTS (check with `node --version`)
   - Docker & Docker Compose (check with `docker --version`)
   - Git (check with `git --version`)
   - VS Code (recommended) with extensions:

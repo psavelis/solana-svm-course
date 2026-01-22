@@ -503,7 +503,7 @@ export class CreateAccountsTable1640000000000 implements MigrationInterface {
 ### Multi-Stage Dockerfile
 ```dockerfile
 # Development stage
-FROM node:18-alpine AS development
+FROM node:22-alpine AS development
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -511,7 +511,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:22-alpine AS production
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
