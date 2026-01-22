@@ -6,6 +6,8 @@ import {
   PrizeDistribution,
   PrizeDistributionStatus,
   PrizeSourceType,
+  PrizeDistributionStrategy,
+  PrizeRiskLevel,
 } from '../entities/prize-distribution.entity';
 import { Match, MatchParticipant } from '../entities/match.entity';
 import { Tournament, TournamentRegistration } from '../entities/tournament.entity';
@@ -29,7 +31,47 @@ export interface PrizeCalculation {
   placement: number;
   amount: string;
   percentage: number;
+  label?: string;
+  isMvp?: boolean;
 }
+
+/**
+ * # Prize Strategy Configurations
+ *
+ * Default prize structures for each distribution strategy.
+ */
+export const PRIZE_STRATEGY_CONFIG: Record<
+  PrizeDistributionStrategy,
+  {
+    riskLevel: PrizeRiskLevel;
+    structure: { place: number; percentage: number; label: string; isMvp?: boolean }[];
+  }
+> = {
+  [PrizeDistributionStrategy.WINNER_TAKES_ALL]: {
+    riskLevel: PrizeRiskLevel.HIGH,
+    structure: [{ place: 1, percentage: 100, label: '1st Place' }],
+  },
+  [PrizeDistributionStrategy.TOP_3_SPLIT]: {
+    riskLevel: PrizeRiskLevel.MEDIUM,
+    structure: [
+      { place: 1, percentage: 60, label: '1st Place' },
+      { place: 2, percentage: 30, label: '2nd Place' },
+      { place: 3, percentage: 10, label: '3rd Place' },
+    ],
+  },
+  [PrizeDistributionStrategy.PERFORMANCE_MVP]: {
+    riskLevel: PrizeRiskLevel.LOW,
+    structure: [
+      { place: 1, percentage: 70, label: '1st Place' },
+      { place: 2, percentage: 20, label: '2nd Place' },
+      { place: 0, percentage: 10, label: 'MVP Bonus', isMvp: true },
+    ],
+  },
+  [PrizeDistributionStrategy.CUSTOM]: {
+    riskLevel: PrizeRiskLevel.MEDIUM,
+    structure: [], // Custom structure provided by user
+  },
+};
 
 @Injectable()
 export class PrizeDistributionService {
@@ -52,6 +94,12 @@ export class PrizeDistributionService {
 
   /**
    * Distribute prizes for a completed match
+   *
+   * Calculates and distributes prizes based on the match's prize strategy:
+   * - WINNER_TAKES_ALL: 100% to winner
+   * - TOP_3_SPLIT: 60%/30%/10% to top 3
+   * - PERFORMANCE_MVP: 70%/20%/10% (winner/2nd/MVP)
+   * - CUSTOM: User-defined structure
    */
   async distributeMatchPrizes(
     match: Match,
@@ -68,8 +116,8 @@ export class PrizeDistributionService {
       (totalPrizePool * BigInt(Math.round(match.platformFeePercent * 100))) / BigInt(10000);
     const distributableAmount = totalPrizePool - platformFee;
 
-    // Calculate distributions based on match type
-    const distributions = this.calculateMatchDistributions(
+    // Calculate distributions based on prize strategy
+    const distributions = this.calculateMatchDistributionsByStrategy(
       match,
       participants,
       distributableAmount,
@@ -84,6 +132,8 @@ export class PrizeDistributionService {
       distributableAmount: distributableAmount.toString(),
       distributedAmount: '0',
       status: PrizeDistributionStatus.PROCESSING,
+      strategy: match.prizeStrategy,
+      riskLevel: match.riskLevel,
       distributions: distributions.map((d) => ({
         ...d,
         status: 'pending' as const,
@@ -166,6 +216,8 @@ export class PrizeDistributionService {
 
   /**
    * Distribute prizes for a completed tournament
+   *
+   * Calculates and distributes prizes based on the tournament's prize strategy.
    */
   async distributeTournamentPrizes(
     tournament: Tournament,
@@ -182,8 +234,8 @@ export class PrizeDistributionService {
       (totalPrizePool * BigInt(Math.round(tournament.platformFeePercent * 100))) / BigInt(10000);
     const distributableAmount = totalPrizePool - platformFee;
 
-    // Calculate distributions based on prize structure
-    const distributions = this.calculateTournamentDistributions(
+    // Calculate distributions based on prize structure and strategy
+    const distributions = this.calculateTournamentDistributionsByStrategy(
       tournament,
       registrations,
       distributableAmount,
@@ -198,6 +250,8 @@ export class PrizeDistributionService {
       distributableAmount: distributableAmount.toString(),
       distributedAmount: '0',
       status: PrizeDistributionStatus.PROCESSING,
+      strategy: tournament.prizeStrategy,
+      riskLevel: tournament.riskLevel,
       distributions: distributions.map((d) => ({
         ...d,
         status: 'pending' as const,
@@ -283,6 +337,8 @@ export class PrizeDistributionService {
 
   /**
    * Get prize info for a match or tournament
+   *
+   * Returns prize pool breakdown based on distribution strategy.
    */
   async getPrizeInfo(
     sourceType: PrizeSourceType,
@@ -291,11 +347,21 @@ export class PrizeDistributionService {
     totalPrizePool: string;
     platformFee: string;
     distributableAmount: string;
-    prizeBreakdown: { placement: number; percentage: number; amount: string }[];
+    strategy: PrizeDistributionStrategy;
+    riskLevel: PrizeRiskLevel;
+    prizeBreakdown: {
+      placement: number;
+      percentage: number;
+      amount: string;
+      label?: string;
+      isMvp?: boolean;
+    }[];
   }> {
     let totalPrizePool: bigint;
     let platformFeePercent: number;
-    let prizeStructure: { place: number; percentage: number }[];
+    let prizeStructure: { place: number; percentage: number; label?: string; isMvp?: boolean }[];
+    let strategy: PrizeDistributionStrategy;
+    let riskLevel: PrizeRiskLevel;
 
     if (sourceType === PrizeSourceType.MATCH) {
       const match = await this.matchRepository.findOne({
@@ -306,8 +372,11 @@ export class PrizeDistributionService {
       }
       totalPrizePool = BigInt(match.prizePool);
       platformFeePercent = match.platformFeePercent;
-      // Default match prize structure: winner takes all
-      prizeStructure = [{ place: 1, percentage: 100 }];
+      strategy = match.prizeStrategy || PrizeDistributionStrategy.WINNER_TAKES_ALL;
+      riskLevel = match.riskLevel || PrizeRiskLevel.HIGH;
+
+      // Get prize structure from match or strategy config
+      prizeStructure = match.prizeStructure || PRIZE_STRATEGY_CONFIG[strategy].structure;
     } else {
       const tournament = await this.tournamentRepository.findOne({
         where: { tournamentId: sourceId },
@@ -317,6 +386,8 @@ export class PrizeDistributionService {
       }
       totalPrizePool = BigInt(tournament.prizePool);
       platformFeePercent = tournament.platformFeePercent;
+      strategy = tournament.prizeStrategy || PrizeDistributionStrategy.TOP_3_SPLIT;
+      riskLevel = tournament.riskLevel || PrizeRiskLevel.MEDIUM;
       prizeStructure = tournament.prizeStructure;
     }
 
@@ -328,12 +399,16 @@ export class PrizeDistributionService {
       placement: ps.place,
       percentage: ps.percentage,
       amount: ((distributableAmount * BigInt(ps.percentage)) / BigInt(100)).toString(),
+      label: ps.label,
+      isMvp: ps.isMvp,
     }));
 
     return {
       totalPrizePool: totalPrizePool.toString(),
       platformFee: platformFee.toString(),
       distributableAmount: distributableAmount.toString(),
+      strategy,
+      riskLevel,
       prizeBreakdown,
     };
   }
@@ -391,52 +466,99 @@ export class PrizeDistributionService {
 
   // Private calculation methods
 
-  private calculateMatchDistributions(
+  /**
+   * Calculate match distributions based on prize strategy
+   *
+   * @param match - Match entity with strategy and results
+   * @param participants - All match participants
+   * @param distributableAmount - Amount after platform fee
+   * @returns Array of prize calculations for each recipient
+   */
+  private calculateMatchDistributionsByStrategy(
     match: Match,
     participants: MatchParticipant[],
     distributableAmount: bigint,
   ): PrizeCalculation[] {
     const distributions: PrizeCalculation[] = [];
+    const strategy = match.prizeStrategy || PrizeDistributionStrategy.WINNER_TAKES_ALL;
 
-    // For duel matches, winner takes all
-    if (match.gameType === 'duel' && match.result?.winnerIds?.length === 1) {
-      const winnerId = match.result.winnerIds[0];
-      const winner = participants.find((p) => p.playerId === winnerId);
+    // Get prize structure from match or default config
+    const prizeStructure =
+      match.prizeStructure && match.prizeStructure.length > 0
+        ? match.prizeStructure
+        : PRIZE_STRATEGY_CONFIG[strategy].structure;
 
-      if (winner) {
-        distributions.push({
-          walletId: winner.walletId,
-          playerId: winner.playerId,
-          placement: 1,
-          amount: distributableAmount.toString(),
-          percentage: 100,
+    if (!match.result?.winnerIds?.length) {
+      return distributions;
+    }
+
+    // Sort participants by placement (based on scores or winner position)
+    const rankedParticipants = this.rankParticipantsByResult(match, participants);
+
+    // Process each prize structure entry
+    for (const prizeEntry of prizeStructure) {
+      let recipient: MatchParticipant | undefined;
+
+      if (prizeEntry.isMvp) {
+        // MVP bonus - use mvpPlayerId from result
+        if (match.result.mvpPlayerId) {
+          recipient = participants.find((p) => p.playerId === match.result.mvpPlayerId);
+        }
+      } else {
+        // Standard placement prize
+        recipient = rankedParticipants.find((p) => {
+          const placement = rankedParticipants.indexOf(p) + 1;
+          return placement === prizeEntry.place;
         });
       }
-    } else if (match.result?.winnerIds) {
-      // Split among winners for team or multi-winner matches
-      const winnerCount = match.result.winnerIds.length;
-      const prizePerWinner = distributableAmount / BigInt(winnerCount);
 
-      for (let i = 0; i < match.result.winnerIds.length; i++) {
-        const winnerId = match.result.winnerIds[i];
-        const winner = participants.find((p) => p.playerId === winnerId);
-
-        if (winner) {
-          distributions.push({
-            walletId: winner.walletId,
-            playerId: winner.playerId,
-            placement: i + 1,
-            amount: prizePerWinner.toString(),
-            percentage: 100 / winnerCount,
-          });
-        }
+      if (recipient) {
+        const amount = (distributableAmount * BigInt(prizeEntry.percentage)) / BigInt(100);
+        distributions.push({
+          walletId: recipient.walletId,
+          playerId: recipient.playerId,
+          placement: prizeEntry.isMvp ? 0 : prizeEntry.place,
+          amount: amount.toString(),
+          percentage: prizeEntry.percentage,
+          label: prizeEntry.label,
+          isMvp: prizeEntry.isMvp,
+        });
       }
     }
 
     return distributions;
   }
 
-  private calculateTournamentDistributions(
+  /**
+   * Rank participants by match result
+   */
+  private rankParticipantsByResult(
+    match: Match,
+    participants: MatchParticipant[],
+  ): MatchParticipant[] {
+    if (!match.result?.winnerIds?.length) {
+      return [];
+    }
+
+    // If we have scores, sort by score descending
+    if (match.result.scores) {
+      return [...participants].sort((a, b) => {
+        const scoreA = match.result.scores?.[a.playerId] ?? 0;
+        const scoreB = match.result.scores?.[b.playerId] ?? 0;
+        return scoreB - scoreA;
+      });
+    }
+
+    // Otherwise, winners first, then others
+    const winners = participants.filter((p) => match.result.winnerIds?.includes(p.playerId));
+    const others = participants.filter((p) => !match.result.winnerIds?.includes(p.playerId));
+    return [...winners, ...others];
+  }
+
+  /**
+   * Calculate tournament distributions based on prize strategy
+   */
+  private calculateTournamentDistributionsByStrategy(
     tournament: Tournament,
     registrations: TournamentRegistration[],
     distributableAmount: bigint,
@@ -449,6 +571,12 @@ export class PrizeDistributionService {
       .sort((a, b) => (a.finalPlacement || 0) - (b.finalPlacement || 0));
 
     for (const prizeEntry of tournament.prizeStructure) {
+      if (prizeEntry.isMvp) {
+        // MVP bonus - would need to be set separately (e.g., via metadata)
+        // For now, skip MVP entries in tournaments unless explicitly handled
+        continue;
+      }
+
       const registration = rankedRegistrations.find((r) => r.finalPlacement === prizeEntry.place);
 
       if (registration) {
@@ -462,10 +590,36 @@ export class PrizeDistributionService {
           placement: prizeEntry.place,
           amount: amount.toString(),
           percentage: prizeEntry.percentage,
+          label: prizeEntry.label,
+          isMvp: prizeEntry.isMvp,
         });
       }
     }
 
     return distributions;
+  }
+
+  // Legacy methods maintained for backward compatibility
+
+  private calculateMatchDistributions(
+    match: Match,
+    participants: MatchParticipant[],
+    distributableAmount: bigint,
+  ): PrizeCalculation[] {
+    // Delegate to new strategy-based method
+    return this.calculateMatchDistributionsByStrategy(match, participants, distributableAmount);
+  }
+
+  private calculateTournamentDistributions(
+    tournament: Tournament,
+    registrations: TournamentRegistration[],
+    distributableAmount: bigint,
+  ): PrizeCalculation[] {
+    // Delegate to new strategy-based method
+    return this.calculateTournamentDistributionsByStrategy(
+      tournament,
+      registrations,
+      distributableAmount,
+    );
   }
 }

@@ -70,6 +70,25 @@ style: |
   .danger {
     color: #ef4444;
   }
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .small-table table {
+    font-size: 0.55em;
+  }
+  .small-table th, .small-table td {
+    padding: 4px 8px;
+  }
+  .tiny-text {
+    font-size: 0.6em;
+  }
+  .compact-diagram pre {
+    font-size: 0.45em;
+    line-height: 1.2;
+    padding: 6px;
+  }
 ---
 
 # 🎮 Solana Esports Platform
@@ -83,13 +102,15 @@ style: |
 # 📋 Agenda
 
 1. **System Overview** - Architecture & Components
-2. **Service Layer Architecture** - Core Services Deep Dive
-3. **MPC Wallet Integration** - Secure Player Wallets
-4. **Matchmaking System** - Entry Fees & Escrow
-5. **Prize Distribution** - Calculations & Strategies
-6. **Tournament Management** - Bracket Generation
-7. **Security Practices** - Production Considerations
-8. **Implementation Details** - Code Walkthrough
+2. **Multi-Token Support** - SOL, USDC, USDT, PYUSD Integration
+3. **Service Layer Architecture** - Core Services Deep Dive
+4. **MPC Wallet Integration** - Secure Player Wallets
+5. **Matchmaking System** - Entry Fees & Escrow
+6. **Prize Distribution** - Calculations & Strategies
+7. **Prize Distribution Strategies** - Winner Takes All, Top 3 Split, MVP
+8. **Tournament Management** - Bracket Generation
+9. **Security Practices** - Production Considerations
+10. **Implementation Details** - Code Walkthrough
 
 ---
 
@@ -130,6 +151,328 @@ style: |
 ```
 
 ---
+
+# 💰 Multi-Token Support
+
+<div class="columns small-table">
+<div>
+
+### Why Multi-Token?
+
+| Benefit | Description |
+|---------|-------------|
+| Price Stability | Fixed USD value during matches |
+| User Choice | Preferred token support |
+| Compliance | USD values for tax reporting |
+| Low Volatility | Stable tournament prizes |
+
+</div>
+<div>
+
+### Supported Tokens
+
+| Token | Type | Decimals |
+|-------|------|----------|
+| SOL | Native | 9 |
+| USDC | Stablecoin | 6 |
+| USDT | Stablecoin | 6 |
+| PYUSD | Stablecoin | 6 |
+| WSOL | Wrapped | 9 |
+
+</div>
+</div>
+
+---
+
+# 💰 Token Configuration Architecture
+
+<div class="columns">
+<div>
+
+### Token Enum
+```typescript
+export enum SupportedToken {
+  SOL = 'SOL',    // 9 decimals
+  USDC = 'USDC',  // 6 decimals
+  USDT = 'USDT',  // 6 decimals
+  PYUSD = 'PYUSD',// 6 decimals
+  WSOL = 'WSOL',  // 9 decimals
+}
+```
+
+</div>
+<div>
+
+### Config Example (USDC)
+```typescript
+[SupportedToken.USDC]: {
+  decimals: 6,
+  mintAddress: {
+    mainnet: 'EPjFWdd5...Dt1v',
+    devnet: '4zMMC9sr...ncDU',
+  },
+  isStablecoin: true,
+  minEntryFee: '100000',
+  maxEntryFee: '100000000000',
+}
+```
+
+</div>
+</div>
+
+---
+
+# 💰 Multi-Token Wallet Architecture
+
+<div class="columns small-table">
+<div>
+
+### Per-Token Balances
+```
+WALLET (MPC 2-of-3)
+├─ SOL: 1.5 avail, 0.5 lock
+├─ USDC: 150 avail, 50 lock
+├─ USDT: 75 avail, 0 lock
+└─ PYUSD: 0 avail, 0 lock
+```
+
+</div>
+<div>
+
+### Balance Isolation
+
+| Match Requires | Can Use |
+|----------------|--------|
+| 10 USDC | USDC only |
+| 1 SOL | SOL only |
+| Mixed | ❌ Never |
+
+⚠️ Prevents cross-token exploits
+
+</div>
+</div>
+
+---
+
+# 💰 Token-Aware Escrow Flow
+
+<div class="columns">
+<div>
+
+### Match Creation
+```typescript
+POST /esports/matches
+{ tokenType: "USDC",
+  entryFee: "5000000" }
+
+// Validates: 0.10 - 100k USDC
+// Creates: USDC escrow + ATA
+```
+
+</div>
+<div>
+
+### Token Enforcement
+```
+Match: USDC
+ ├─ Player 1: USDC ✓
+ ├─ Player 2: USDC ✓
+ └─ Player 3: SOL ✗
+```
+
+⚠️ **Token immutable after creation**
+
+</div>
+</div>
+
+---
+
+# 💰 Decimal Handling
+
+<div class="columns small-table">
+<div>
+
+### Token Decimals
+
+| Token | Dec | 1.00 = |
+|-------|-----|--------|
+| SOL | 9 | `1000000000` |
+| USDC/USDT | 6 | `1000000` |
+
+```typescript
+toBaseUnits('USDC', '10.50')
+// → '10500000'
+```
+
+</div>
+<div>
+
+### ⚠️ Use BigInt!
+```typescript
+// ✅ CORRECT
+const total = BigInt(fee) 
+            * BigInt(count);
+
+// ❌ WRONG!
+const bad = parseFloat(fee) 
+          * count;
+```
+
+</div>
+</div>
+
+---
+
+# 💰 Stablecoin Entry Fee Example
+
+<div class="columns">
+<div>
+
+### $5 USDC Match
+```typescript
+const match = await createMatch({
+  gameType: BATTLE_ROYALE,
+  tokenType: USDC,
+  entryFee: '5000000',
+  maxPlayers: 100,
+  prizeStrategy: TOP_3_SPLIT,
+});
+```
+
+</div>
+<div>
+
+### Prize Pool
+```
+100 × 5 USDC = 500 USDC
+Platform (5%): -25 USDC
+─────────────────────
+Available: 475 USDC
+
+1st: 285 (60%)
+2nd: 142.5 (30%)
+3rd: 47.5 (10%)
+```
+
+</div>
+</div>
+
+---
+
+# 💰 Token Security Checklist
+
+<div class="columns tiny-text">
+<div>
+
+**✓ Mint Address Verification**
+- Hardcoded official addresses
+- No dynamic token addition
+- Separate mainnet/devnet
+
+**✓ Decimal Handling**
+- Always use BigInt
+- Store base units only
+- UI conversion at display
+
+**✓ ATA Management**
+- Create before deposit
+- Validate ownership
+- Handle rent-exempt
+
+</div>
+<div>
+
+**✓ Transfer Validation**
+- Verify mint matches
+- Check balance first
+- Validate recipient ATA
+
+**✓ Balance Isolation**
+- Per-token tracking
+- No cross-token spending
+- Enforced at match level
+
+**✓ Audit Trail**
+- Log token types
+- Track mint addresses
+- Record ATA derivations
+
+</div>
+</div>
+
+---
+
+# 💰 Token Implementation Do's and Don'ts
+
+<div class="columns small-table">
+<div>
+
+### ✅ DO's
+
+| Practice | Reason |
+|----------|--------|
+| Hardcode mint addresses | Prevents substitution attacks |
+| Validate on every transfer | Token type consistency |
+| Use BigInt everywhere | Prevents precision loss |
+| Store base units only | Simplifies calculations |
+| Derive ATAs deterministically | Correct account targeting |
+| Log token type | Aids debugging/auditing |
+
+</div>
+<div>
+
+### ❌ DON'Ts
+
+| Anti-Pattern | Risk |
+|--------------|------|
+| Arbitrary mint addresses | Substitution attacks |
+| Mix token types | Wrong distribution |
+| Use floating point | Precision loss |
+| Skip mint validation | Wrong token accepted |
+| Cross-token operations | Exploitation |
+| Store display amounts | Decimal errors |
+
+</div>
+</div>
+
+---
+
+# 💰 Querying by Token Type
+
+<div class="columns">
+<div>
+
+### Filter Matches/Tournaments
+```typescript
+// Stablecoin matches only
+GET /esports/matches
+  ?stablecoinsOnly=true
+
+// USDC tournaments
+GET /esports/tournaments
+  ?tokenType=USDC
+  &status=REGISTRATION_OPEN
+```
+
+</div>
+<div>
+
+### Response Fields
+```typescript
+interface MatchResponse {
+  matchId: string;
+  tokenType: SupportedToken;
+  tokenMint: string;
+  entryFee: string;
+  prizePool: string;
+}
+```
+
+</div>
+</div>
+
+---
+
 # 🏗️ Service Layer Architecture
 
 ## Five Core Services
@@ -852,7 +1195,335 @@ async distributeMatchPrizes(matchId: string) {
 
 ---
 
-# 🏆 Tournament System
+# � Prize Distribution Strategies
+
+## Flexible Payout Models for Different Use Cases
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 PRIZE DISTRIBUTION STRATEGIES                   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │ WINNER TAKES   │  │    TOP 3        │  │  PERFORMANCE    │ │
+│  │      ALL       │  │    SPLIT        │  │     MVP         │ │
+│  ├─────────────────┤  ├─────────────────┤  ├─────────────────┤ │
+│  │  🥇 100%       │  │  🥇 60%         │  │  🥇 70%         │ │
+│  │                │  │  🥈 30%         │  │  🥈 20%         │ │
+│  │                │  │  🥉 10%         │  │  ⭐ 10% (MVP)   │ │
+│  ├─────────────────┤  ├─────────────────┤  ├─────────────────┤ │
+│  │ Risk: HIGH     │  │ Risk: MEDIUM    │  │ Risk: LOW       │ │
+│  │ Best for: 1v1  │  │ Best for: Comp  │  │ Best for: Casual│ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 🏆 Strategy Types Explained
+
+## Four Distribution Strategies
+
+| Strategy | Description | Risk Level | Best For |
+|----------|-------------|------------|----------|
+| **WINNER_TAKES_ALL** | 100% to 1st place | 🔴 HIGH | 1v1 duels, high-stakes |
+| **TOP_3_SPLIT** | 60/30/10 distribution | 🟡 MEDIUM | Competitive tournaments |
+| **PERFORMANCE_MVP** | 70/20/10 with MVP bonus | 🟢 LOW | Team games, casual |
+| **CUSTOM** | User-defined structure | ⚪ VARIES | Special events |
+
+```typescript
+enum PrizeDistributionStrategy {
+  WINNER_TAKES_ALL = 'WINNER_TAKES_ALL',
+  TOP_3_SPLIT = 'TOP_3_SPLIT',
+  PERFORMANCE_MVP = 'PERFORMANCE_MVP',
+  CUSTOM = 'CUSTOM',
+}
+
+enum PrizeRiskLevel {
+  HIGH = 'HIGH',     // Winner takes all
+  MEDIUM = 'MEDIUM', // Top 3 split
+  LOW = 'LOW',       // MVP bonus included
+}
+```
+
+---
+
+# 💡 Strategy Configuration
+
+## Default Prize Structures by Strategy
+
+```typescript
+const PRIZE_STRATEGY_CONFIG: Record<PrizeDistributionStrategy, PrizeStructure[]> = {
+  WINNER_TAKES_ALL: [
+    { place: 1, percentage: 100, label: 'Winner' }
+  ],
+  
+  TOP_3_SPLIT: [
+    { place: 1, percentage: 60, label: '1st Place' },
+    { place: 2, percentage: 30, label: '2nd Place' },
+    { place: 3, percentage: 10, label: '3rd Place' },
+  ],
+  
+  PERFORMANCE_MVP: [
+    { place: 1, percentage: 70, label: 'Winner' },
+    { place: 2, percentage: 20, label: 'Runner-up' },
+    { place: 0, percentage: 10, label: 'MVP Bonus', isMvp: true },
+  ],
+  
+  CUSTOM: [], // User-defined
+};
+```
+
+---
+
+# 🎮 Winner Takes All Strategy
+
+## High Risk, High Reward (1v1 Duels)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              WINNER TAKES ALL (HIGH RISK)                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   Prize Pool: 10 SOL                                        │
+│   Platform Fee: 5% (0.5 SOL)                                │
+│   Distributable: 9.5 SOL                                    │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │                    🥇 WINNER                        │   │
+│   │                                                     │   │
+│   │                   9.5 SOL (100%)                    │   │
+│   │                                                     │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│   Best for: 1v1 duels, high-stakes matches                  │
+│   Risk: All-or-nothing for participants                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 🏅 Top 3 Split Strategy
+
+## Balanced Competition (Tournaments)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                TOP 3 SPLIT (MEDIUM RISK)                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   Prize Pool: 10 SOL | Platform Fee: 5% | Distributable: 9.5│
+│                                                             │
+│   ┌───────────────────────────────────────────────────┐     │
+│   │           🥇 1ST PLACE: 5.7 SOL (60%)             │     │
+│   └───────────────────────────────────────────────────┘     │
+│                                                             │
+│   ┌─────────────────────────────────────┐                   │
+│   │    🥈 2ND PLACE: 2.85 SOL (30%)     │                   │
+│   └─────────────────────────────────────┘                   │
+│                                                             │
+│   ┌───────────────────────┐                                 │
+│   │ 🥉 3RD: 0.95 SOL (10%)│                                 │
+│   └───────────────────────┘                                 │
+│                                                             │
+│   Best for: Competitive leagues, standard tournaments       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# ⭐ Performance MVP Strategy
+
+## Rewarding Excellence (Team Games)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              PERFORMANCE MVP (LOW RISK)                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   Prize Pool: 10 SOL | Distributable: 9.5 SOL               │
+│                                                             │
+│   ┌─────────────────────────────────────────────────┐       │
+│   │         🥇 WINNER: 6.65 SOL (70%)               │       │
+│   └─────────────────────────────────────────────────┘       │
+│                                                             │
+│   ┌───────────────────────────────┐                         │
+│   │   🥈 RUNNER-UP: 1.9 SOL (20%) │                         │
+│   └───────────────────────────────┘                         │
+│                                                             │
+│   ┌───────────────────────┐    ← Can be ANY participant!    │
+│   │ ⭐ MVP: 0.95 SOL (10%)│                                 │
+│   └───────────────────────┘                                 │
+│                                                             │
+│   MVP: Best performer regardless of match outcome           │
+│   Example: Highest K/D, most objectives, best stats         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 🔧 Strategy Implementation
+
+## Match Creation with Strategy
+
+```typescript
+// Creating a match with specific strategy
+const match = await matchmakingService.createMatch({
+  gameType: 'battle-royale',
+  entryFee: '1000000000',  // 1 SOL
+  maxParticipants: 10,
+  
+  // Strategy configuration
+  prizeStrategy: PrizeDistributionStrategy.PERFORMANCE_MVP,
+  riskLevel: PrizeRiskLevel.LOW,
+  
+  // Optional: Custom structure override
+  prizeStructure: [
+    { place: 1, percentage: 50, label: 'Champion' },
+    { place: 2, percentage: 25, label: 'Runner-up' },
+    { place: 3, percentage: 15, label: 'Third' },
+    { place: 0, percentage: 10, label: 'MVP', isMvp: true },
+  ],
+});
+```
+
+---
+
+# 📝 Submitting Results with MVP
+
+## Performance MVP Requires MVP Selection
+
+```typescript
+// Submit match result with MVP
+await matchmakingService.submitResult(matchId, {
+  winnerIds: ['player_1'],
+  placements: {
+    'player_1': 1,
+    'player_2': 2,
+    'player_3': 3,
+  },
+  
+  // Required for PERFORMANCE_MVP strategy
+  mvpPlayerId: 'player_2',  // MVP can be non-winner!
+  mvpReason: 'Highest K/D ratio: 15/3',
+  
+  metadata: {
+    duration: 1800,
+    gameVersion: '2.1.0',
+  },
+});
+```
+
+### ⚠️ Validation Rules
+- MVP player must be a match participant
+- `mvpReason` recommended for audit trail
+- MVP can receive bonus even if they lost the match
+
+---
+
+# 📊 Strategy Comparison Table
+
+## Choosing the Right Strategy
+
+| Aspect | Winner Takes All | Top 3 Split | Performance MVP |
+|--------|------------------|-------------|-----------------|
+| **Risk** | 🔴 High | 🟡 Medium | 🟢 Low |
+| **Players Rewarded** | 1 | 3 | 2-3 |
+| **MVP Bonus** | ❌ | ❌ | ✅ |
+| **Best Format** | 1v1 Duels | Tournaments | Team Games |
+| **Skill Ceiling** | Very High | High | Moderate |
+| **Player Appeal** | Competitive | Standard | Casual/Inclusive |
+| **Losers Get** | Nothing | Top 3 Only | Potential MVP |
+
+```typescript
+// Query matches by risk level
+const casualMatches = await controller.getMatches({
+  riskLevel: PrizeRiskLevel.LOW,
+  status: MatchStatus.WAITING_FOR_PLAYERS,
+});
+```
+
+---
+
+# 🧮 Distribution Calculation
+
+## Strategy-Based Prize Calculation
+
+```typescript
+calculateDistributionsByStrategy(
+  strategy: PrizeDistributionStrategy,
+  distributableAmount: bigint,
+  participants: Participant[],
+  result: MatchResult,
+): PrizeCalculation[] {
+  const config = PRIZE_STRATEGY_CONFIG[strategy];
+  const distributions: PrizeCalculation[] = [];
+  
+  for (const prizeEntry of config) {
+    if (prizeEntry.isMvp) {
+      // MVP bonus - separate from placement
+      const mvpPlayer = participants.find(
+        p => p.playerId === result.mvpPlayerId
+      );
+      if (mvpPlayer) {
+        distributions.push({
+          playerId: mvpPlayer.playerId,
+          amount: (distributableAmount * BigInt(prizeEntry.percentage)) / 100n,
+          label: 'MVP Bonus',
+          isMvp: true,
+        });
+      }
+    } else {
+      // Placement-based distribution
+      const placedPlayer = participants.find(
+        p => result.placements[p.playerId] === prizeEntry.place
+      );
+      // ... calculate and push
+    }
+  }
+  return distributions;
+}
+```
+
+---
+
+# 🎰 Risk Level Filtering
+
+## Match Discovery by Risk Preference
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              MATCH DISCOVERY BY RISK LEVEL                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   Player Profile: "I prefer lower-risk matches"             │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │  🟢 LOW RISK MATCHES                                │   │
+│   │  ────────────────────                               │   │
+│   │  • Battle Royale - 10 players - 5 SOL pool         │   │
+│   │    Strategy: PERFORMANCE_MVP                        │   │
+│   │    Your worst case: MVP bonus possible              │   │
+│   │                                                     │   │
+│   │  • Team Deathmatch - 8 players - 2 SOL pool        │   │
+│   │    Strategy: TOP_3_SPLIT                            │   │
+│   │    Your worst case: 3rd place = 0.19 SOL           │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │  🔴 HIGH RISK (Hidden by preference)                │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# �🏆 Tournament System
 
 ## Bracket Generation
 
@@ -2355,6 +3026,8 @@ async getFeeBreakdown(matchId: string): Promise<FeeBreakdown> {
 3. **Atomic state machines** prevent fund loss
 4. **Platform co-signing** enables fraud prevention
 5. **Full audit trails** support dispute resolution
+6. **Flexible prize strategies** (Winner Takes All, Top 3, MVP) support diverse use cases
+7. **Risk-based filtering** helps players find matches matching their preferences
 
 ---
 

@@ -10,24 +10,97 @@ import {
   TournamentRegistration,
   RegistrationStatus,
 } from '../entities/tournament.entity';
+import { PrizeDistributionStrategy, PrizeRiskLevel } from '../entities/prize-distribution.entity';
 import { EscrowService } from './escrow.service';
 import { PlayerWalletService } from './player-wallet.service';
 import { MatchmakingService, CreateMatchRequest } from './matchmaking.service';
-import { PrizeDistributionService } from './prize-distribution.service';
+import { PrizeDistributionService, PRIZE_STRATEGY_CONFIG } from './prize-distribution.service';
 import { EscrowSourceType } from '../entities/escrow.entity';
 import { GameType, MatchStatus } from '../entities/match.entity';
+import {
+  SupportedToken,
+  getTokenConfig,
+  getTokenMintAddress,
+  isValidEntryFee,
+  toDisplayAmount,
+  isStablecoin,
+  getStablecoins,
+} from '../entities/token.entity';
 
+/**
+ * # Create Tournament Request
+ *
+ * Request interface for creating a new tournament.
+ *
+ * ## Multi-Token Tournament Support
+ *
+ * Tournaments can be denominated in any supported token:
+ *
+ * ```
+ * ┌──────────────────────────────────────────────────────────────┐
+ * │            TOURNAMENT TOKEN CONSIDERATIONS                   │
+ * ├──────────────────────────────────────────────────────────────┤
+ * │                                                              │
+ * │  STABLECOIN TOURNAMENTS (USDC, USDT, PYUSD):                │
+ * │    ✓ Fixed USD value for entry fees and prizes              │
+ * │    ✓ No volatility during multi-day events                  │
+ * │    ✓ Easier financial planning for organizers               │
+ * │    ✓ Clear tax reporting values                             │
+ * │                                                              │
+ * │  SOL TOURNAMENTS:                                            │
+ * │    ✓ Lower transaction fees                                  │
+ * │    ✓ Native token advantages                                 │
+ * │    ✗ Prize pool value may fluctuate                         │
+ * │    ✗ Entry fee USD value varies                             │
+ * │                                                              │
+ * │  GUARANTEED PRIZE POOLS:                                     │
+ * │    • Must be in same token as entry fee                     │
+ * │    • Organizer must escrow guarantee amount                 │
+ * │    • Released if registration doesn't cover                 │
+ * │                                                              │
+ * └──────────────────────────────────────────────────────────────┘
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Create USDC tournament with guaranteed prize
+ * const request: CreateTournamentRequest = {
+ *   name: 'Monthly Championship',
+ *   gameType: 'BATTLE_ROYALE',
+ *   tokenType: SupportedToken.USDC,
+ *   entryFee: '10000000', // 10 USDC
+ *   guaranteedPrizePool: '100000000', // 100 USDC minimum prize
+ *   maxParticipants: 64,
+ *   bracketType: BracketType.SINGLE_ELIMINATION,
+ * };
+ * ```
+ */
 export interface CreateTournamentRequest {
   name: string;
   description?: string;
   gameType: string;
+  /** Entry fee in base units (lamports for SOL, micro-units for stablecoins) */
   entryFee: string;
+  /**
+   * Token type for entry fee and prize pool.
+   * Defaults to SOL if not specified.
+   * @see SupportedToken
+   */
+  tokenType?: SupportedToken;
+  /** Guaranteed minimum prize pool (must be in same token as entry fee) */
   guaranteedPrizePool?: string;
   maxParticipants: number;
   minParticipants?: number;
   bracketType: BracketType;
   platformFeePercent?: number;
-  prizeStructure: { place: number; percentage: number; fixedAmount?: string }[];
+  prizeStrategy?: PrizeDistributionStrategy;
+  prizeStructure?: {
+    place: number;
+    percentage: number;
+    fixedAmount?: string;
+    label?: string;
+    isMvp?: boolean;
+  }[];
   registrationStart: Date;
   registrationEnd: Date;
   startDate: Date;
@@ -50,6 +123,12 @@ export interface RegisterPlayerRequest {
 export interface TournamentQueryOptions {
   status?: TournamentStatus;
   gameType?: string;
+  prizeStrategy?: PrizeDistributionStrategy;
+  riskLevel?: PrizeRiskLevel;
+  /** Filter by specific token type */
+  tokenType?: SupportedToken;
+  /** Filter to only return stablecoin tournaments */
+  stablecoinsOnly?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -71,6 +150,17 @@ export class TournamentService {
 
   /**
    * Create a new tournament
+   *
+   * Tournaments support configurable prize distribution strategies:
+   * - TOP_3_SPLIT (default): 60%/30%/10% to top 3
+   * - WINNER_TAKES_ALL: 100% to winner
+   * - PERFORMANCE_MVP: 70%/20%/10% (winner/2nd/MVP)
+   * - CUSTOM: User-defined structure
+   *
+   * ## Multi-Token Support
+   *
+   * Tournaments can use any supported token type (SOL, USDC, USDT, PYUSD).
+   * Entry fee limits are validated per token configuration.
    */
   async createTournament(request: CreateTournamentRequest): Promise<Tournament> {
     const {
@@ -78,11 +168,13 @@ export class TournamentService {
       description,
       gameType,
       entryFee,
+      tokenType = SupportedToken.SOL,
       guaranteedPrizePool = '0',
       maxParticipants,
       minParticipants = 2,
       bracketType,
       platformFeePercent = 5.0,
+      prizeStrategy = PrizeDistributionStrategy.TOP_3_SPLIT,
       prizeStructure,
       registrationStart,
       registrationEnd,
@@ -90,8 +182,36 @@ export class TournamentService {
       metadata,
     } = request;
 
+    // Get token configuration and mint address
+    const tokenConfig = getTokenConfig(tokenType);
+    const network = (process.env.SOLANA_NETWORK || 'mainnet') as 'mainnet' | 'devnet';
+    const tokenMint = getTokenMintAddress(tokenType, network);
+
+    // Validate entry fee against token-specific limits
+    if (!isValidEntryFee(tokenType, entryFee)) {
+      const displayMin = toDisplayAmount(tokenType, tokenConfig.minEntryFee);
+      const displayMax = toDisplayAmount(tokenType, tokenConfig.maxEntryFee);
+      throw new BadRequestException(
+        `${tokenConfig.symbol} entry fee must be between ${displayMin} and ${displayMax} ${tokenConfig.symbol}`,
+      );
+    }
+
+    // Determine risk level from strategy
+    const riskLevel = PRIZE_STRATEGY_CONFIG[prizeStrategy].riskLevel;
+
+    // Get default prize structure if not provided
+    let finalPrizeStructure = prizeStructure;
+    if (!finalPrizeStructure || finalPrizeStructure.length === 0) {
+      finalPrizeStructure = PRIZE_STRATEGY_CONFIG[prizeStrategy].structure.map((s) => ({
+        place: s.place,
+        percentage: s.percentage,
+        label: s.label,
+        isMvp: s.isMvp,
+      }));
+    }
+
     // Validate prize structure
-    const totalPercentage = prizeStructure.reduce((sum, ps) => sum + ps.percentage, 0);
+    const totalPercentage = finalPrizeStructure.reduce((sum, ps) => sum + ps.percentage, 0);
     if (totalPercentage > 100) {
       throw new BadRequestException(`Prize structure exceeds 100%: ${totalPercentage}%`);
     }
@@ -101,11 +221,13 @@ export class TournamentService {
 
     const tournamentId = `tournament_${randomBytes(8).toString('hex')}`;
 
-    // Create escrow
+    // Create escrow with token-specific configuration
     const escrow = await this.escrowService.createEscrow({
       sourceType: EscrowSourceType.TOURNAMENT,
       sourceId: tournamentId,
       platformFeePercent,
+      tokenType,
+      tokenMint,
     });
 
     const tournament = this.tournamentRepository.create({
@@ -113,6 +235,8 @@ export class TournamentService {
       name,
       description,
       gameType,
+      tokenType,
+      tokenMint,
       entryFee,
       prizePool: '0',
       guaranteedPrizePool,
@@ -121,7 +245,9 @@ export class TournamentService {
       bracketType,
       status: TournamentStatus.DRAFT,
       platformFeePercent,
-      prizeStructure,
+      prizeStrategy,
+      riskLevel,
+      prizeStructure: finalPrizeStructure,
       escrowAddress: escrow.escrowAddress,
       metadata,
       registrationStart,
@@ -132,7 +258,10 @@ export class TournamentService {
 
     const savedTournament = await this.tournamentRepository.save(tournament);
 
-    this.logger.log(`Created tournament ${tournamentId}: ${name}`);
+    const displayEntryFee = toDisplayAmount(tokenType, entryFee);
+    this.logger.log(
+      `Created tournament ${tournamentId}: ${name}, entry ${displayEntryFee} ${tokenConfig.symbol}, strategy ${prizeStrategy} (${riskLevel} risk)`,
+    );
 
     return savedTournament;
   }
@@ -470,8 +599,13 @@ export class TournamentService {
   /**
    * Get tournaments with filters
    */
+  /**
+   * Get tournaments with filtering
+   *
+   * Supports filtering by strategy and risk level.
+   */
   async getTournaments(options: TournamentQueryOptions = {}): Promise<Tournament[]> {
-    const { status, gameType, limit = 20, offset = 0 } = options;
+    const { status, gameType, prizeStrategy, riskLevel, limit = 20, offset = 0 } = options;
 
     const query = this.tournamentRepository
       .createQueryBuilder('tournament')
@@ -483,6 +617,14 @@ export class TournamentService {
 
     if (gameType) {
       query.andWhere('tournament.gameType = :gameType', { gameType });
+    }
+
+    if (prizeStrategy) {
+      query.andWhere('tournament.prizeStrategy = :prizeStrategy', { prizeStrategy });
+    }
+
+    if (riskLevel) {
+      query.andWhere('tournament.riskLevel = :riskLevel', { riskLevel });
     }
 
     query.orderBy('tournament.startDate', 'ASC').skip(offset).take(limit);

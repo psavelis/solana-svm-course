@@ -55,7 +55,12 @@ import {
 
 import { GameType, MatchStatus } from './entities/match.entity';
 import { TournamentStatus, BracketType } from './entities/tournament.entity';
-import { PrizeSourceType } from './entities/prize-distribution.entity';
+import {
+  PrizeSourceType,
+  PrizeDistributionStrategy,
+  PrizeRiskLevel,
+} from './entities/prize-distribution.entity';
+import { SupportedToken } from './entities/token.entity';
 
 /**
  * # Esports Controller
@@ -96,13 +101,23 @@ export class EsportsController {
   /**
    * Create a new monetized match
    *
-   * Creates a match with entry fee requirements and initializes
-   * an escrow account to hold player funds until match completion.
+   * Creates a match with entry fee requirements, escrow account,
+   * and configurable prize distribution strategy.
+   *
+   * ## Prize Distribution Strategies
+   *
+   * | Strategy | Risk | Distribution |
+   * |----------|------|--------------|
+   * | WINNER_TAKES_ALL | High | 100% to winner |
+   * | TOP_3_SPLIT | Medium | 60%/30%/10% to top 3 |
+   * | PERFORMANCE_MVP | Low | 70%/20%/10% (winner/2nd/MVP) |
+   * | CUSTOM | Variable | User-defined structure |
    */
   @Post('matches')
   @ApiOperation({
     summary: 'Create monetized match',
-    description: 'Create a new match with entry fee and escrow',
+    description:
+      'Create a new match with entry fee, escrow, and prize distribution strategy. Supports multiple token types (SOL, USDC, USDT, PYUSD).',
   })
   @ApiBody({ type: CreateMatchDto })
   @ApiResponse({ status: 201, type: MatchResponseDto })
@@ -110,9 +125,12 @@ export class EsportsController {
     const match = await this.matchmakingService.createMatch({
       gameType: dto.gameType,
       entryFee: dto.entryFee,
+      tokenType: dto.tokenType,
       minPlayers: dto.minPlayers,
       maxPlayers: dto.maxPlayers,
       platformFeePercent: dto.platformFeePercent,
+      prizeStrategy: dto.prizeStrategy,
+      prizeStructure: dto.prizeStructure,
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
       metadata: dto.metadata,
     });
@@ -179,12 +197,14 @@ export class EsportsController {
    *
    * Records the match outcome, triggers prize calculation,
    * and initiates automated prize distribution to winners.
+   *
+   * For PERFORMANCE_MVP strategy, provide mvpPlayerId in request.
    */
   @Post('matches/:matchId/result')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Submit match result',
-    description: 'Record result and trigger prize distribution',
+    description: 'Record result and trigger prize distribution based on strategy',
   })
   @ApiParam({ name: 'matchId', description: 'Match identifier' })
   @ApiBody({ type: SubmitResultDto })
@@ -197,6 +217,8 @@ export class EsportsController {
       matchId,
       winnerIds: dto.winnerIds,
       scores: dto.scores,
+      mvpPlayerId: dto.mvpPlayerId,
+      mvpReason: dto.mvpReason,
       proof: dto.proof,
       submittedBy: dto.submittedBy,
     });
@@ -236,6 +258,8 @@ export class EsportsController {
 
   /**
    * List matches with filters
+   *
+   * Supports filtering by prize strategy and risk level.
    */
   @Get('matches')
   @ApiOperation({ summary: 'List matches' })
@@ -244,6 +268,8 @@ export class EsportsController {
     const matches = await this.matchmakingService.getMatches({
       status: query.status,
       gameType: query.gameType,
+      prizeStrategy: query.prizeStrategy,
+      riskLevel: query.riskLevel,
       minEntryFee: query.minEntryFee,
       maxEntryFee: query.maxEntryFee,
       limit: query.limit,
@@ -437,11 +463,14 @@ export class EsportsController {
 
   /**
    * Create tournament
+   *
+   * Creates a tournament with configurable prize distribution strategy.
    */
   @Post('tournaments')
   @ApiOperation({
     summary: 'Create tournament',
-    description: 'Create tournament with prize structure',
+    description:
+      'Create tournament with prize structure and distribution strategy. Supports multiple token types (SOL, USDC, USDT, PYUSD).',
   })
   @ApiBody({ type: CreateTournamentDto })
   @ApiResponse({ status: 201, type: TournamentResponseDto })
@@ -451,11 +480,13 @@ export class EsportsController {
       description: dto.description,
       gameType: dto.gameType,
       entryFee: dto.entryFee,
+      tokenType: dto.tokenType,
       guaranteedPrizePool: dto.guaranteedPrizePool,
       maxParticipants: dto.maxParticipants,
       minParticipants: dto.minParticipants,
       bracketType: dto.bracketType,
       platformFeePercent: dto.platformFeePercent,
+      prizeStrategy: dto.prizeStrategy,
       prizeStructure: dto.prizeStructure,
       registrationStart: new Date(dto.registrationStart),
       registrationEnd: new Date(dto.registrationEnd),
@@ -556,6 +587,8 @@ export class EsportsController {
 
   /**
    * List tournaments
+   *
+   * Supports filtering by prize strategy and risk level.
    */
   @Get('tournaments')
   @ApiOperation({ summary: 'List tournaments' })
@@ -564,6 +597,8 @@ export class EsportsController {
     const tournaments = await this.tournamentService.getTournaments({
       status: query.status,
       gameType: query.gameType,
+      prizeStrategy: query.prizeStrategy,
+      riskLevel: query.riskLevel,
       limit: query.limit,
       offset: query.offset,
     });
@@ -645,6 +680,8 @@ export class EsportsController {
       distributableAmount: distribution.distributableAmount,
       distributedAmount: distribution.distributedAmount,
       status: distribution.status,
+      strategy: distribution.strategy,
+      riskLevel: distribution.riskLevel,
       distributions: distribution.distributions,
       distributedAt: distribution.distributedAt,
       createdAt: distribution.createdAt,
@@ -677,6 +714,8 @@ export class EsportsController {
       distributableAmount: d.distributableAmount,
       distributedAmount: d.distributedAmount,
       status: d.status,
+      strategy: d.strategy,
+      riskLevel: d.riskLevel,
       distributions: d.distributions,
       distributedAt: d.distributedAt,
       createdAt: d.createdAt,
@@ -690,14 +729,20 @@ export class EsportsController {
       id: match.id,
       matchId: match.matchId,
       gameType: match.gameType,
+      tokenType: match.tokenType || SupportedToken.SOL,
+      tokenMint: match.tokenMint,
       entryFee: match.entryFee,
       minPlayers: match.minPlayers,
       maxPlayers: match.maxPlayers,
       currentPlayers: match.getCurrentPlayerCount?.() || match.participants?.length || 0,
       prizePool: match.prizePool,
       platformFeePercent: match.platformFeePercent,
+      prizeStrategy: match.prizeStrategy || PrizeDistributionStrategy.WINNER_TAKES_ALL,
+      riskLevel: match.riskLevel || PrizeRiskLevel.HIGH,
+      prizeStructure: match.prizeStructure,
       status: match.status,
       winnerId: match.winnerId,
+      mvpPlayerId: match.result?.mvpPlayerId,
       escrowAddress: match.escrowAddress,
       metadata: match.metadata,
       scheduledAt: match.scheduledAt,
@@ -732,6 +777,8 @@ export class EsportsController {
       name: tournament.name,
       description: tournament.description,
       gameType: tournament.gameType,
+      tokenType: tournament.tokenType || SupportedToken.SOL,
+      tokenMint: tournament.tokenMint,
       entryFee: tournament.entryFee,
       prizePool: tournament.prizePool,
       guaranteedPrizePool: tournament.guaranteedPrizePool,
@@ -741,6 +788,8 @@ export class EsportsController {
       bracketType: tournament.bracketType,
       status: tournament.status,
       platformFeePercent: tournament.platformFeePercent,
+      prizeStrategy: tournament.prizeStrategy || PrizeDistributionStrategy.TOP_3_SPLIT,
+      riskLevel: tournament.riskLevel || PrizeRiskLevel.MEDIUM,
       prizeStructure: tournament.prizeStructure,
       escrowAddress: tournament.escrowAddress,
       metadata: tournament.metadata,

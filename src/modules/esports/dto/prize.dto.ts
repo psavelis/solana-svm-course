@@ -7,9 +7,15 @@ import {
   IsEnum,
   IsOptional,
   IsNumber,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PrizeDistributionStatus, PrizeSourceType } from '../entities/prize-distribution.entity';
+import {
+  PrizeDistributionStatus,
+  PrizeSourceType,
+  PrizeDistributionStrategy,
+  PrizeRiskLevel,
+} from '../entities/prize-distribution.entity';
 
 export class PrizeRecipientDto {
   @ApiProperty({ description: 'Player ID receiving prize', example: 'player_123' })
@@ -64,6 +70,8 @@ export class PrizeDistributionItemDto {
   @ApiProperty() placement: number;
   @ApiProperty() amount: string;
   @ApiProperty() percentage: number;
+  @ApiPropertyOptional() label?: string;
+  @ApiPropertyOptional() isMvp?: boolean;
   @ApiPropertyOptional() signature?: string;
   @ApiProperty() status: 'pending' | 'completed' | 'failed';
   @ApiPropertyOptional() failureReason?: string;
@@ -79,6 +87,8 @@ export class PrizeDistributionResponseDto {
   @ApiProperty() distributableAmount: string;
   @ApiProperty() distributedAmount: string;
   @ApiProperty({ enum: PrizeDistributionStatus }) status: PrizeDistributionStatus;
+  @ApiProperty({ enum: PrizeDistributionStrategy }) strategy: PrizeDistributionStrategy;
+  @ApiProperty({ enum: PrizeRiskLevel }) riskLevel: PrizeRiskLevel;
   @ApiProperty({ type: [PrizeDistributionItemDto] }) distributions: PrizeDistributionItemDto[];
   @ApiPropertyOptional() distributedAt?: Date;
   @ApiProperty() createdAt: Date;
@@ -90,11 +100,15 @@ export class PrizeInfoResponseDto {
   @ApiProperty() totalPrizePool: string;
   @ApiProperty() platformFee: string;
   @ApiProperty() distributableAmount: string;
+  @ApiProperty({ enum: PrizeDistributionStrategy }) strategy: PrizeDistributionStrategy;
+  @ApiProperty({ enum: PrizeRiskLevel }) riskLevel: PrizeRiskLevel;
   @ApiProperty()
   prizeBreakdown: {
     placement: number;
     percentage: number;
     amount: string;
+    label?: string;
+    isMvp?: boolean;
   }[];
 }
 

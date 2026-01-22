@@ -10,17 +10,85 @@ import {
   MatchParticipant,
   ParticipantStatus,
 } from '../entities/match.entity';
+import { PrizeDistributionStrategy, PrizeRiskLevel } from '../entities/prize-distribution.entity';
 import { EscrowService } from './escrow.service';
 import { PlayerWalletService } from './player-wallet.service';
-import { PrizeDistributionService } from './prize-distribution.service';
+import { PrizeDistributionService, PRIZE_STRATEGY_CONFIG } from './prize-distribution.service';
 import { EscrowSourceType } from '../entities/escrow.entity';
+import {
+  SupportedToken,
+  getTokenConfig,
+  getTokenMintAddress,
+  isValidEntryFee,
+  toDisplayAmount,
+} from '../entities/token.entity';
 
+/**
+ * # Create Match Request
+ *
+ * Request interface for creating a new monetized match.
+ *
+ * ## Multi-Token Support
+ *
+ * The platform supports multiple token types for entry fees:
+ *
+ * | Token | Decimals | Use Case |
+ * |-------|----------|----------|
+ * | SOL | 9 | Native, low-fee transactions |
+ * | USDC | 6 | Stable value, USD-pegged |
+ * | USDT | 6 | Stable value, USD-pegged |
+ * | PYUSD | 6 | PayPal USD, stable value |
+ *
+ * ## Token Selection Flow
+ *
+ * ```
+ * ┌──────────────────────────────────────────────────────────────┐
+ * │                  TOKEN SELECTION FLOW                        │
+ * ├──────────────────────────────────────────────────────────────┤
+ * │                                                              │
+ * │  1. Creator selects token type (defaults to SOL)            │
+ * │  2. Entry fee validated against token-specific limits       │
+ * │  3. Token mint address resolved from TOKEN_CONFIG           │
+ * │  4. Escrow created with token-specific account              │
+ * │  5. All participants must pay in same token                 │
+ * │                                                              │
+ * │  IMPORTANT: Once created, match token type CANNOT change    │
+ * │                                                              │
+ * └──────────────────────────────────────────────────────────────┘
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Create match with USDC entry fee
+ * const request: CreateMatchRequest = {
+ *   gameType: GameType.BATTLE_ROYALE,
+ *   tokenType: SupportedToken.USDC,
+ *   entryFee: '5000000', // 5 USDC (6 decimals)
+ *   maxPlayers: 100,
+ *   prizeStrategy: PrizeDistributionStrategy.TOP_3_SPLIT,
+ * };
+ * ```
+ */
 export interface CreateMatchRequest {
   gameType: GameType;
+  /** Entry fee in base units (lamports for SOL, micro-units for stablecoins) */
   entryFee: string;
+  /**
+   * Token type for entry fee and prize pool.
+   * Defaults to SOL if not specified.
+   * @see SupportedToken
+   */
+  tokenType?: SupportedToken;
   minPlayers?: number;
   maxPlayers?: number;
   platformFeePercent?: number;
+  prizeStrategy?: PrizeDistributionStrategy;
+  prizeStructure?: {
+    place: number;
+    percentage: number;
+    label?: string;
+    isMvp?: boolean;
+  }[];
   scheduledAt?: Date;
   metadata?: {
     gameName?: string;
@@ -42,6 +110,8 @@ export interface SubmitResultRequest {
   matchId: string;
   winnerIds: string[];
   scores?: Record<string, number>;
+  mvpPlayerId?: string;
+  mvpReason?: string;
   proof?: string;
   submittedBy: string;
 }
@@ -49,6 +119,12 @@ export interface SubmitResultRequest {
 export interface MatchQueryOptions {
   status?: MatchStatus;
   gameType?: GameType;
+  prizeStrategy?: PrizeDistributionStrategy;
+  riskLevel?: PrizeRiskLevel;
+  /** Filter by specific token type */
+  tokenType?: SupportedToken;
+  /** Filter to only return stablecoin matches */
+  stablecoinsOnly?: boolean;
   minEntryFee?: string;
   maxEntryFee?: string;
   limit?: number;
@@ -71,47 +147,106 @@ export class MatchmakingService {
 
   /**
    * Create a new monetized match
+   *
+   * Creates a match with configurable prize distribution strategy:
+   * - WINNER_TAKES_ALL (High Risk): 100% to winner
+   * - TOP_3_SPLIT (Medium Risk): 60%/30%/10% to top 3
+   * - PERFORMANCE_MVP (Low Risk): 70%/20%/10% (winner/2nd/MVP)
+   * - CUSTOM: User-defined structure
+   *
+   * ## Multi-Token Support
+   *
+   * The match can use any supported token type for entry fees:
+   * - SOL: Native token, 9 decimals
+   * - USDC/USDT/PYUSD: Stablecoins, 6 decimals
+   *
+   * Entry fee limits are token-specific and defined in TOKEN_CONFIG.
    */
   async createMatch(request: CreateMatchRequest): Promise<Match> {
     const {
       gameType,
       entryFee,
+      tokenType = SupportedToken.SOL,
       minPlayers = 2,
       maxPlayers = 2,
       platformFeePercent = 5.0,
+      prizeStrategy = PrizeDistributionStrategy.WINNER_TAKES_ALL,
+      prizeStructure,
       scheduledAt,
       metadata,
     } = request;
 
-    // Validate entry fee
-    const minEntryFee = BigInt(process.env.ESPORTS_MIN_ENTRY_FEE_LAMPORTS || '1000000');
-    const maxEntryFee = BigInt(process.env.ESPORTS_MAX_ENTRY_FEE_LAMPORTS || '100000000000');
+    // Get token configuration
+    const tokenConfig = getTokenConfig(tokenType);
+    const network = (process.env.SOLANA_NETWORK || 'mainnet') as 'mainnet' | 'devnet';
+    const tokenMint = getTokenMintAddress(tokenType, network);
 
-    if (BigInt(entryFee) < minEntryFee || BigInt(entryFee) > maxEntryFee) {
+    // Validate entry fee against token-specific limits
+    if (!isValidEntryFee(tokenType, entryFee)) {
+      const displayMin = toDisplayAmount(tokenType, tokenConfig.minEntryFee);
+      const displayMax = toDisplayAmount(tokenType, tokenConfig.maxEntryFee);
       throw new BadRequestException(
-        `Entry fee must be between ${minEntryFee} and ${maxEntryFee} lamports`,
+        `${tokenConfig.symbol} entry fee must be between ${displayMin} and ${displayMax} ${tokenConfig.symbol}`,
       );
     }
+
+    // Validate prize structure if CUSTOM strategy
+    if (prizeStrategy === PrizeDistributionStrategy.CUSTOM) {
+      if (!prizeStructure || prizeStructure.length === 0) {
+        throw new BadRequestException('Prize structure is required for CUSTOM strategy');
+      }
+      const totalPercentage = prizeStructure.reduce((sum, p) => sum + p.percentage, 0);
+      if (totalPercentage !== 100) {
+        throw new BadRequestException(
+          `Prize structure percentages must sum to 100, got ${totalPercentage}`,
+        );
+      }
+    }
+
+    // Validate player count for strategies that require more placements
+    if (prizeStrategy === PrizeDistributionStrategy.TOP_3_SPLIT && maxPlayers < 3) {
+      throw new BadRequestException('TOP_3_SPLIT strategy requires at least 3 players');
+    }
+    if (prizeStrategy === PrizeDistributionStrategy.PERFORMANCE_MVP && maxPlayers < 2) {
+      throw new BadRequestException('PERFORMANCE_MVP strategy requires at least 2 players');
+    }
+
+    // Determine risk level from strategy
+    const riskLevel = PRIZE_STRATEGY_CONFIG[prizeStrategy].riskLevel;
+
+    // Get default prize structure if not provided
+    const finalPrizeStructure =
+      prizeStructure ||
+      (prizeStrategy !== PrizeDistributionStrategy.CUSTOM
+        ? PRIZE_STRATEGY_CONFIG[prizeStrategy].structure
+        : []);
 
     // Generate match ID
     const matchId = `match_${randomBytes(8).toString('hex')}`;
 
-    // Create escrow account for the match
+    // Create escrow account for the match with token-specific configuration
     const escrow = await this.escrowService.createEscrow({
       sourceType: EscrowSourceType.MATCH,
       sourceId: matchId,
       platformFeePercent,
+      tokenType,
+      tokenMint,
     });
 
-    // Create match
+    // Create match with token configuration
     const match = this.matchRepository.create({
       matchId,
       gameType,
+      tokenType,
+      tokenMint,
       entryFee,
       minPlayers,
       maxPlayers,
       prizePool: '0',
       platformFeePercent,
+      prizeStrategy,
+      riskLevel,
+      prizeStructure: finalPrizeStructure,
       status: MatchStatus.CREATED,
       escrowAddress: escrow.escrowAddress,
       metadata,
@@ -121,7 +256,10 @@ export class MatchmakingService {
 
     const savedMatch = await this.matchRepository.save(match);
 
-    this.logger.log(`Created match ${matchId}: ${gameType}, entry fee ${entryFee}`);
+    const displayEntryFee = toDisplayAmount(tokenType, entryFee);
+    this.logger.log(
+      `Created match ${matchId}: ${gameType}, entry fee ${displayEntryFee} ${tokenConfig.symbol}, strategy ${prizeStrategy} (${riskLevel} risk)`,
+    );
 
     return savedMatch;
   }
@@ -250,9 +388,14 @@ export class MatchmakingService {
 
   /**
    * Submit match result and trigger prize distribution
+   *
+   * Validates result data and distributes prizes based on the match's strategy:
+   * - For PERFORMANCE_MVP: requires mvpPlayerId in request
+   * - For TOP_3_SPLIT: distributes to top 3 based on scores
+   * - For WINNER_TAKES_ALL: gives 100% to first winner
    */
   async submitResult(request: SubmitResultRequest): Promise<Match> {
-    const { matchId, winnerIds, scores, proof, submittedBy } = request;
+    const { matchId, winnerIds, scores, mvpPlayerId, mvpReason, proof, submittedBy } = request;
 
     const match = await this.getMatchById(matchId);
 
@@ -272,6 +415,18 @@ export class MatchmakingService {
       throw new BadRequestException(`Invalid winner IDs: ${invalidWinners.join(', ')}`);
     }
 
+    // Validate MVP for PERFORMANCE_MVP strategy
+    if (match.prizeStrategy === PrizeDistributionStrategy.PERFORMANCE_MVP) {
+      if (!mvpPlayerId) {
+        throw new BadRequestException(
+          'MVP player ID is required for PERFORMANCE_MVP prize strategy',
+        );
+      }
+      if (!participantPlayerIds.includes(mvpPlayerId)) {
+        throw new BadRequestException(`MVP player ${mvpPlayerId} is not a match participant`);
+      }
+    }
+
     // Update match result
     match.result = {
       winnerIds,
@@ -279,6 +434,8 @@ export class MatchmakingService {
       proof,
       submittedBy,
       verifiedAt: new Date(),
+      mvpPlayerId,
+      mvpReason,
     };
     match.status = MatchStatus.COMPLETED;
     match.endedAt = new Date();
@@ -286,11 +443,17 @@ export class MatchmakingService {
 
     await this.matchRepository.save(match);
 
-    // Update participant placements
-    for (let i = 0; i < winnerIds.length; i++) {
-      const winnerId = winnerIds[i];
+    // Update participant placements based on scores or winner order
+    const rankedPlayerIds = scores
+      ? Object.entries(scores)
+          .sort(([, a], [, b]) => b - a)
+          .map(([id]) => id)
+      : winnerIds;
+
+    for (let i = 0; i < rankedPlayerIds.length; i++) {
+      const playerId = rankedPlayerIds[i];
       await this.participantRepository.update(
-        { matchId: match.id, playerId: winnerId },
+        { matchId: match.id, playerId },
         {
           status: ParticipantStatus.FINISHED,
           placement: i + 1,
@@ -380,9 +543,20 @@ export class MatchmakingService {
 
   /**
    * Get matches with filtering
+   *
+   * Supports filtering by strategy and risk level.
    */
   async getMatches(options: MatchQueryOptions = {}): Promise<Match[]> {
-    const { status, gameType, minEntryFee, maxEntryFee, limit = 20, offset = 0 } = options;
+    const {
+      status,
+      gameType,
+      prizeStrategy,
+      riskLevel,
+      minEntryFee,
+      maxEntryFee,
+      limit = 20,
+      offset = 0,
+    } = options;
 
     const query = this.matchRepository
       .createQueryBuilder('match')
@@ -394,6 +568,14 @@ export class MatchmakingService {
 
     if (gameType) {
       query.andWhere('match.gameType = :gameType', { gameType });
+    }
+
+    if (prizeStrategy) {
+      query.andWhere('match.prizeStrategy = :prizeStrategy', { prizeStrategy });
+    }
+
+    if (riskLevel) {
+      query.andWhere('match.riskLevel = :riskLevel', { riskLevel });
     }
 
     if (minEntryFee) {

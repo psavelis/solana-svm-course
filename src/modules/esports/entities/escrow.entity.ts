@@ -7,6 +7,7 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
+import { SupportedToken } from './token.entity';
 
 /**
  * # Escrow Status
@@ -126,6 +127,7 @@ export enum EscrowTransactionType {
 @Entity('esports_escrow_accounts')
 @Index(['sourceType', 'sourceId'])
 @Index(['status'])
+@Index(['tokenType'])
 export class EscrowAccount {
   /** Unique internal identifier (UUID) */
   @PrimaryGeneratedColumn('uuid')
@@ -138,6 +140,39 @@ export class EscrowAccount {
   /** Solana PDA address for this escrow */
   @Column()
   escrowAddress: string;
+
+  /**
+   * Token type for this escrow
+   * @see SupportedToken
+   *
+   * ## Multi-Token Escrow
+   *
+   * Each escrow account is token-specific:
+   * - SOL escrows hold native SOL
+   * - SPL escrows hold specific token (USDC, USDT, etc.)
+   *
+   * @security CRITICAL: Token type is immutable after creation
+   */
+  @Column({
+    type: 'enum',
+    enum: SupportedToken,
+    default: SupportedToken.SOL,
+  })
+  tokenType: SupportedToken;
+
+  /**
+   * SPL Token mint address (null for native SOL)
+   * @security Must be verified against TOKEN_CONFIG
+   */
+  @Column({ nullable: true })
+  tokenMint: string;
+
+  /**
+   * Associated Token Account (ATA) for SPL tokens
+   * Derived from escrow PDA and token mint
+   */
+  @Column({ nullable: true })
+  ataAddress: string;
 
   /**
    * Type of competition

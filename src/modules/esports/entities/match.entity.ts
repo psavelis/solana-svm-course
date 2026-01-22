@@ -9,6 +9,8 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
+import { PrizeDistributionStrategy, PrizeRiskLevel } from './prize-distribution.entity';
+import { SupportedToken } from './token.entity';
 
 /**
  * # Match Status
@@ -156,8 +158,58 @@ export class Match {
   gameType: GameType;
 
   /**
-   * Entry fee in lamports (1 SOL = 1,000,000,000 lamports)
-   * @example "1000000000" // 1 SOL
+   * Token type for entry fees and prize pool
+   * @see SupportedToken
+   * @default SOL
+   *
+   * ## Multi-Token Support
+   *
+   * Matches support multiple tokens for entry fees:
+   * - SOL: Native Solana (9 decimals)
+   * - USDC: USD Coin (6 decimals)
+   * - USDT: Tether USD (6 decimals)
+   * - PYUSD: PayPal USD (6 decimals)
+   *
+   * @example
+   * ```typescript
+   * // SOL match: 1 SOL entry
+   * { tokenType: SupportedToken.SOL, entryFee: '1000000000' }
+   *
+   * // USDC match: $10 entry
+   * { tokenType: SupportedToken.USDC, entryFee: '10000000' }
+   * ```
+   */
+  @Column({
+    type: 'enum',
+    enum: SupportedToken,
+    default: SupportedToken.SOL,
+  })
+  tokenType: SupportedToken;
+
+  /**
+   * SPL Token mint address for the entry fee token
+   * - For SOL: Native mint (So11111111111111111111111111111111111111112)
+   * - For USDC: Circle's official mint address
+   * - For USDT: Tether's official mint address
+   *
+   * @security CRITICAL: Must match verified mint addresses only
+   */
+  @Column({ nullable: true })
+  tokenMint: string;
+
+  /**
+   * Entry fee in base units (lamports for SOL, micro-units for USDC/USDT)
+   *
+   * ## Decimal Reference
+   *
+   * | Token | Decimals | 1.00 Unit |
+   * |-------|----------|-----------|
+   * | SOL | 9 | 1,000,000,000 |
+   * | USDC | 6 | 1,000,000 |
+   * | USDT | 6 | 1,000,000 |
+   * | PYUSD | 6 | 1,000,000 |
+   *
+   * @example "1000000000" // 1 SOL or 1000 USDC
    */
   @Column({ type: 'bigint' })
   entryFee: string;
@@ -171,7 +223,7 @@ export class Match {
   maxPlayers: number;
 
   /**
-   * Current prize pool in lamports
+   * Current prize pool in base units (same token as entryFee)
    * Calculated as: entryFee × currentPlayers
    */
   @Column({ type: 'bigint', default: '0' })
@@ -183,6 +235,45 @@ export class Match {
    */
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 5.0 })
   platformFeePercent: number;
+
+  /**
+   * Prize distribution strategy
+   * @see PrizeDistributionStrategy
+   * @default WINNER_TAKES_ALL
+   */
+  @Column({
+    type: 'enum',
+    enum: PrizeDistributionStrategy,
+    default: PrizeDistributionStrategy.WINNER_TAKES_ALL,
+  })
+  prizeStrategy: PrizeDistributionStrategy;
+
+  /**
+   * Risk level for prize distribution
+   * @see PrizeRiskLevel
+   * @default HIGH (winner takes all)
+   */
+  @Column({
+    type: 'enum',
+    enum: PrizeRiskLevel,
+    default: PrizeRiskLevel.HIGH,
+  })
+  riskLevel: PrizeRiskLevel;
+
+  /**
+   * Custom prize structure (required when strategy is CUSTOM)
+   * @property place - Placement position (1 = winner)
+   * @property percentage - Percentage of distributable pool
+   * @property label - Display label (e.g., "1st Place", "MVP Bonus")
+   * @property isMvp - Whether this slot is for MVP
+   */
+  @Column({ type: 'jsonb', nullable: true })
+  prizeStructure: {
+    place: number;
+    percentage: number;
+    label?: string;
+    isMvp?: boolean;
+  }[];
 
   /**
    * Current match status
@@ -227,6 +318,8 @@ export class Match {
    * @property proof - Result verification (hash, URL)
    * @property submittedBy - User who submitted result
    * @property verifiedAt - Verification timestamp
+   * @property mvpPlayerId - MVP player ID (for PERFORMANCE_MVP strategy)
+   * @property mvpReason - Reason for MVP selection
    */
   @Column({ type: 'jsonb', nullable: true })
   result: {
@@ -235,6 +328,8 @@ export class Match {
     proof?: string;
     submittedBy?: string;
     verifiedAt?: Date;
+    mvpPlayerId?: string;
+    mvpReason?: string;
   };
 
   /** Match participants */

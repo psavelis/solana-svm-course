@@ -10,9 +10,12 @@ import {
   IsArray,
   ValidateNested,
   IsDateString,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BracketType, TournamentStatus } from '../entities/tournament.entity';
+import { PrizeDistributionStrategy, PrizeRiskLevel } from '../entities/prize-distribution.entity';
+import { SupportedToken } from '../entities/token.entity';
 
 export class PrizeStructureItemDto {
   @ApiProperty({ description: 'Placement position', example: 1 })
@@ -30,6 +33,16 @@ export class PrizeStructureItemDto {
   @IsOptional()
   @IsString()
   fixedAmount?: string;
+
+  @ApiPropertyOptional({ description: 'Display label', example: '1st Place' })
+  @IsOptional()
+  @IsString()
+  label?: string;
+
+  @ApiPropertyOptional({ description: 'Whether this is MVP slot', default: false })
+  @IsOptional()
+  @IsBoolean()
+  isMvp?: boolean;
 }
 
 export class TournamentMetadataDto {
@@ -75,13 +88,30 @@ export class CreateTournamentDto {
   @IsNotEmpty()
   gameType: string;
 
-  @ApiProperty({ description: 'Entry fee in lamports', example: '5000000000' })
+  @ApiProperty({
+    description: 'Token type for entry fees and prize pool',
+    enum: SupportedToken,
+    example: SupportedToken.USDC,
+    default: SupportedToken.SOL,
+  })
+  @IsOptional()
+  @IsEnum(SupportedToken)
+  tokenType?: SupportedToken;
+
+  @ApiProperty({
+    description: 'Entry fee in base units',
+    example: '5000000000',
+    examples: {
+      SOL: { value: '5000000000', summary: '5 SOL entry (9 decimals)' },
+      USDC: { value: '25000000', summary: '$25 USDC entry (6 decimals)' },
+    },
+  })
   @IsString()
   @IsNotEmpty()
   entryFee: string;
 
   @ApiPropertyOptional({
-    description: 'Guaranteed minimum prize pool in lamports',
+    description: 'Guaranteed minimum prize pool in base units',
     example: '100000000000',
   })
   @IsOptional()
@@ -115,14 +145,23 @@ export class CreateTournamentDto {
   @Max(50)
   platformFeePercent?: number;
 
+  @ApiPropertyOptional({
+    description: 'Prize distribution strategy',
+    enum: PrizeDistributionStrategy,
+    example: PrizeDistributionStrategy.TOP_3_SPLIT,
+    default: PrizeDistributionStrategy.TOP_3_SPLIT,
+  })
+  @IsOptional()
+  @IsEnum(PrizeDistributionStrategy)
+  prizeStrategy?: PrizeDistributionStrategy;
+
   @ApiProperty({
-    description: 'Prize structure',
+    description: 'Prize structure (auto-generated based on strategy if not provided)',
     type: [PrizeStructureItemDto],
     example: [
-      { place: 1, percentage: 50 },
-      { place: 2, percentage: 25 },
-      { place: 3, percentage: 10 },
-      { place: 4, percentage: 10 },
+      { place: 1, percentage: 60, label: '1st Place' },
+      { place: 2, percentage: 30, label: '2nd Place' },
+      { place: 3, percentage: 10, label: '3rd Place' },
     ],
   })
   @IsArray()
@@ -196,15 +235,20 @@ export class TournamentResponseDto {
   @ApiProperty() name: string;
   @ApiPropertyOptional() description?: string;
   @ApiProperty() gameType: string;
-  @ApiProperty() entryFee: string;
-  @ApiProperty() prizePool: string;
-  @ApiProperty() guaranteedPrizePool: string;
+  @ApiProperty({ enum: SupportedToken, description: 'Token type for entry fees and prizes' })
+  tokenType: SupportedToken;
+  @ApiPropertyOptional({ description: 'SPL Token mint address' }) tokenMint?: string;
+  @ApiProperty({ description: 'Entry fee in base units' }) entryFee: string;
+  @ApiProperty({ description: 'Prize pool in base units' }) prizePool: string;
+  @ApiProperty({ description: 'Guaranteed prize pool in base units' }) guaranteedPrizePool: string;
   @ApiProperty() maxParticipants: number;
   @ApiProperty() minParticipants: number;
   @ApiProperty() currentParticipants: number;
   @ApiProperty({ enum: BracketType }) bracketType: BracketType;
   @ApiProperty({ enum: TournamentStatus }) status: TournamentStatus;
   @ApiProperty() platformFeePercent: number;
+  @ApiProperty({ enum: PrizeDistributionStrategy }) prizeStrategy: PrizeDistributionStrategy;
+  @ApiProperty({ enum: PrizeRiskLevel }) riskLevel: PrizeRiskLevel;
   @ApiProperty({ type: [PrizeStructureItemDto] }) prizeStructure: PrizeStructureItemDto[];
   @ApiPropertyOptional() escrowAddress?: string;
   @ApiPropertyOptional() metadata?: TournamentMetadataDto;
@@ -253,6 +297,27 @@ export class TournamentQueryDto {
   @IsOptional()
   @IsString()
   gameType?: string;
+
+  @ApiPropertyOptional({ enum: SupportedToken, description: 'Filter by token type' })
+  @IsOptional()
+  @IsEnum(SupportedToken)
+  tokenType?: SupportedToken;
+
+  @ApiPropertyOptional({ description: 'Filter by stablecoins only', default: false })
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  stablecoinsOnly?: boolean;
+
+  @ApiPropertyOptional({ enum: PrizeDistributionStrategy })
+  @IsOptional()
+  @IsEnum(PrizeDistributionStrategy)
+  prizeStrategy?: PrizeDistributionStrategy;
+
+  @ApiPropertyOptional({ enum: PrizeRiskLevel, description: 'Filter by risk level' })
+  @IsOptional()
+  @IsEnum(PrizeRiskLevel)
+  riskLevel?: PrizeRiskLevel;
 
   @ApiPropertyOptional({ default: 20 })
   @IsOptional()

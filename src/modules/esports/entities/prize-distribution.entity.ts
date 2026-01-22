@@ -59,6 +59,86 @@ export enum PrizeSourceType {
 }
 
 /**
+ * # Prize Distribution Strategy
+ *
+ * Defines how the prize pool is distributed among participants.
+ *
+ * ## Strategy Overview
+ *
+ * | Strategy | Risk Level | Distribution Pattern |
+ * |----------|------------|---------------------|
+ * | WINNER_TAKES_ALL | High | 100% to winner |
+ * | TOP_3_SPLIT | Medium | 60%/30%/10% to top 3 |
+ * | PERFORMANCE_MVP | Low | 70%/20%/10% (winner/2nd/MVP) |
+ * | CUSTOM | Variable | User-defined structure |
+ *
+ * ## Use Cases
+ *
+ * ```
+ * WINNER_TAKES_ALL:
+ *   - High-stakes 1v1 duels
+ *   - Maximum competitive pressure
+ *   - Simple winner determination
+ *
+ * TOP_3_SPLIT:
+ *   - Multi-player tournaments
+ *   - Rewards multiple performers
+ *   - Reduces winner-take-all variance
+ *
+ * PERFORMANCE_MVP:
+ *   - Team-based competitions
+ *   - Recognizes individual excellence
+ *   - Balances team and individual rewards
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Winner takes all for 1v1
+ * { strategy: PrizeDistributionStrategy.WINNER_TAKES_ALL }
+ *
+ * // Top 3 for tournament
+ * { strategy: PrizeDistributionStrategy.TOP_3_SPLIT }
+ *
+ * // MVP bonus for team match
+ * { strategy: PrizeDistributionStrategy.PERFORMANCE_MVP, mvpPlayerId: 'player_mvp' }
+ * ```
+ */
+export enum PrizeDistributionStrategy {
+  /** 100% to the winner (high risk, high reward) */
+  WINNER_TAKES_ALL = 'winner_takes_all',
+  /** 60%/30%/10% split to top 3 (medium risk) */
+  TOP_3_SPLIT = 'top_3_split',
+  /** 70% winner, 20% 2nd place, 10% MVP bonus (low risk) */
+  PERFORMANCE_MVP = 'performance_mvp',
+  /** Custom prize structure defined in prizeStructure field */
+  CUSTOM = 'custom',
+}
+
+/**
+ * # Risk Level
+ *
+ * Indicates the financial risk profile of a prize distribution strategy.
+ *
+ * ## Risk Assessment
+ *
+ * | Level | Description | Typical Distribution |
+ * |-------|-------------|---------------------|
+ * | HIGH | Winner-take-all | Single recipient |
+ * | MEDIUM | Top performers | 2-3 recipients |
+ * | LOW | Spread rewards | Multiple recipients |
+ *
+ * Players can filter matches/tournaments by risk level preference.
+ */
+export enum PrizeRiskLevel {
+  /** High risk: Winner takes all */
+  HIGH = 'high',
+  /** Medium risk: Top 3 split */
+  MEDIUM = 'medium',
+  /** Low risk: Spread distribution with MVP */
+  LOW = 'low',
+}
+
+/**
  * # Prize Distribution Entity
  *
  * Manages automated prize distribution for competitions.
@@ -151,12 +231,36 @@ export class PrizeDistribution {
   status: PrizeDistributionStatus;
 
   /**
+   * Prize distribution strategy used
+   * @see PrizeDistributionStrategy
+   */
+  @Column({
+    type: 'enum',
+    enum: PrizeDistributionStrategy,
+    default: PrizeDistributionStrategy.WINNER_TAKES_ALL,
+  })
+  strategy: PrizeDistributionStrategy;
+
+  /**
+   * Risk level associated with the distribution strategy
+   * @see PrizeRiskLevel
+   */
+  @Column({
+    type: 'enum',
+    enum: PrizeRiskLevel,
+    default: PrizeRiskLevel.HIGH,
+  })
+  riskLevel: PrizeRiskLevel;
+
+  /**
    * Individual prize distributions
    * @property walletId - Recipient wallet ID
    * @property playerId - Recipient player ID
    * @property placement - Final placement (1 = winner)
    * @property amount - Prize amount in lamports
    * @property percentage - Prize percentage of pool
+   * @property label - Human-readable prize label (e.g., "1st Place", "MVP Bonus")
+   * @property isMvp - Whether this is an MVP bonus distribution
    * @property signature - Solana transaction signature
    * @property status - Individual distribution status
    * @property failureReason - Error message if failed
@@ -169,6 +273,8 @@ export class PrizeDistribution {
     placement: number;
     amount: string;
     percentage: number;
+    label?: string;
+    isMvp?: boolean;
     signature?: string;
     status: 'pending' | 'completed' | 'failed';
     failureReason?: string;

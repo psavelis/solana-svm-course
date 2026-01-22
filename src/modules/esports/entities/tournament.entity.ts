@@ -9,6 +9,8 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
+import { PrizeDistributionStrategy, PrizeRiskLevel } from './prize-distribution.entity';
+import { SupportedToken } from './token.entity';
 
 /**
  * # Tournament Status
@@ -185,21 +187,53 @@ export class Tournament {
   gameType: string;
 
   /**
-   * Entry fee in lamports
-   * @example "5000000000" // 5 SOL
+   * Token type for entry fees and prize pool
+   * @see SupportedToken
+   * @default SOL
+   *
+   * ## Multi-Token Tournament Support
+   *
+   * Tournaments support stablecoins for predictable prize values:
+   * - USDC: Best for professional tournaments (price stability)
+   * - USDT: Alternative stablecoin option
+   * - SOL: Native token for lower fees
+   *
+   * @example
+   * ```typescript
+   * // $1000 USDC tournament
+   * { tokenType: SupportedToken.USDC, guaranteedPrizePool: '1000000000' }
+   * ```
+   */
+  @Column({
+    type: 'enum',
+    enum: SupportedToken,
+    default: SupportedToken.SOL,
+  })
+  tokenType: SupportedToken;
+
+  /**
+   * SPL Token mint address for the tournament token
+   * @security CRITICAL: Must match verified mint addresses only
+   */
+  @Column({ nullable: true })
+  tokenMint: string;
+
+  /**
+   * Entry fee in base units
+   * @example "5000000000" // 5 SOL or 5000 USDC
    */
   @Column({ type: 'bigint' })
   entryFee: string;
 
   /**
-   * Current prize pool (entry fees collected)
+   * Current prize pool in base units (entry fees collected)
    * Updated as players register
    */
   @Column({ type: 'bigint', default: '0' })
   prizePool: string;
 
   /**
-   * Guaranteed minimum prize pool
+   * Guaranteed minimum prize pool in base units
    * Platform covers shortfall (overlay)
    */
   @Column({ type: 'bigint', default: '0' })
@@ -243,16 +277,44 @@ export class Tournament {
   platformFeePercent: number;
 
   /**
+   * Prize distribution strategy
+   * @see PrizeDistributionStrategy
+   * @default TOP_3_SPLIT for tournaments
+   */
+  @Column({
+    type: 'enum',
+    enum: PrizeDistributionStrategy,
+    default: PrizeDistributionStrategy.TOP_3_SPLIT,
+  })
+  prizeStrategy: PrizeDistributionStrategy;
+
+  /**
+   * Risk level for prize distribution
+   * @see PrizeRiskLevel
+   * @default MEDIUM (top 3 split)
+   */
+  @Column({
+    type: 'enum',
+    enum: PrizeRiskLevel,
+    default: PrizeRiskLevel.MEDIUM,
+  })
+  riskLevel: PrizeRiskLevel;
+
+  /**
    * Prize distribution structure
    * @property place - Placement position (1 = winner)
    * @property percentage - Percentage of distributable pool
    * @property fixedAmount - Optional fixed amount override
+   * @property label - Display label (e.g., "1st Place", "MVP Bonus")
+   * @property isMvp - Whether this slot is for MVP
    */
   @Column({ type: 'jsonb' })
   prizeStructure: {
     place: number;
     percentage: number;
     fixedAmount?: string;
+    label?: string;
+    isMvp?: boolean;
   }[];
 
   /** Solana PDA escrow address */
