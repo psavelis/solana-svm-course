@@ -2,6 +2,120 @@
 
 A learning and implementation platform for Solana and SVM (Solana Virtual Machine) development, designed for developers transitioning from EVM-based chains like Ethereum and Polygon.
 
+## 📚 Complete Course PDF
+
+**📕 [Download Complete Course PDF](marp/solana-svm-study-course-complete-2026-01-22T12-02-18.pdf)** - Full slide deck covering all topics below (19 modules, 5.17 MB)
+
+## Course Topics
+
+### Module 1: Accounts & Programs
+- Account model fundamentals (vs EVM's account model)
+- Program Derived Addresses (PDAs)
+- Account ownership and rent
+- Data serialization with Borsh
+
+### Module 2: Transactions & Instructions
+- Transaction anatomy and lifecycle
+- Instruction structure and encoding
+- Transaction fees and compute units
+- Versioned transactions
+
+### Module 3: Token Standards
+- SPL Token Program
+- Token accounts and mints
+- Associated Token Accounts (ATAs)
+- Token-2022 extensions
+
+### Module 4: Account Abstraction
+- Native account abstraction on Solana
+- Multisig patterns
+- Durable nonces for offline signing
+- Session keys implementation
+
+### Module 5: Fee Mechanism
+- Priority fees and compute budget
+- Fee estimation strategies
+- Dynamic fee adjustment
+- Conservative, balanced, aggressive, predictive, and adaptive strategies
+
+### Module 6: Consensus & Validation
+- Proof of History (PoH)
+- Tower BFT consensus
+- Validator architecture
+- Slot and epoch mechanics
+
+### Module 7: Signing & Cryptography
+- Ed25519 signatures
+- Keypair management
+- Hardware wallet integration
+- Message signing and verification
+
+### Module 8: Multi-Party Computation (MPC)
+- Threshold signature schemes (TSS)
+- 2-of-3, 3-of-5, 4-of-7 configurations
+- Distributed key generation
+- Secure multi-party signing
+
+### Module 9: Solana Virtual Machine (SVM)
+- BPF bytecode execution
+- Runtime environment
+- Syscalls and CPI
+- Memory model and constraints
+
+### Module 10: Cross-Program Invocations (CPIs)
+- CPI mechanics and patterns
+- Signer privileges propagation
+- PDA signing in CPIs
+- Security considerations
+
+### Module 11: Events & Logging
+- Program logs and events
+- Log parsing and indexing
+- Real-time event monitoring
+- Historical event queries
+
+### Module 12: Security Practices
+- Common vulnerabilities
+- Signer verification patterns
+- Reentrancy prevention
+- Arithmetic overflow protection
+
+### Module 13: Development Tools
+- Solana CLI and toolchain
+- Anchor framework overview
+- Local test validator
+- Debugging and profiling
+
+### Module 14: Network Architecture
+- Cluster topology
+- RPC nodes and validators
+- Gossip protocol
+- Transaction propagation
+
+### Module 15: Advanced Features
+- Lookup tables (ALTs)
+- Compute budget optimization
+- Parallel transaction execution
+- Jupiter aggregator integration
+
+### Module 16: Esports Matchmaking Platform
+- **Security Concepts**:
+  - Collusion detection and prevention
+  - Sybil attack mitigations
+  - Escrow system design
+  - Prize manipulation prevention
+  - Entry fee validation
+  - Deterministic addressing (PDA-style)
+  - Rate limiting strategies
+  - Audit trail implementation
+- **Multi-Token Support**: SOL, USDC, USDT, PYUSD, WSOL
+- **MPC Wallet Integration**: 2-of-3 threshold player wallets
+- **Matchmaking System**: Entry fees, escrow, prize pools
+- **Prize Distribution**: Winner takes all, top 3 split, MVP bonus strategies
+- **Tournament Management**: Bracket generation, registration, settlement
+
+---
+
 ## Overview
 
 This repository implements a NestJS-based API service that demonstrates Solana integrations, featuring:
@@ -20,6 +134,8 @@ This repository implements a NestJS-based API service that demonstrates Solana i
 📋 **[Project Overview](docs/PROJECT.md)** - Project objectives, design patterns, and architecture
 
 📝 **[Implementation Tasks](docs/TASKS.md)** - Detailed task breakdown for all features
+
+🎓 **[Slide Decks](marp/README.md)** - Individual module presentations
 
 ## Architecture
 

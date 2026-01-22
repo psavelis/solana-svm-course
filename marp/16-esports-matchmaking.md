@@ -89,6 +89,19 @@ style: |
     line-height: 1.2;
     padding: 6px;
   }
+  .concept-box {
+    background: #2d2d44;
+    border-left: 4px solid #9945ff;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 0.65em;
+  }
+  .mini-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    font-size: 0.6em;
+  }
 ---
 
 # 🎮 Solana Esports Platform
@@ -101,16 +114,366 @@ style: |
 
 # 📋 Agenda
 
-1. **System Overview** - Architecture & Components
-2. **Multi-Token Support** - SOL, USDC, USDT, PYUSD Integration
-3. **Service Layer Architecture** - Core Services Deep Dive
-4. **MPC Wallet Integration** - Secure Player Wallets
-5. **Matchmaking System** - Entry Fees & Escrow
-6. **Prize Distribution** - Calculations & Strategies
-7. **Prize Distribution Strategies** - Winner Takes All, Top 3 Split, MVP
+1. **Security Concepts** - Understanding Threats & Mitigations
+2. **System Overview** - Architecture & Components
+3. **Multi-Token Support** - SOL, USDC, USDT, PYUSD Integration
+4. **Service Layer Architecture** - Core Services Deep Dive
+5. **MPC Wallet Integration** - Secure Player Wallets
+6. **Matchmaking System** - Entry Fees & Escrow
+7. **Prize Distribution** - Calculations & Strategies
 8. **Tournament Management** - Bracket Generation
-9. **Security Practices** - Production Considerations
-10. **Implementation Details** - Code Walkthrough
+9. **Security Implementation** - Production Considerations
+
+---
+
+# 🛡️ Security Concepts: Overview
+
+<div class="mini-columns">
+<div>
+
+### Threats We Address
+| Threat | Impact |
+|--------|--------|
+| **Collusion** | Unfair outcomes |
+| **Sybil Attacks** | Pool manipulation |
+| **Fund Theft** | Asset loss |
+| **Prize Manipulation** | Incorrect payouts |
+| **Result Tampering** | False winners |
+
+</div>
+<div>
+
+### Our Mitigations
+| Solution | Protects Against |
+|----------|------------------|
+| MPC Wallets | Fund theft |
+| Escrow System | Payment disputes |
+| Entry Validation | Sybil attacks |
+| Deterministic Prizes | Manipulation |
+| Audit Logs | Tampering |
+
+</div>
+</div>
+
+---
+
+# 🤝 What is Collusion?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**Collusion** = Secret cooperation between players to gain unfair advantage at the expense of others.
+
+### Gaming Examples
+- **Match Fixing**: Players agree on outcome before match starts
+- **Chip Dumping**: Intentionally losing to transfer prize pool
+- **Ghosting**: Sharing opponent's screen/position info
+- **Win Trading**: Alternating wins to farm rewards
+
+</div>
+<div>
+
+### Why It Matters
+- Destroys competitive integrity
+- Defrauds legitimate players
+- Legal liability for platform
+- Regulatory scrutiny
+
+### Our Mitigations
+✓ Random matchmaking queues
+✓ Anti-patterns in match history
+✓ Prize distribution audit trails
+✓ Platform co-signing (MPC)
+
+</div>
+</div>
+
+---
+
+# 👥 What is a Sybil Attack?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**Sybil Attack** = Creating multiple fake identities to gain disproportionate influence or rewards.
+
+### Gaming Examples
+- **Multi-accounting**: One player, many accounts
+- **Prize Pool Stuffing**: Fill match with own accounts
+- **Guaranteed Wins**: Play against yourself
+- **Bonus Abuse**: Claim rewards multiple times
+
+</div>
+<div>
+
+### Why It Matters
+- Drains prize pools illegitimately
+- Destroys fair competition
+- Inflates platform costs
+- Undermines trust
+
+### Our Mitigations
+✓ Entry fee requirements (economic barrier)
+✓ MPC wallet creation limits
+✓ IP/device fingerprinting (external)
+✓ Behavioral analysis patterns
+
+</div>
+</div>
+
+---
+
+# 🔐 What is Escrow?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**Escrow** = Neutral third-party holds funds until conditions are met, then releases to appropriate party.
+
+### How It Works
+```
+Player A ──┐        ┌── Winner
+           │        │
+         [$]──►ESCROW──►[$]
+           │        │
+Player B ──┘        └── (Loser: $0)
+```
+
+</div>
+<div>
+
+### Why It Matters
+- No trust required between players
+- Platform can't steal funds
+- Automatic settlement on result
+- Dispute resolution possible
+
+### Our Implementation
+✓ On-chain escrow accounts (PDA-style)
+✓ Locked until match complete
+✓ Deterministic release conditions
+✓ Refund on cancellation/timeout
+
+</div>
+</div>
+
+---
+
+# 🔑 What is MPC (Multi-Party Computation)?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**MPC** = Cryptographic technique where multiple parties jointly compute a result (signature) without revealing their individual inputs (key shares).
+
+### 2-of-3 Threshold Scheme
+```
+┌─────────────────────┐
+│ KEY SHARES          │
+├─────────────────────┤
+│ Share 1: Player     │
+│ Share 2: Platform   │
+│ Share 3: Recovery   │
+├─────────────────────┤
+│ Sign = Any 2 shares │
+└─────────────────────┘
+```
+
+</div>
+<div>
+
+### Why It Matters
+- **No single point of failure** - one compromised key ≠ fund loss
+- **No seed phrases** - better UX for players
+- **Platform co-signs** - prevents fraud withdrawals
+- **Recovery possible** - lost device ≠ lost funds
+
+### Security Properties
+✓ Player + Platform = normal operation
+✓ Player + Recovery = device lost
+✓ Platform alone = cannot steal funds
+
+</div>
+</div>
+
+---
+
+# 💰 What is Prize Manipulation?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**Prize Manipulation** = Tampering with prize calculations or distribution to benefit certain parties unfairly.
+
+### Attack Vectors
+- **Floating point errors**: Rounding exploits
+- **Percentage overflow**: >100% claimed
+- **Fee miscalculation**: Platform takes extra
+- **Missing distributions**: Prizes disappear
+
+</div>
+<div>
+
+### Why It Matters
+- Direct financial loss to players
+- Legal liability for platform
+- Destroys trust instantly
+- Regulatory violations
+
+### Our Mitigations
+✓ **BigInt only** - no floating point
+✓ **Basis points** - 100 = 1% precision
+✓ **Pre-defined strategies** - auditable
+✓ **Sum validation** - must equal 100%
+
+</div>
+</div>
+
+---
+
+# 🎫 What is Entry Fee Validation?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**Entry Fee Validation** = Ensuring each participant pays the exact required fee in the correct token before joining.
+
+### Attack Vectors Without It
+- Pay 0, win full prize pool
+- Pay in wrong token (worthless)
+- Partial payment exploitation
+- Cross-token arbitrage
+
+</div>
+<div>
+
+### Why It Matters
+- Prize pool integrity
+- Fair competition (equal stake)
+- Token consistency
+- Economic security
+
+### Our Implementation
+✓ Token-specific fee ranges
+✓ Exact amount verification
+✓ Balance check before lock
+✓ Atomic lock → join operation
+
+</div>
+</div>
+
+---
+
+# 🔄 What is Deterministic Addressing?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**Deterministic Addressing** = Deriving account addresses from fixed inputs so the same inputs always produce the same address (like Solana PDAs).
+
+### Formula
+```
+escrow_addr = hash(
+  source_type + source_id
+)
+// Always same for Match #123
+```
+
+</div>
+<div>
+
+### Why It Matters
+- **Verifiable**: Anyone can compute address
+- **No guessing**: Can't find random escrow
+- **No collisions**: Unique per match/tournament
+- **Auditable**: Trace funds to source
+
+### Our Implementation
+✓ SHA-256 hash of source type + ID
+✓ Match escrow = `MATCH:match_xxx`
+✓ Tournament = `TOURNAMENT:tour_xxx`
+✓ Cannot be manipulated
+
+</div>
+</div>
+
+---
+
+# ⏱️ What is Rate Limiting?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**Rate Limiting** = Restricting how often an action can be performed within a time window.
+
+### Gaming Context
+| Action | Limit | Purpose |
+|--------|-------|---------|
+| Withdrawals | 3/day | Theft delay |
+| Match joins | 10/hour | Anti-bot |
+| Wallet create | 1/user | Anti-sybil |
+
+</div>
+<div>
+
+### Why It Matters
+- Slows down attackers
+- Time for fraud detection
+- Protects against automation
+- Compliance (suspicious activity)
+
+### Our Implementation
+✓ Daily withdrawal limits
+✓ Cooldown periods
+✓ Max active matches per player
+✓ Tournament registration windows
+
+</div>
+</div>
+
+---
+
+# 📝 What is an Audit Trail?
+
+<div class="columns tiny-text">
+<div>
+
+### Definition
+**Audit Trail** = Immutable record of all actions, state changes, and transactions for accountability and forensics.
+
+### What We Log
+| Event | Data Captured |
+|-------|---------------|
+| Wallet create | Player, MPC ID, time |
+| Match join | Player, fee, escrow ref |
+| Result submit | Winners, proof, signer |
+| Prize distribute | Amounts, recipients, tx |
+
+</div>
+<div>
+
+### Why It Matters
+- **Dispute resolution** - prove what happened
+- **Fraud detection** - identify patterns
+- **Compliance** - regulatory requirements
+- **Debugging** - trace issues
+
+### Our Implementation
+✓ All entities have createdAt/updatedAt
+✓ Transaction history per wallet
+✓ Escrow state transitions logged
+✓ Blockchain signatures stored
+
+</div>
+</div>
 
 ---
 
